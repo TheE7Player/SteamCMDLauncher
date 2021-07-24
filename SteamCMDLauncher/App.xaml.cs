@@ -48,9 +48,10 @@ namespace SteamCMDLauncher
                 }
             }
 
-            var mainWindow = new Setup();
-            mainWindow.Show();
-            mainWindow.Focus();
+            Window mainWindow;
+            if (!Config.DatabaseExists || !Config.HasServers()) mainWindow = new Setup(); else mainWindow = new main_view();
+
+            mainWindow.Show(); mainWindow.Focus();
             //mainWindow.Closed += Window_Closed;
         }
 

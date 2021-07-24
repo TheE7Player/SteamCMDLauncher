@@ -1,0 +1,31 @@
+﻿<Window x:Class="SteamCMDLauncher.main_view"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SteamCMDLauncher"
+        mc:Ignorable="d"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignDarkBackground}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Title="Steam CMD Launcher" Height="720" Width="1280" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="120"></RowDefinition>
+            <RowDefinition Height="80"></RowDefinition>
+            <RowDefinition Height="121*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <TextBlock FontSize="36" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
+            <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">version 0.1</TextBlock>
+        </Grid>
+        <Grid Grid.Row="1">
+            <TextBlock FontSize="22" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,20,0,0">Welcome, Here are your current stored servers:</TextBlock>
+        </Grid>
+        <Grid Grid.Row="2">
+            
+        </Grid>
+    </Grid>
+</Window>

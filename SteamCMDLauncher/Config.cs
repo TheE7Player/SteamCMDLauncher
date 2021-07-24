@@ -104,10 +104,33 @@ namespace SteamCMDLauncher
                 using (var db = new LiteDatabase(db_location))
                 {
                     col = db.GetCollection(SERVER_INFO_COLLECTION);
-
+                   
                     col.Insert(new BsonDocument { ["_id"] = ObjectId.NewObjectId(), ["app_id"] = id, ["folder"]=folder_loc });
 
                     return true;
+                }
+            }
+            catch (Exception _)
+            {
+                db_error = _.Message;
+            }
+
+            return false;
+        }
+
+        public static bool HasServers()
+        {
+            db_error = string.Empty;
+
+            ILiteCollection<BsonDocument> col;
+
+            try
+            {
+                using (var db = new LiteDatabase(db_location))
+                {
+                    col = db.GetCollection(SERVER_INFO_COLLECTION);
+
+                    return col.FindAll().Count() > 0;
                 }
             }
             catch (Exception _)
