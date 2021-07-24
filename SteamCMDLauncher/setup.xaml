@@ -1,0 +1,74 @@
+﻿<Window x:Class="SteamCMDLauncher.Setup"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SteamCMDLauncher" xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        mc:Ignorable="d"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignDarkBackground}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Title="Steam CMD Launcher" Height="720" Width="1280" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+
+    <Grid ShowGridLines="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="120"></RowDefinition>
+            <RowDefinition Height="120"></RowDefinition>
+            <RowDefinition Height="121*"></RowDefinition>
+        </Grid.RowDefinitions>
+
+        <materialDesign:DialogHost Grid.RowSpan="3" x:Name="installDialog" IsOpen="False" >
+            <materialDesign:DialogHost.DialogContent>
+                <StackPanel Margin="20">
+                    <TextBlock x:Name="GameInstallName" Text="Now Installing ${GAME}" FontWeight="Bold" FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                    <ProgressBar
+                        Style="{DynamicResource MaterialDesignCircularProgressBar}"
+                        HorizontalAlignment="Center" Margin="0,20,0,25"
+                        IsIndeterminate="True"
+                        Value="0" />
+                    <TextBlock Text="Depending on file size and bandwidth, this may take a while" FontSize="10" TextWrapping="Wrap" HorizontalAlignment="Center" FontStyle="Italic"/>
+                    <TextBlock x:Name="GameInstallStatus" Text="Current Progress: Booting SteamCMD" FontWeight="Bold" FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </materialDesign:DialogHost.DialogContent>
+        </materialDesign:DialogHost>
+
+        <Grid Grid.Row="0">
+            <TextBlock FontSize="36" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
+            <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">version 0.1</TextBlock>
+        </Grid>
+        
+        <Grid Grid.Row="1" Margin="40,20,0,0">
+            <TextBlock Foreground="#FFEDF2F3" FontWeight="Bold" FontSize="20">Let's first setup a server, if you have done so already - press the button and locate the server folder:</TextBlock>
+            <Button x:Name="SteamCMDButton" Margin="1,50,1063,18" Click="SteamCMD_Click">SteamCMD Location</Button>
+            <Button x:Name="ServerFolderButton" Margin="205,50,785,18" IsEnabled="False" Click="ServerFolderButton_Click">Server Folder Location</Button>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <materialDesign:Card x:Name="Card1" Background="#FFF3F3EF" Margin="60,50,913,78" IsEnabled="False">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 1:</TextBlock>
+                    <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="10" TextWrapping="Wrap" Text="Select the type of game server you'd like to host:" Height="68"/>
+                    <ComboBox materialDesign:HintAssist.Hint="Select a game" Padding="10" Margin="10,0,10,0" x:Name="GameDropDown" SelectionChanged="GameDropDown_SelectionChanged" />
+                </StackPanel>
+            </materialDesign:Card>
+
+            <materialDesign:Card x:Name="Card2" Background="#FFF3F3EF" Margin="486,50,486,78" IsEnabled="False">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 2:</TextBlock>
+                    <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="20" TextWrapping="Wrap" Text="Locate where you want to store the server files:" Height="68"/>
+                    <Button Width="196" Content="Select Folder" Margin="0,30,0,0" Click="Location_Click"/>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <materialDesign:Card x:Name="Card3" Background="#FFF3F3EF" Margin="912,50,60,78" IsEnabled="False">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 3:</TextBlock>
+                    <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="20" TextWrapping="Wrap" Text="Install the required files (This may take many minutes or hours depending on download size)" Height="86"/>
+                    <Button Width="196" Content="Install" Margin="0,30,0,0" Click="InstallServer_Click"  />
+                </StackPanel>
+            </materialDesign:Card>
+        </Grid>
+    </Grid>
+</Window>
