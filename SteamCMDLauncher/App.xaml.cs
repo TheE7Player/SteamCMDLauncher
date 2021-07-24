@@ -49,7 +49,10 @@ namespace SteamCMDLauncher
             }
 
             Window mainWindow;
-            if (!Config.DatabaseExists || !Config.HasServers()) mainWindow = new Setup(); else mainWindow = new main_view();
+            if (!Config.DatabaseExists && !Config.HasServers()) 
+                mainWindow = new Setup(); 
+            else 
+                mainWindow = new main_view();
 
             mainWindow.Show(); mainWindow.Focus();
             //mainWindow.Closed += Window_Closed;

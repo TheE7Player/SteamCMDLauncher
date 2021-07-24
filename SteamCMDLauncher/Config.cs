@@ -17,10 +17,13 @@ namespace SteamCMDLauncher
         public const string SERVER_COLLECTION = "sc";
         public const string LOG_COLLECTION = "lg";
         public const string SERVER_INFO_COLLECTION = "sci";
+        public const string SERVER_ALIAS_COLLECTION = "sca";
 
         public static bool DatabaseExists => System.IO.File.Exists(db_location);
 
         public static string DatabaseLocation => db_location;
+
+        private static string GetID() => ObjectId.NewObjectId().ToString();
 
         /// <summary>
         /// Returns true if the adding of the item was successful, false if not
@@ -43,15 +46,7 @@ namespace SteamCMDLauncher
 
                     var current_table = col.FindAll().ToArray();
 
-                    var duplicate = current_table.FirstOrDefault(x => x.Keys.Contains(key));
-                    
-                    if (!ReferenceEquals(duplicate, null))
-                    {
-                        duplicate[key] = new BsonValue(value);
-                        col.Update(duplicate);
-                    }
-                    else
-                        col.Insert(new BsonDocument { ["_id"] = ObjectId.NewObjectId(), [key] = new BsonValue(value) });
+                    col.Insert(new BsonDocument { ["_id"] = GetID(), [key] = new BsonValue(value) });
                 }
 
                 return true;
@@ -105,7 +100,7 @@ namespace SteamCMDLauncher
                 {
                     col = db.GetCollection(SERVER_INFO_COLLECTION);
                    
-                    col.Insert(new BsonDocument { ["_id"] = ObjectId.NewObjectId(), ["app_id"] = id, ["folder"]=folder_loc });
+                    col.Insert(new BsonDocument { ["_id"] = GetID(), ["app_id"] = id, ["folder"]=folder_loc });
 
                     return true;
                 }
@@ -139,6 +134,57 @@ namespace SteamCMDLauncher
             }
 
             return false;
+        }
+
+        public static Dictionary<string, string[]> GetServers()
+        {
+            db_error = string.Empty;
+
+            ILiteCollection<BsonDocument> col;
+            var _dict = new Dictionary<string, string[]>();
+
+            try
+            {
+                using (var db = new LiteDatabase(db_location))
+                {
+                    col = db.GetCollection(SERVER_INFO_COLLECTION);
+                    var aliases = db.GetCollection(SERVER_ALIAS_COLLECTION);
+
+                    var servers = col.FindAll();
+
+                    BsonDocument alias;
+
+                    foreach (var item in servers)
+                    { 
+                        alias = aliases.FindOne(Query.EQ("_id", item["_id"]));
+   
+                        _dict.Add(item["_id"], new string[] { item["app_id"].RawValue.ToString(), item["folder"], (alias is null) ? string.Empty: alias.AsString });
+                    }
+
+                    return _dict;
+                }
+            }
+            catch (Exception _)
+            {
+                db_error = _.Message;
+            }
+
+            return null;
+        }
+
+        public static string GetGameByAppId(string id)
+        {
+            string file = System.Text.Encoding.Default.GetString(SteamCMDLauncher.Properties.Resources.dedicated_server_list);
+
+            Newtonsoft.Json.Linq.JObject objectA = Newtonsoft.Json.Linq.JObject.Parse(file);
+
+            file = null;
+
+            return objectA["server"]
+                 .Children()
+                 .Where(x => x["id"].ToString() == id)
+                 .Single()
+                 .Value<string>("game");
         }
     }
 }

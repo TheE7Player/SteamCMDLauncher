@@ -20,12 +20,14 @@
         <Grid Grid.Row="0">
             <TextBlock FontSize="36" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
             <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">version 0.1</TextBlock>
+            <Button Margin="1006,50,36,38" Click="NewServer_Click">Add Another Server</Button>
         </Grid>
         <Grid Grid.Row="1">
-            <TextBlock FontSize="22" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,20,0,0">Welcome, Here are your current stored servers:</TextBlock>
+            <TextBlock FontSize="22" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,20,0,0">Welcome! Select a server to view or launch:</TextBlock>
+           
         </Grid>
         <Grid Grid.Row="2">
-            
+            <StackPanel x:Name="ServerStack" Orientation="Horizontal" Margin="44,0,35,30"></StackPanel>
         </Grid>
     </Grid>
 </Window>
