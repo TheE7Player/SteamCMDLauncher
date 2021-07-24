@@ -152,12 +152,29 @@ namespace SteamCMDLauncher
         // Select file location for server (If installed already)
         private void ServerFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            //TODO: Make it that it reads the appid text file to validate the ID
 
             folder_location = GetFolder("steam_appid.txt", "Need to locate the game dir where 'steam_appid.txt' is located, if not there please enforce it manually");
             if (folder_location.Length > 0)
             {
-                Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
+                // Validate if the id is correct
+
+                string appid_loc = File.ReadAllText(Path.Combine(folder_location, "steam_appid.txt")).Trim();
+
+                int result;
+                if(!Int32.TryParse(appid_loc, out result))
+                {
+                    MessageBox.Show($"Unable to support (from parsing) from id '{appid_loc}' - some features may be not implemented or available");
+                    return;
+                }
+
+                if(!available_IDS.Any(x => x == result))
+                {
+                    MessageBox.Show($"Unable to support from id '{appid_loc}' - some features may be not implemented or available");
+                    return;
+                }
+
+                //Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
+                Config.AddServer(result, folder_location);
 
                 Log(folder_location);
             }
