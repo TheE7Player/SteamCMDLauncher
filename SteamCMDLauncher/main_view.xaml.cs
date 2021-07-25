@@ -29,6 +29,29 @@ namespace SteamCMDLauncher
 
         private void PopulateCards()
         {
+            // Create a card instance
+            var Card = new UIComponents.ServerCard();
+
+            // Loop over each record stored
+            foreach (var item in servers)
+            {
+                ServerStack.Children.Add(
+                    Card.CreateCard(
+                        Config.GetGameByAppId(item.Value[0]),
+                        item.Value[2],
+                        item.Value[1],
+                        Convert.ToBoolean(item.Value[3])
+                    )
+                );
+            }
+            Card = null;
+            GC.WaitForFullGCComplete();
+            GC.Collect();
+        }
+
+        [Obsolete]
+        private void PopulateCards_old()
+        {
             int serverCount = 1;
 
             foreach (var item in servers)
@@ -87,7 +110,7 @@ namespace SteamCMDLauncher
 
         private void NewServer_Click(object sender, RoutedEventArgs e)
         {
-            var setup = new Setup();
+            var setup = new Setup(false);
             this.Close();
             setup.Show();
         }

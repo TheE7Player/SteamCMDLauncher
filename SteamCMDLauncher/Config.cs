@@ -100,7 +100,7 @@ namespace SteamCMDLauncher
                 {
                     col = db.GetCollection(SERVER_INFO_COLLECTION);
                    
-                    col.Insert(new BsonDocument { ["_id"] = GetID(), ["app_id"] = id, ["folder"]=folder_loc });
+                    col.Insert(new BsonDocument { ["_id"] = GetID(), ["app_id"] = id, ["folder"]=folder_loc, ["installed"]=false });
 
                     return true;
                 }
@@ -158,7 +158,7 @@ namespace SteamCMDLauncher
                     { 
                         alias = aliases.FindOne(Query.EQ("_id", item["_id"]));
    
-                        _dict.Add(item["_id"], new string[] { item["app_id"].RawValue.ToString(), item["folder"], (alias is null) ? string.Empty: alias.AsString });
+                        _dict.Add(item["_id"], new string[] { item["app_id"].RawValue.ToString(), item["folder"], (alias is null) ? string.Empty: alias.AsString, item["installed"] });
                     }
 
                     return _dict;

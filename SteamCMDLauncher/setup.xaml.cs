@@ -15,6 +15,8 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class Setup : Window
     {
+        private bool first_time_run = true;
+
         private string selectedGame = String.Empty;
         private string steamcmd_location = String.Empty;
         private string folder_location = String.Empty;
@@ -22,32 +24,31 @@ namespace SteamCMDLauncher
         private int selectedGame_ID;
         private int[] available_IDS;
 
-        public Setup()
+        public Setup(bool firstrun = true)
         {
+            first_time_run = firstrun;
+
             InitializeComponent();
-            
+
+            ReturnBack.Visibility = (!first_time_run) ? Visibility.Visible : Visibility.Hidden;
+
             ToolTipService.SetShowOnDisabled(SteamCMDButton, true);
-            ToolTipService.SetShowOnDisabled(ServerFolderButton, true);
 
             if (Config.DatabaseExists)
             {
                 var cmdLoc = Config.GetEntryByKey("cmd", Config.INFO_COLLECTION);
-                var svrLoc = Config.GetEntryByKey("svr", Config.INFO_COLLECTION);
 
                 steamcmd_location = (!(cmdLoc is null)) ? cmdLoc.AsString : String.Empty;
-                folder_location = (!(svrLoc is null)) ? svrLoc.AsString : String.Empty;
 
                 SteamCMDButton.IsEnabled = String.IsNullOrEmpty(steamcmd_location);
-                ServerFolderButton.IsEnabled = String.IsNullOrEmpty(folder_location);
 
                 if (!SteamCMDButton.IsEnabled)
                 { 
                     SteamCMDButton.ToolTip = new ToolTip { Content = $"Already set to: {steamcmd_location}", IsOpen = true };
                     Card1.IsEnabled = true;
                 }
-            
-                if (!ServerFolderButton.IsEnabled)
-                    ServerFolderButton.ToolTip = new ToolTip { Content = $"Already set to: {folder_location}", IsOpen = true };
+
+                ServerFolderButton.IsEnabled = !SteamCMDButton.IsEnabled;
             }
 
             this.GameDropDown.ItemsSource = GetSupportedGames();
@@ -179,8 +180,17 @@ namespace SteamCMDLauncher
                 Log(folder_location);
             }
         }
+        
+        // Return back to home screen (if not first time/setup)
+        private void ReturnBack_Click(object sender, RoutedEventArgs e)
+        {
+            var main = new main_view();
+            this.Close();
+            main.Show();
+        }
         #endregion
 
         #endregion
+
     }
 }
