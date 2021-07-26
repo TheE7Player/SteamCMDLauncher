@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using Newtonsoft.Json.Linq;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace SteamCMDLauncher
 {
@@ -99,7 +100,8 @@ namespace SteamCMDLauncher
         #region Events
         private void GameDropDown_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Card2.IsEnabled = Card2.IsEnabled == false;
+            if(!Card2.IsEnabled)
+                Card2.IsEnabled = true;
             
             // Assign the new ID and name of the current game to download for
             selectedGame = GameDropDown.SelectedValue.ToString();
@@ -112,7 +114,6 @@ namespace SteamCMDLauncher
         // "SteamCMD Location"
         private void SteamCMD_Click(object sender, RoutedEventArgs e)
         {
-
             steamcmd_location = GetFolder("steamcmd.exe", "The given path doesn't contain the 'steamcmd.exe' to install the game files! Try agin.");
 
             if (steamcmd_location.Length > 0)
@@ -123,7 +124,8 @@ namespace SteamCMDLauncher
 
                 ServerFolderButton.IsEnabled = true;
 
-                Card1.IsEnabled = Card1.IsEnabled == false;
+                if (!Card1.IsEnabled)
+                    Card1.IsEnabled = true;
             }
         }
 
@@ -136,18 +138,67 @@ namespace SteamCMDLauncher
                 Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
 
                 Log(folder_location);
-                
-                Card3.IsEnabled = Card3.IsEnabled == false;
+
+                if (!Card3.IsEnabled)
+                    Card3.IsEnabled = true;
             }             
         }
 
         private void InstallServer_Click(object sender, RoutedEventArgs e)
         {
             GameInstallName.Text = $"Now Installing:{Environment.NewLine}{selectedGame}";
-            
+            GameInstallStatus.Text = $"Pre-running 'steamexe.exe' - waiting for result";
+
             installDialog.IsOpen = true;
 
-            Config.AddServer(selectedGame_ID, folder_location);
+            var cmd = new Component.SteamCMD(steamcmd_location);
+
+            // Force all the buttons to be inactive
+            SteamCMDButton.IsHitTestVisible = false;
+            ServerFolderButton.IsHitTestVisible = false;
+            ReturnBack.IsHitTestVisible = false;
+            SelectDirFolder.IsHitTestVisible = false;
+
+            // Extra validation if the ID is 90 due to multiple games sharing them
+
+            // For the json, they increament to prevent duplicates
+            if (selectedGame_ID >= 90 && selectedGame_ID <= 99)
+            {
+                switch (selectedGame)
+                {
+                    case "Counter-Strike: Condition Zero": cmd.AddArgument("+app_set_config \"90 mod czero\""); break;
+                    case "Day of Defeat": cmd.AddArgument("+app_set_config \"90 mod dod\""); break;
+                    case "Deathmatch Classic": cmd.AddArgument("+app_set_config \"90 mod dmc\""); break;
+                    case "Ricochet": cmd.AddArgument("+app_set_config \"90 mod ricochet\""); break;
+                    case "Team Fortress Classic": cmd.AddArgument("	+app_set_config \"90 mod tfc\""); break;
+                    case "Half-Life: Opposing Force": cmd.AddArgument("+app_set_config \"90 mod gearbox\""); break;
+                }
+            }
+
+            var main_win = new main_view();
+
+            var t = Task.Run(() =>
+            {
+                cmd.PreRun();
+
+                this.Dispatcher.Invoke(() =>
+                {
+                    GameInstallStatus.Text = $"Installing... Don't close this window";
+                });
+
+                cmd.InstallGame(selectedGame_ID, folder_location);
+                this.Dispatcher.Invoke(() =>
+                {
+                    GameInstallStatus.Text = $"Installed! Return back to main page.";
+                    Task.Delay(100);
+                    Config.AddServer(selectedGame_ID, folder_location);
+                    Task.Delay(2100);
+                    installDialog.IsOpen = false;
+                    Task.Delay(2100);
+                    main_win.Show();
+                    this.Close();                   
+                });
+            });        
         }
 
         // Select file location for server (If installed already)

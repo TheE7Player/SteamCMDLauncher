@@ -40,7 +40,7 @@ namespace SteamCMDLauncher.UIComponents
             if (server_count > 1) server_count = 1;
         }
 
-        public MaterialDesignThemes.Wpf.Card CreateCard(string game, string alias, string folder, bool? installed)
+        public MaterialDesignThemes.Wpf.Card CreateCard(string game, string alias, string folder)
         {
             // TODO: Implement something if its registered, but not installed
 

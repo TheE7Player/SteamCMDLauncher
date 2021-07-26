@@ -22,14 +22,14 @@
         <materialDesign:DialogHost Grid.RowSpan="3" x:Name="installDialog" IsOpen="False" >
             <materialDesign:DialogHost.DialogContent>
                 <StackPanel Margin="20">
-                    <TextBlock x:Name="GameInstallName" Text="Now Installing ${GAME}" FontWeight="Bold" FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="GameInstallName" Text="Now Installing ${GAME}" FontWeight="Bold" FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     <ProgressBar
                         Style="{DynamicResource MaterialDesignCircularProgressBar}"
                         HorizontalAlignment="Center" Margin="0,20,0,25"
                         IsIndeterminate="True"
                         Value="0" />
                     <TextBlock Text="Depending on file size and bandwidth, this may take a while" FontSize="10" TextWrapping="Wrap" HorizontalAlignment="Center" FontStyle="Italic"/>
-                    <TextBlock x:Name="GameInstallStatus" Text="Current Progress: Booting SteamCMD" FontWeight="Bold" FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="GameInstallStatus" Text="..." FontWeight="Bold" FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center"/>
                 </StackPanel>
             </materialDesign:DialogHost.DialogContent>
         </materialDesign:DialogHost>
@@ -59,7 +59,7 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 2:</TextBlock>
                     <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="20" TextWrapping="Wrap" Text="Locate where you want to store the server files:" Height="68"/>
-                    <Button Width="196" Content="Select Folder" Margin="0,30,0,0" Click="Location_Click"/>
+                    <Button x:Name="SelectDirFolder" Width="196" Content="Select Folder" Margin="0,30,0,0" Click="Location_Click"/>
                 </StackPanel>
             </materialDesign:Card>
 

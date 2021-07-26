@@ -100,7 +100,7 @@ namespace SteamCMDLauncher
                 {
                     col = db.GetCollection(SERVER_INFO_COLLECTION);
                    
-                    col.Insert(new BsonDocument { ["_id"] = GetID(), ["app_id"] = id, ["folder"]=folder_loc, ["installed"]=false });
+                    col.Insert(new BsonDocument { ["_id"] = GetID(), ["app_id"] = id, ["folder"]=folder_loc});
 
                     return true;
                 }
@@ -154,6 +154,8 @@ namespace SteamCMDLauncher
 
                     BsonDocument alias;
 
+
+                    if(!(servers is null))
                     foreach (var item in servers)
                     { 
                         alias = aliases.FindOne(Query.EQ("_id", item["_id"]));
@@ -185,6 +187,31 @@ namespace SteamCMDLauncher
                  .Where(x => x["id"].ToString() == id)
                  .Single()
                  .Value<string>("game");
+        }
+
+        public static string GetCMDDirectory()
+        {
+            db_error = string.Empty;
+
+            ILiteCollection<BsonDocument> col;
+
+            try
+            {
+                using (var db = new LiteDatabase(db_location))
+                {
+                    col = db.GetCollection(INFO_COLLECTION);
+
+                    var exe = col.FindOne(Query.Contains("cmd", ":"));
+
+                    return (exe is null) ? string.Empty : exe["cmd"].AsString;
+                }
+            }
+            catch (Exception _)
+            {
+                db_error = _.Message;
+            }
+
+            return string.Empty;
         }
     }
 }

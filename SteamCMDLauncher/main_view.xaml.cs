@@ -27,29 +27,35 @@ namespace SteamCMDLauncher
             PopulateCards();
         }
 
+        // Better over-head heap: -0.39KB (+824 objects)
         private void PopulateCards()
         {
             // Create a card instance
             var Card = new UIComponents.ServerCard();
 
             // Loop over each record stored
+
+            if (servers is null) return;
+
             foreach (var item in servers)
             {
                 ServerStack.Children.Add(
                     Card.CreateCard(
                         Config.GetGameByAppId(item.Value[0]),
                         item.Value[2],
-                        item.Value[1],
-                        Convert.ToBoolean(item.Value[3])
+                        item.Value[1]
                     )
                 );
             }
+
+            // Dereference the object as we don't need it anymore
             Card = null;
-            GC.WaitForFullGCComplete();
-            GC.Collect();
+
+            GC.WaitForFullGCComplete(); GC.Collect();
         }
 
-        [Obsolete]
+        [Obsolete(message: "A newer better heap version is in use")]
+        // Worse over-head heap: +0.39KB (+831 objects)
         private void PopulateCards_old()
         {
             int serverCount = 1;
