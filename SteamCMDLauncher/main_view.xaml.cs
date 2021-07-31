@@ -33,17 +33,21 @@ namespace SteamCMDLauncher
             // Create a card instance
             var Card = new UIComponents.ServerCard();
 
-            // Loop over each record stored
+            // Check if any updates are needed since last update
+            if(Config.Require_Get_Server)
+                servers = Config.GetServers();
 
+            // Loop over each record stored
             if (servers is null) return;
 
             foreach (var item in servers)
             {
                 ServerStack.Children.Add(
                     Card.CreateCard(
-                        Config.GetGameByAppId(item.Value[0]),
-                        item.Value[2],
-                        item.Value[1]
+                        Config.GetGameByAppId(item.Value[0]), // The games ID (740, 90 etc)
+                        item.Value[2], // The alias name if set by the user
+                        item.Value[1], // The folder of where the file is located
+                        item.Key // The _id from the database (unique id)
                     )
                 );
             }

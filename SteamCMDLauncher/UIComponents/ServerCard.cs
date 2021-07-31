@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace SteamCMDLauncher.UIComponents
 {
@@ -22,7 +23,9 @@ namespace SteamCMDLauncher.UIComponents
 
         private readonly Thickness txt_game_margin = new Thickness(4, 0, 4, 10);
         private readonly Thickness txt_alias_margin = new Thickness(4, 0, 4, 40);
-
+        
+        private readonly Thickness ico_margin = new Thickness(0, 0, 0, 10);
+        
         #endregion
 
         #region Cached variables
@@ -32,6 +35,7 @@ namespace SteamCMDLauncher.UIComponents
         private int server_count = 1;
         private readonly double WIDTH = 300;
         private readonly double HEIGHT = 200;
+        private readonly double ICON_SIZE = 25;
         #endregion
 
         public ServerCard()
@@ -40,12 +44,13 @@ namespace SteamCMDLauncher.UIComponents
             if (server_count > 1) server_count = 1;
         }
 
-        public MaterialDesignThemes.Wpf.Card CreateCard(string game, string alias, string folder)
+        public MaterialDesignThemes.Wpf.Card CreateCard(string game, string alias, string folder, string _id)
         {
             // TODO: Implement something if its registered, but not installed
 
             // Setup the objects first
             MaterialDesignThemes.Wpf.Card card = new MaterialDesignThemes.Wpf.Card();
+            MaterialDesignThemes.Wpf.PackIcon icon = new MaterialDesignThemes.Wpf.PackIcon();
             StackPanel panel = new StackPanel();
             Button viewButton, viewServer;
             TextBlock gameName, serverName;
@@ -85,10 +90,34 @@ namespace SteamCMDLauncher.UIComponents
                 System.Diagnostics.Process.Start("explorer.exe", folder);
             };
 
+            viewServer.Click += (_, e) =>
+            {
+                var server_window = new ServerView(_id, serverName.Text);
+                server_window.Show();
+            };
+
+            bool folder_exists = System.IO.Directory.Exists(folder);
+
+            // Set the icon depending if the folder exists
+            icon.Kind = (folder_exists) ? 
+                MaterialDesignThemes.Wpf.PackIconKind.Link :                                                          
+                MaterialDesignThemes.Wpf.PackIconKind.LinkVariantOff;
+
+            icon.Width = ICON_SIZE; icon.Height = ICON_SIZE;
+            icon.HorizontalAlignment = HorizontalAlignment.Center;
+
+            icon.ToolTip = new ToolTip { Content = (folder_exists) ? "Folder still exists" : $"Couldn't find '{folder}'" };
+            icon.Padding = ico_margin;
+
+            // These events change the cursor type
+            icon.MouseEnter += (_, e) => { icon.Cursor = Cursors.Hand; };
+            icon.MouseLeave += (_, e) => { icon.Cursor = Cursors.Arrow; };
+
             // Now we sequently add the items into the panel
             panel.Children.Add(gameName);
             panel.Children.Add(seperator);
             panel.Children.Add(serverName);
+            panel.Children.Add(icon);
             panel.Children.Add(viewButton);
             panel.Children.Add(viewServer);
 

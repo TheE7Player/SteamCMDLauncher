@@ -19,6 +19,8 @@ namespace SteamCMDLauncher
         public const string SERVER_INFO_COLLECTION = "sci";
         public const string SERVER_ALIAS_COLLECTION = "sca";
 
+        public static bool Require_Get_Server { get; private set; } = false;
+
         public static bool DatabaseExists => System.IO.File.Exists(db_location);
 
         public static string DatabaseLocation => db_location;
@@ -102,6 +104,9 @@ namespace SteamCMDLauncher
                    
                     col.Insert(new BsonDocument { ["_id"] = GetID(), ["app_id"] = id, ["folder"]=folder_loc});
 
+                    if (!Require_Get_Server)
+                        Require_Get_Server = true;
+
                     return true;
                 }
             }
@@ -154,7 +159,6 @@ namespace SteamCMDLauncher
 
                     BsonDocument alias;
 
-
                     if(!(servers is null))
                     foreach (var item in servers)
                     { 
@@ -162,6 +166,8 @@ namespace SteamCMDLauncher
    
                         _dict.Add(item["_id"], new string[] { item["app_id"].RawValue.ToString(), item["folder"], (alias is null) ? string.Empty: alias.AsString, item["installed"] });
                     }
+
+                    if (Require_Get_Server) Require_Get_Server = false;
 
                     return _dict;
                 }
