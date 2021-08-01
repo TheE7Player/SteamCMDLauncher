@@ -5,6 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SteamCMDLauncher"
+        xmlns:validate="clr-namespace:SteamCMDLauncher.Component.Validation"
         mc:Ignorable="d"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
@@ -23,15 +24,22 @@
         </Grid>
         <Grid Grid.Row="1">
             <TextBox
+                Name="ServerAlias"
                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
                 VerticalAlignment="Top"
                 Height="55"
-                AcceptsReturn="True"
-                TextWrapping="Wrap"
                 VerticalScrollBarVisibility="Hidden"
-                Text="{Binding Alias, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" FontSize="16" Margin="42,10,812,0" Foreground="#FFECE3E3"
-               />
-            
+                FontSize="16" Margin="42,10,812,0" Foreground="#FFECE3E3" KeyUp="ServerAlias_KeyUp"
+               >
+                <TextBox.Text>
+                    <Binding Path="Alias">
+                        <Binding.ValidationRules>
+                            <validate:ServerAliasValidation ValidatesOnTargetUpdated="True"/>
+                        </Binding.ValidationRules>
+                    </Binding>
+                </TextBox.Text>
+            </TextBox>
+
         </Grid>
     </Grid>
 </Window>

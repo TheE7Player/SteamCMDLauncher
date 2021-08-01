@@ -163,8 +163,7 @@ namespace SteamCMDLauncher
                     foreach (var item in servers)
                     { 
                         alias = aliases.FindOne(Query.EQ("_id", item["_id"]));
-   
-                        _dict.Add(item["_id"], new string[] { item["app_id"].RawValue.ToString(), item["folder"], (alias is null) ? string.Empty: alias.AsString, item["installed"] });
+                        _dict.Add(item["_id"], new string[] { item["app_id"].RawValue.ToString(), item["folder"], (alias is null) ? string.Empty: alias["alias"].AsString, item["installed"] });
                     }
 
                     if (Require_Get_Server) Require_Get_Server = false;
@@ -218,6 +217,42 @@ namespace SteamCMDLauncher
             }
 
             return string.Empty;
+        }
+
+        public static bool ChangeServerAlias(string id, string new_alias)
+        {
+            db_error = string.Empty;
+
+            ILiteCollection<BsonDocument> col;
+
+            try
+            {
+                using (var db = new LiteDatabase(db_location))
+                {
+                    col = db.GetCollection(SERVER_ALIAS_COLLECTION);
+
+                    var r = col.FindById(id);
+
+                    // Perform "INSERT" query if doesn't exist, else perform "UPDATE" query
+                    if (r is null)
+                        col.Insert(new BsonDocument { ["_id"] = id, ["alias"] = new_alias });
+                    else
+                    {
+                        r["alias"] = new_alias;
+                        col.Update(r);
+                    }
+
+                    return !(r is null);
+                }
+            }
+            catch (Exception _)
+            {
+                db_error = _.Message;
+            }
+
+            return false;
+
+            return true;
         }
     }
 }

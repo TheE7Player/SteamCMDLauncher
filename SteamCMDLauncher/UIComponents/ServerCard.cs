@@ -36,6 +36,13 @@ namespace SteamCMDLauncher.UIComponents
         private readonly double WIDTH = 300;
         private readonly double HEIGHT = 200;
         private readonly double ICON_SIZE = 25;
+
+        // Function which describes how the event is triggered with arguments
+        public delegate void view_server_func(string unique_id, string alias);
+
+        // Event handler which prompts the invoke
+        public event view_server_func View_Server;
+
         #endregion
 
         public ServerCard()
@@ -71,31 +78,39 @@ namespace SteamCMDLauncher.UIComponents
                 Margin = txt_game_margin
             };
 
+            string fixed_string = null;
+
+            if (!string.IsNullOrEmpty(alias))
+            {
+                if (alias.Length > 34)
+                    fixed_string = $"{alias.Substring(0, 34)}...";
+                else if (alias.Length > 0)
+                    fixed_string = alias;
+                else
+                    fixed_string = $"Server-{server_count++}";
+            } 
+            else
+            {
+                fixed_string = $"Server-{server_count++}";
+            }
+
             serverName = new TextBlock
             {
-                Text = (String.IsNullOrEmpty(alias)) ? $"Server-{server_count++}" : alias,
+                Text = fixed_string,
                 FontSize = 14,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = txt_game_margin
             };
-
+          
             // Now we setup the buttons
 
             viewButton = new Button { Content = btn_folder_text, Margin = btn_folder_margin };
             viewServer = new Button { Content = btn_view_text, Margin = btn_view_margin };
 
             // Add an event to the buttons
-            viewButton.Click += (_, e) =>
-            {
-                System.Diagnostics.Process.Start("explorer.exe", folder);
-            };
-
-            viewServer.Click += (_, e) =>
-            {
-                var server_window = new ServerView(_id, serverName.Text);
-                server_window.Show();
-            };
-
+            viewButton.Click += (_, e) => { System.Diagnostics.Process.Start("explorer.exe", folder); };
+            viewServer.Click += (_, e) => { View_Server?.Invoke(_id, fixed_string); };
+            
             bool folder_exists = System.IO.Directory.Exists(folder);
 
             // Set the icon depending if the folder exists

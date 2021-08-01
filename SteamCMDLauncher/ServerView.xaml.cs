@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Text;
+using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -17,46 +16,96 @@ namespace SteamCMDLauncher
     /// <summary>
     /// Interaction logic for ServerView.xaml
     /// </summary>
-    public partial class ServerView : Window, INotifyPropertyChanged
+    public partial class ServerView : Window
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        private Timer waitTime;
+        private string id, alias;
+        private bool prevent_update = false;
 
-        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        private string current_alias = string.Empty;
+        public string Alias
         {
-            Console.Beep();
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.alias)));
-        }
-
-        public string id { get; private set; }
-        
-        private string alias;
-        public string Alias { 
-            get {
-                return alias;
-            }
-            
-            private set 
+            get
             {
-                alias = value;
-                OnPropertyChanged();
+                if (current_alias.Length == 0) current_alias = alias;
+                return current_alias;
+            }
+            set
+            {
+                current_alias = value;
             }
         }
 
         public ServerView(string id, string alias)
         {
+            this.id = id;
+            this.alias = alias;
+
+            waitTime = new Timer(1000);
+            waitTime.Elapsed += TimerElapsed;
+            waitTime.AutoReset = true;
+
             InitializeComponent();
             this.DataContext = this;
-            
-            this.id = id;
-            this.alias = alias;          
         }
 
-        // Hint: -> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(outputFolderPath)));
+        private bool isStringSame(string A, string B)
+        {
+            if (A.Length != B.Length) return false;
+
+            if (!A.Trim().ToLower().Equals(B.Trim().ToLower())) return false;
+
+            return true;
+        }
+
+        private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            // Work around for: 'The calling thread must be STA' error
+            // And 'because a different thread owns it' error
+            Application.Current.Dispatcher.Invoke((Action)delegate {  
+                Keyboard.ClearFocus(); 
+                waitTime.Stop();
+
+                if (!prevent_update && !isStringSame(alias, ServerAlias.Text))
+                {
+                    alias = ServerAlias.Text.Trim();
+                    Config.ChangeServerAlias(id, ServerAlias.Text.Trim());
+                    Console.Beep();
+                }
+            });
+            waitTime.Interval = 1000;
+        }
+
+        private void ServerAlias_KeyUp(object sender, KeyEventArgs e)
+        {
+            waitTime.Stop();
+
+            waitTime.Interval += 250;
+
+            ServerAlias.GetBindingExpression(TextBox.TextProperty).UpdateSource();
+
+            if (ServerAlias.GetBindingExpression(TextBox.TextProperty).HasError)
+            {
+                waitTime.Stop();
+                waitTime.Interval = 1000;
+                prevent_update = true;
+            } else
+            {
+                if (prevent_update) prevent_update = false;
+            }
+            
+            waitTime.Start();
+        }
 
         private void ReturnBack_Click(object sender, RoutedEventArgs e)
         {
             this.id = null;
             this.alias = null;
+
+            // Load the main window again
+            main_view mv = new main_view();
+            mv.Show();
+
             this.Close();
         }
     }

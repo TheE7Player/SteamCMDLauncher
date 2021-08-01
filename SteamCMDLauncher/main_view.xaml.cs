@@ -27,11 +27,23 @@ namespace SteamCMDLauncher
             PopulateCards();
         }
 
+        private void loadServerView(string id, string al)
+        {
+            servers = null;
+            GC.Collect();
+
+            var server_window = new ServerView(id, al);
+            server_window.Show();
+            this.Close();
+        }
+
         // Better over-head heap: -0.39KB (+824 objects)
         private void PopulateCards()
         {
             // Create a card instance
             var Card = new UIComponents.ServerCard();
+
+            Card.View_Server += loadServerView;
 
             // Check if any updates are needed since last update
             if(Config.Require_Get_Server)
