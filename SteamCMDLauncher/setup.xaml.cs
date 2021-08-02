@@ -72,31 +72,6 @@ namespace SteamCMDLauncher
                 .Select( x => x["game"].ToString() ).ToList();
         }
 
-        private string GetFolder(string required_file, string rule_break)
-        { 
-            var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
-            dialog.InitialDirectory = "C:\\Users";
-            dialog.IsFolderPicker = true;
-
-            while (true)
-            {
-                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-                {
-                    if(!string.IsNullOrEmpty(required_file))
-                    if (!File.Exists(Path.Combine(dialog.FileName, required_file)))
-                    {
-                        MessageBox.Show(rule_break);
-                        continue;
-                    }
-                    return dialog.FileName;
-                } else { break; }
-            }
-
-            return string.Empty;
-        }
-
-        private void Log(string text) => System.Diagnostics.Debug.WriteLine(text);
-
         #region Events
         private void GameDropDown_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -107,20 +82,20 @@ namespace SteamCMDLauncher
             selectedGame = GameDropDown.SelectedValue.ToString();
             selectedGame_ID = available_IDS[GameDropDown.SelectedIndex];
 
-            Log($"ID: {selectedGame_ID} | Game: {selectedGame}");
+            Config.Log($"ID: {selectedGame_ID} | Game: {selectedGame}");
         }
 
         #region Button Events
         // "SteamCMD Location"
         private void SteamCMD_Click(object sender, RoutedEventArgs e)
         {
-            steamcmd_location = GetFolder("steamcmd.exe", "The given path doesn't contain the 'steamcmd.exe' to install the game files! Try agin.");
+            steamcmd_location = Config.GetFolder("steamcmd.exe", "The given path doesn't contain the 'steamcmd.exe' to install the game files! Try agin.");
 
             if (steamcmd_location.Length > 0)
             {
                 Config.AddEntry_BJSON("cmd", steamcmd_location, Config.INFO_COLLECTION);
 
-                Log(steamcmd_location);
+                Config.Log(steamcmd_location);
 
                 ServerFolderButton.IsEnabled = true;
 
@@ -132,12 +107,12 @@ namespace SteamCMDLauncher
         // Where to install
         private void Location_Click(object sender, RoutedEventArgs e)
         {
-            folder_location = GetFolder(string.Empty, string.Empty);
+            folder_location = Config.GetFolder(string.Empty, string.Empty);
             if (folder_location.Length > 0)
             {
                 Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
 
-                Log(folder_location);
+                Config.Log(folder_location);
 
                 if (!Card3.IsEnabled)
                     Card3.IsEnabled = true;
@@ -204,8 +179,8 @@ namespace SteamCMDLauncher
         // Select file location for server (If installed already)
         private void ServerFolderButton_Click(object sender, RoutedEventArgs e)
         {
-
-            folder_location = GetFolder("steam_appid.txt", "Need to locate the game dir where 'steam_appid.txt' is located, if not there please enforce it manually");
+            // TODO: Do game validation here
+            folder_location = Config.GetFolder(null, "");
             if (folder_location.Length > 0)
             {
                 // Validate if the id is correct
@@ -228,7 +203,7 @@ namespace SteamCMDLauncher
                 //Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
                 Config.AddServer(result, folder_location);
 
-                Log(folder_location);
+                Config.Log(folder_location);
             }
         }
         

@@ -10,7 +10,7 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignDarkBackground}"
         FontFamily="{DynamicResource MaterialDesignFont}"
-        Title="Steam CMD Launcher" Height="720" Width="1280" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="Steam CMD Launcher" Height="720" Width="1280" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen" StateChanged="Window_StateChanged">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="120"></RowDefinition>
@@ -21,13 +21,16 @@
             <TextBlock FontSize="36" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
             <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">version 0.1</TextBlock>
             <Button Margin="1006,50,36,38" Click="NewServer_Click">Add Another Server</Button>
+            <Button x:Name="RefreshServers" Margin="898,50,279,38" Click="RefreshServers_Click" >
+                <materialDesign:PackIcon Kind="RestartOff" Foreground="White" Height="25" Width="25"/>
+            </Button>
         </Grid>
         <Grid Grid.Row="1">
             <TextBlock FontSize="22" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,20,0,0">Welcome! Select a server to view or launch:</TextBlock>
-           
+
         </Grid>
         <Grid Grid.Row="2">
-            <StackPanel x:Name="ServerStack" Orientation="Horizontal" Margin="44,0,35,30"></StackPanel>
+            <StackPanel x:Name="ServerStack" Orientation="Horizontal" Margin="44,0,35,30"/>
         </Grid>
     </Grid>
 </Window>

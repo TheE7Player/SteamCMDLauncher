@@ -49,15 +49,6 @@ namespace SteamCMDLauncher
             this.DataContext = this;
         }
 
-        private bool isStringSame(string A, string B)
-        {
-            if (A.Length != B.Length) return false;
-
-            if (!A.Trim().ToLower().Equals(B.Trim().ToLower())) return false;
-
-            return true;
-        }
-
         private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             // Work around for: 'The calling thread must be STA' error
@@ -66,12 +57,13 @@ namespace SteamCMDLauncher
                 Keyboard.ClearFocus(); 
                 waitTime.Stop();
 
-                if (!prevent_update && !isStringSame(alias, ServerAlias.Text))
+                if (!prevent_update && !alias.Same(ServerAlias.Text))
                 {
                     alias = ServerAlias.Text.Trim();
                     Config.ChangeServerAlias(id, ServerAlias.Text.Trim());
                     Console.Beep();
                 }
+
             });
             waitTime.Interval = 1000;
         }

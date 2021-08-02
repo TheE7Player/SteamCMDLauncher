@@ -24,11 +24,51 @@ namespace SteamCMDLauncher
         {
             servers = Config.GetServers();
             InitializeComponent();
+
+            UpdateRefreshButton();
+
             PopulateCards();
+        }
+
+        private void UpdateRefreshButton()
+        {
+            MaterialDesignThemes.Wpf.PackIcon refreshButtonIcon = (MaterialDesignThemes.Wpf.PackIcon)RefreshServers.Content;
+
+            refreshButtonIcon.Kind = (servers.Count > 0) ? 
+                MaterialDesignThemes.Wpf.PackIconKind.Restart :
+                MaterialDesignThemes.Wpf.PackIconKind.RestartOff;
+
+            RefreshServers.IsEnabled = servers.Count > 0;
+        }
+
+        private void loadServerFolder(string id, string location)
+        {
+            if (!System.IO.Directory.Exists(location))
+            {
+                //TODO: Show dialog and force user to state new folder location
+
+
+                return;
+            }
+
+            System.Diagnostics.Process.Start("explorer.exe", location);
         }
 
         private void loadServerView(string id, string al)
         {
+            if(!(servers is null))
+            {
+                if(!System.IO.Directory.Exists(servers[id][1]))
+                {
+                    MessageBox.Show($"That server location ({servers[id][1]}) doesn't exist anymore!\nCorrect it but stating the new location from 'View Folder' button");
+                    return;
+                }
+            } else
+            {
+                MessageBox.Show("Internal Problem - Not cached servers, fault with server dictionary");
+                return;
+            }
+
             servers = null;
             GC.Collect();
 
@@ -44,6 +84,7 @@ namespace SteamCMDLauncher
             var Card = new UIComponents.ServerCard();
 
             Card.View_Server += loadServerView;
+            Card.View_Folder += loadServerFolder;
 
             // Check if any updates are needed since last update
             if(Config.Require_Get_Server)
@@ -68,6 +109,15 @@ namespace SteamCMDLauncher
             Card = null;
 
             GC.WaitForFullGCComplete(); GC.Collect();
+        }
+
+        private void refreshCards()
+        {
+            int len = ServerStack.Children.Count;
+            for (int i = 0; i < len; i++)
+            {
+                ((MaterialDesignThemes.Wpf.Card)(ServerStack.Children[i])).UpdateCard();
+            }
         }
 
         [Obsolete(message: "A newer better heap version is in use")]
@@ -135,6 +185,22 @@ namespace SteamCMDLauncher
             var setup = new Setup(false);
             this.Close();
             setup.Show();
+        }
+
+        bool shown = true;
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            shown = !shown;
+            if (shown) 
+            { 
+                refreshCards(); 
+                UpdateRefreshButton(); 
+            }
+        }
+
+        private void RefreshServers_Click(object sender, RoutedEventArgs e)
+        {
+            refreshCards();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace SteamCMDLauncher.UIComponents
         private readonly Thickness card_padding = new Thickness(2, 10, 2, 5);
         private readonly Thickness card_margin = new Thickness(10, 0, 10, 0);
 
-        private readonly Thickness btn_folder_margin = new Thickness(75, 0, 75, 10);
+        private readonly Thickness btn_folder_margin = new Thickness(75, 5, 75, 10);
         private readonly Thickness btn_view_margin = new Thickness(100, 0, 100, 0);
 
         private readonly Thickness pnl_game_title_margin = new Thickness(4, 0, 4, 10);
@@ -36,13 +36,18 @@ namespace SteamCMDLauncher.UIComponents
         private readonly double WIDTH = 300;
         private readonly double HEIGHT = 200;
         private readonly double ICON_SIZE = 25;
+        #endregion
 
+        #region Events/Delegates
         // Function which describes how the event is triggered with arguments
         public delegate void view_server_func(string unique_id, string alias);
 
+        // Function which describes how the event triggers to open the server folder
+        public delegate void view_folder(string unique_id, string location);
+
         // Event handler which prompts the invoke
         public event view_server_func View_Server;
-
+        public event view_folder View_Folder;
         #endregion
 
         public ServerCard()
@@ -53,8 +58,6 @@ namespace SteamCMDLauncher.UIComponents
 
         public MaterialDesignThemes.Wpf.Card CreateCard(string game, string alias, string folder, string _id)
         {
-            // TODO: Implement something if its registered, but not installed
-
             // Setup the objects first
             MaterialDesignThemes.Wpf.Card card = new MaterialDesignThemes.Wpf.Card();
             MaterialDesignThemes.Wpf.PackIcon icon = new MaterialDesignThemes.Wpf.PackIcon();
@@ -68,6 +71,9 @@ namespace SteamCMDLauncher.UIComponents
 
             // Setting up the padding and margin as well
             card.Margin = card_margin; card.Padding = card_padding;
+
+            // Assign a tag to make finding location easier
+            card.Tag = folder;
 
             // Setting up titles
             gameName = new TextBlock
@@ -108,7 +114,7 @@ namespace SteamCMDLauncher.UIComponents
             viewServer = new Button { Content = btn_view_text, Margin = btn_view_margin };
 
             // Add an event to the buttons
-            viewButton.Click += (_, e) => { System.Diagnostics.Process.Start("explorer.exe", folder); };
+            viewButton.Click += (_, e) => { View_Folder?.Invoke(_id, folder);};
             viewServer.Click += (_, e) => { View_Server?.Invoke(_id, fixed_string); };
             
             bool folder_exists = System.IO.Directory.Exists(folder);

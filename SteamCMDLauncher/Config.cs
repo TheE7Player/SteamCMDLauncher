@@ -9,6 +9,7 @@ namespace SteamCMDLauncher
 {
     public static class Config
     {
+        #region Variables/Constants
         private static readonly string db_location = System.IO.Path.Combine(Environment.CurrentDirectory, "data.db");
 
         private static string db_error = string.Empty;
@@ -18,13 +19,17 @@ namespace SteamCMDLauncher
         public const string LOG_COLLECTION = "lg";
         public const string SERVER_INFO_COLLECTION = "sci";
         public const string SERVER_ALIAS_COLLECTION = "sca";
+        #endregion
 
+        #region Properties
         public static bool Require_Get_Server { get; private set; } = false;
 
         public static bool DatabaseExists => System.IO.File.Exists(db_location);
 
         public static string DatabaseLocation => db_location;
+        #endregion
 
+        #region Server Related
         private static string GetID() => ObjectId.NewObjectId().ToString();
 
         /// <summary>
@@ -251,8 +256,70 @@ namespace SteamCMDLauncher
             }
 
             return false;
-
-            return true;
         }
+
+        public static bool ChangeServerFolder(string id, string new_location)
+        {
+            db_error = string.Empty;
+
+            ILiteCollection<BsonDocument> col;
+
+            try
+            {
+                using (var db = new LiteDatabase(db_location))
+                {
+                    col = db.GetCollection(INFO_COLLECTION);
+
+                    var r = col.FindById(id);
+
+                    // Perform "INSERT" query if doesn't exist, else perform "UPDATE" query
+                    if (r is null)
+                        col.Insert(new BsonDocument { ["_id"] = id, ["svr"] = new_location });
+                    else
+                    {
+                        r["svr"] = new_location;
+                        col.Update(r);
+                    }
+
+                    return !(r is null);
+                }
+            }
+            catch (Exception _)
+            {
+                db_error = _.Message;
+            }
+
+            return false;
+        }
+
+        #endregion
+
+        #region Utilities
+        public static string GetFolder(string required_file, string rule_break)
+        {
+            var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
+            dialog.InitialDirectory = "C:\\Users";
+            dialog.IsFolderPicker = true;
+
+            while (true)
+            {
+                if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
+                {
+                    if (!string.IsNullOrEmpty(required_file))
+                        if (!System.IO.File.Exists(System.IO.Path.Combine(dialog.FileName, required_file)))
+                        {
+                            System.Windows.MessageBox.Show(rule_break);
+                            continue;
+                        }
+                    return dialog.FileName;
+                }
+                else { break; }
+            }
+
+            return string.Empty;
+        }
+
+        public static void Log(string text) => System.Diagnostics.Debug.WriteLine(text);
+        #endregion
     }
 }
