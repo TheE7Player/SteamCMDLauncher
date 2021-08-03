@@ -43,15 +43,24 @@ namespace SteamCMDLauncher
 
         private void loadServerFolder(string id, string location)
         {
+            string folder_location = string.Empty;
+
             if (!System.IO.Directory.Exists(location))
             {
-                //TODO: Show dialog and force user to state new folder location
+                MessageBox.Show("Please select the new location of the server as the last one wasn't found or exists");
 
+                folder_location = Config.GetFolder(string.Empty, string.Empty);
+                if (folder_location.Length > 0)
+                {
+                    Config.ChangeServerFolder(id, location, folder_location);
+                    //Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
+                    Config.Log(folder_location);
 
-                return;
+                    MessageBox.Show("A restart is required to make full effect - Refreshing will not solve this.");
+                } else { return; }
             }
-
-            System.Diagnostics.Process.Start("explorer.exe", location);
+            else
+            System.Diagnostics.Process.Start("explorer.exe", location); 
         }
 
         private void loadServerView(string id, string al)

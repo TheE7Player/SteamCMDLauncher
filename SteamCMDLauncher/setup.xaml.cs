@@ -179,13 +179,18 @@ namespace SteamCMDLauncher
         // Select file location for server (If installed already)
         private void ServerFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Do game validation here
             folder_location = Config.GetFolder(null, "");
             if (folder_location.Length > 0)
             {
                 // Validate if the id is correct
 
-                string appid_loc = File.ReadAllText(Path.Combine(folder_location, "steam_appid.txt")).Trim();
+                string appid_loc = Config.FindGameID(folder_location);
+
+                if(string.IsNullOrEmpty(appid_loc))
+                {
+                    MessageBox.Show("Sorry but the program didn't manage to find the appid based on current folders\nPlease help by stating what commands and files to run that in this program.");
+                    return;
+                }
 
                 int result;
                 if(!Int32.TryParse(appid_loc, out result))
@@ -204,6 +209,12 @@ namespace SteamCMDLauncher
                 Config.AddServer(result, folder_location);
 
                 Config.Log(folder_location);
+
+                MessageBox.Show("Server has been added - Returning to home screen");
+
+                var mw = new main_view();
+                mw.Show();
+                this.Close();
             }
         }
         

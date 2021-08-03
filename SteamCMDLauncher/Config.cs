@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using LiteDB;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace SteamCMDLauncher
 {
@@ -19,6 +23,24 @@ namespace SteamCMDLauncher
         public const string LOG_COLLECTION = "lg";
         public const string SERVER_INFO_COLLECTION = "sci";
         public const string SERVER_ALIAS_COLLECTION = "sca";
+
+        public enum LogType
+        {
+            // Server appending codes
+            ServerAdd = 0,
+
+            // Server location and naming codes
+            FolderChange = 1, AliasChange = 2,
+
+            // Server running/status codes
+            ServerRun = 3, ServerStop = 4, ServerError = 5, ServerValidate = 6, ServerUpdate = 7
+        }
+
+        private static Queue<BsonDocument> LogQueue;
+
+        private static Timer QueueRunner;
+        private const int QueueRunner_Wait = 4000;
+
         #endregion
 
         #region Properties
@@ -106,11 +128,15 @@ namespace SteamCMDLauncher
                 using (var db = new LiteDatabase(db_location))
                 {
                     col = db.GetCollection(SERVER_INFO_COLLECTION);
-                   
-                    col.Insert(new BsonDocument { ["_id"] = GetID(), ["app_id"] = id, ["folder"]=folder_loc});
+
+                    string u_id = GetID();
+                    
+                    col.Insert(new BsonDocument { ["_id"] = u_id, ["app_id"] = id, ["folder"]=folder_loc});
 
                     if (!Require_Get_Server)
                         Require_Get_Server = true;
+
+                    AddLog(u_id, LogType.ServerAdd, $"New server added with ID: {u_id}");
 
                     return true;
                 }
@@ -238,14 +264,20 @@ namespace SteamCMDLauncher
 
                     var r = col.FindById(id);
 
+                    var old_alias = (r is null) ? string.Empty : r["alias"].AsString;
+
                     // Perform "INSERT" query if doesn't exist, else perform "UPDATE" query
                     if (r is null)
+                    {
                         col.Insert(new BsonDocument { ["_id"] = id, ["alias"] = new_alias });
+                    }
                     else
                     {
                         r["alias"] = new_alias;
                         col.Update(r);
                     }
+
+                    AddLog(id, LogType.AliasChange, $"From: '{old_alias}', To: '{new_alias}'");
 
                     return !(r is null);
                 }
@@ -258,8 +290,10 @@ namespace SteamCMDLauncher
             return false;
         }
 
-        public static bool ChangeServerFolder(string id, string new_location)
+        public static bool ChangeServerFolder(string id, string old_location, string new_location)
         {
+            //TODO: Change it from 'sci' table
+
             db_error = string.Empty;
 
             ILiteCollection<BsonDocument> col;
@@ -270,7 +304,7 @@ namespace SteamCMDLauncher
                 {
                     col = db.GetCollection(INFO_COLLECTION);
 
-                    var r = col.FindById(id);
+                    var r = col.FindOne(Query.EQ("svr", old_location));
 
                     // Perform "INSERT" query if doesn't exist, else perform "UPDATE" query
                     if (r is null)
@@ -281,6 +315,8 @@ namespace SteamCMDLauncher
                         col.Update(r);
                     }
 
+                    AddLog(id, LogType.FolderChange, $"Changed to: '{new_location}'");
+
                     return !(r is null);
                 }
             }
@@ -290,6 +326,123 @@ namespace SteamCMDLauncher
             }
 
             return false;
+        }
+
+        //TODO: Use a lock or mutex for db connections (if db is already in use)
+
+        public static bool CleanLog()
+        {
+            try
+            {
+                Log("Clearing log table");
+                using (var db = new LiteDatabase(db_location))
+                {
+                    var col = db.GetCollection(LOG_COLLECTION);
+
+                    return col.DeleteAll() > 0;
+                }
+            }
+            catch (Exception _)
+            {
+                db_error = _.Message;
+                return false;
+            }
+        }
+
+        public static void RunLogQueue()
+        {
+            if (LogQueue is null) return;
+            if (LogQueue.Count == 0) return;
+
+            if(!(QueueRunner is null))
+                QueueRunner.Stop();
+
+            db_error = string.Empty;
+
+            ILiteCollection<BsonDocument> col;
+
+            try
+            {
+                Log("Runner Queue Log to DB");
+                using (var db = new LiteDatabase(db_location))
+                {
+                    col = db.GetCollection(LOG_COLLECTION);
+
+                    BsonDocument item;
+                    while (LogQueue.Count > 0)
+                    {
+                        item = LogQueue.Dequeue();
+                        col.Insert(item);
+                    }
+
+                    col.EnsureIndex("svr_id");
+                }
+            }
+            catch (Exception _)
+            {
+                db_error = _.Message;
+            }
+        }
+    
+        private static void AddLog(string id, LogType lType, string details)
+        {
+            if (LogQueue is null)
+                LogQueue = new Queue<BsonDocument>();
+
+            if (QueueRunner is null)
+            { 
+                QueueRunner = new Timer(QueueRunner_Wait);
+                QueueRunner.AutoReset = true;
+                QueueRunner.Elapsed += (_, e) =>
+                {
+                    RunLogQueue();
+                };
+            }
+            
+            QueueRunner.Start();
+
+            LogQueue.Enqueue(new BsonDocument
+            {
+                ["svr_id"] = id,
+                ["time"] = DateTime.Now.UTC_String(),
+                ["type"] = ((int)lType),
+                ["info"] = details
+            });
+        }
+
+        public static string FindGameID(string path)
+        {
+
+            JObject CurrentFiles = JObject.Parse(SteamCMDLauncher.Properties.Resources.server_file_search);
+            string current_app_id;
+
+            // .Name -> Key
+            // .Value -> files ( '/' for folder, '.' for exe )
+            bool found = false;
+            string val;
+            string joined_path;
+            foreach (var game in CurrentFiles)
+            {
+                current_app_id = game.Key;
+
+                // Loop through each available folder or exe to find the game
+                foreach (var item in game.Value)
+                {
+                    val = item.ToString();
+
+                    // Join the path and remove the first symbol ( / or . )
+                    joined_path = Path.Combine(path, val.Substring(1, val.Length-1));
+
+                    found = (val.StartsWith("/")) ? 
+                            Directory.Exists(joined_path) :
+                            File.Exists(joined_path);
+
+                    if (found) return current_app_id;
+                }
+
+            }
+
+            return string.Empty;
         }
 
         #endregion

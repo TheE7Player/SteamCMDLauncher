@@ -40,5 +40,17 @@ namespace SteamCMDLauncher
 
             return true;
         }
+
+        /// <summary>
+        /// Returns the string of current date and time into UTC format
+        /// </summary>
+        /// <param name="self">The date and time to change to</param>
+        /// <returns></returns>
+        public static string UTC_String (this DateTime self)
+        {
+            return self
+                .ToUniversalTime()
+                .ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffK");
+        }
     }
 }

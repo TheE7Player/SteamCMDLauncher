@@ -30,7 +30,9 @@
 
         </Grid>
         <Grid Grid.Row="2">
-            <StackPanel x:Name="ServerStack" Orientation="Horizontal" Margin="44,0,35,30"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <StackPanel x:Name="ServerStack" Orientation="Horizontal" Margin="44,0,35,30" VerticalAlignment="Center" />
+            </ScrollViewer>
         </Grid>
     </Grid>
 </Window>

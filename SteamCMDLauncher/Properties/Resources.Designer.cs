@@ -69,5 +69,14 @@ namespace SteamCMDLauncher.Properties {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string server_file_search {
+            get {
+                return ResourceManager.GetString("server_file_search", resourceCulture);
+            }
+        }
     }
 }

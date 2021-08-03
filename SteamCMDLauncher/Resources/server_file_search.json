@@ -1,0 +1,10 @@
+{
+	// Garrys Mod
+	"4020": [ "/garrysmod" ],
+
+	// CSGO
+	"740": [ "/csgo" ],
+
+	// CS 1.6 / Half Life
+	"90": [ "/cstrike" ]
+}

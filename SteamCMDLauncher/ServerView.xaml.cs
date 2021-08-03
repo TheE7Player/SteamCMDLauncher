@@ -61,7 +61,7 @@ namespace SteamCMDLauncher
                 {
                     alias = ServerAlias.Text.Trim();
                     Config.ChangeServerAlias(id, ServerAlias.Text.Trim());
-                    Console.Beep();
+                    //Console.Beep();
                 }
 
             });

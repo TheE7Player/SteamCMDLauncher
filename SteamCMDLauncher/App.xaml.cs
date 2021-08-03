@@ -14,15 +14,26 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class App : Application
     {
-        private void App_Startup(object sender, StartupEventArgs e)
+        private void Cleanup()
         {
-            // Code for before window opens (optional);
-
             if(Keyboard.IsKeyDown(Key.RightShift))
             {
                 Console.Beep();
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(1000);
                 int clear_db_count = 1;
+
+                if(Keyboard.IsKeyDown(Key.RightShift) && Keyboard.IsKeyDown(Key.L))
+                {
+                    Config.Log("Clearing logs...");
+                    MessageBox.Show("Clearing log shortcut acknowledged - Performing cleaning");
+
+                    if(Config.CleanLog())
+                        MessageBox.Show("Clearing log was successful");
+                    else
+                        MessageBox.Show("Clearing log was unsuccessful or there were no logs to delete.");
+                    
+                    return;
+                }
 
                 while(Keyboard.IsKeyDown(Key.RightShift))
                 {
@@ -47,6 +58,12 @@ namespace SteamCMDLauncher
                     }
                 }
             }
+        }
+
+        private void App_Startup(object sender, StartupEventArgs e)
+        {
+            // Code for before window opens (optional);
+            Cleanup();
 
             Window mainWindow;
             if (!Config.DatabaseExists && !Config.HasServers()) 
