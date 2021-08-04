@@ -1,4 +1,9 @@
 {
+	// Look at: https://steamdb.info/depot/X/
+	// Replace 'X' with depot id (usually offset by 1 on wards -> 4021 (4020 + 1)
+
+	// [NOTE] Currently all Windows depots - None for Linux or Mac OS yet
+
 	// Garrys Mod
 	"4020": [ "/garrysmod" ],
 
@@ -6,5 +11,174 @@
 	"740": [ "/csgo" ],
 
 	// CS 1.6 / Half Life
-	"90": [ "/cstrike" ]
+	"90": [ "/cstrike" ],
+
+	// 7 Days to Die
+	"294420": [ ".7DaysToDieServer.exe", "/7DaysToDieServer_Data" ],
+
+	// ASTRONEER
+	"728470": [ "/Astro" ],
+
+	// Age of Chivalry
+	"17515": [ "/ageofchivalry" ],
+
+	// ARK: Survival Evolved
+	"376030": [ "/ShooterGame/Binaries/Win64/ArkEGSLauncher.exe" ],
+
+	// Black Mesa: Deathmatch
+	"346680": [ "/bms" ],
+
+	// BlazeRush
+	"332850": [ ".DedicatedServer.exe" ],
+
+	// Conan Exiles
+	"443030": [
+		"/ConanSandbox",
+		"ConanSandbox/Binaries/Win64/ConanSandboxServer-Win64-Test.exe",
+		".ConanSandboxServer.exe"
+	],
+
+	// Counter-Strike: Condition Zero
+	"91": [ "/cstrike" ],
+
+	// Day of Defeat
+	"92": [ "/dod" ],
+
+	// Deathmatch Classic
+	"93": [ "/dmc" ],
+
+	// Ricochet
+	"94": [ "/ricochet" ],
+
+	// Team Fortress Classic
+	"95": [ "/tfc" ],
+
+	// Half-Life: Opposing Force
+	"96": [ "/gearbox", "/gearbox_hd" ],
+
+	// Counter-Strike: Source
+	"232330": [ "/cstrike" ],
+
+	// D.I.P.R.I.P.
+	"17535": [ "/diprip" ],
+
+	// Day of Defeat: Source
+	"232290": [ "/dod" ],
+
+	// Day of Infamy
+	"462310": [ "/doi" ],
+
+	// Double Action
+	"317800": [ "/dab" ],
+
+	// Dystopia
+	"17585": [ "/dystopia" ],
+
+	// Eden Star
+	"419790": [ "/EdenGame", "/EdenGame/Binaries/Win64/EdenGameServer.exe" ],
+
+	// Empires
+	"460040": [ "/empires" ],
+
+	// Eternal Silence
+	"17555": [ "/esmod" ],
+
+	// Fistful of Frags Server
+	"295230": [ "/fof" ],
+
+	// The Forest
+	"556450": [ ".TheForestDedicatedServer.exe", "/TheForestDedicatedServer_Data" ],
+
+	// Fortress Forever
+	"329710": [ "/FortressForever" ],
+
+	// Half-Life 2: Deathmatch
+	"232370": [ "/hl2mp" ],
+
+	// Half-Life Deathmatch: Source
+	"255470": [ "/hl1mp" ],
+
+	// Hurtworld dedicated server
+	"405100": [ ".Hurtworld.exe", "/Hurtworld_Data" ],
+
+	// Insurgency: Sandstorm
+	"581330": [ ".InsurgencyServer.exe", "/Insurgency" ],
+
+	// Insurgency
+	"237410": [ "/insurgency" ],
+
+	// Insurgency: Modern Infantry Combat
+	"17705": [ "/insurgency" ],
+
+	// Just Cause 2: Multiplayer
+	"261140": [ ".JcmpServer.exe", "/default_scripts" ],
+
+	// Killing Floor 2 Windows
+	"232130": [ "/Binaries/Win64/KFServer.exe", "/KFGame" ],
+
+	// Kingdoms Rise
+	"265360": [ "/UDKGame", "/Binaries/Win32/UDK.exe" ],
+
+	// Left 4 Dead 2
+	"222860": [ ".left4dead2.exe", "/left4dead2" ],
+
+	// Left 4 Dead
+	"222840": [ ".left4dead.exe", "/left4dead" ],
+
+	// Life is Feudal: Your Own
+	"320850": [ ".ddctd_cm_yo_server.exe", "/art" ],
+
+	// NEOTOKYO
+	"313600": [ "/NeotokyoSource" ],
+
+	// NS2: Combat
+	"313900": [ ".ColladaMax.dle", "/combat" ],
+
+	// Nuclear Dawn
+	"111710": [ ".nucleardawn.exe", ".nd_launcher.exe", "/nucleardawn" ],
+
+	// Out of Reach
+	"406800": [ "/SFS2X" ],
+
+	// Pirates, Vikings and Knights II
+	"17575": [ "/pvkii" ],
+
+	// Reflex
+	"329740": [ ".reflexded.exe" ],
+
+	// Rust
+	"258550": [ ".RustDedicated.exe", "/RustDedicated_Data" ],
+
+	// Serious Sam HD: The Second Encounter
+	"41015": [ "/Content/SeriousSamHD_TSE" ],
+
+	// Source/Source SDK Base 2006 MP
+	"205": [ "/hl2" ],
+
+	// Source 2007
+	"310": [ "/hl2" ],
+
+	// Source SDK Base 2013
+	"244310": [ "/hl2" ],
+
+	// Space Engineers
+	"298740": [ "/DedicatedServer64/SpaceEngineersDedicated.exe" ],
+
+	// Squad
+	"403240": [ ".SquadGameServer.exe", "/SquadGame/Binaries/Win64/SquadGameServer.exe" ],
+
+	// Synergy
+	"17525": [ "/synergy" ],
+
+	// Takedown: Red Sabre
+	"261020": [ "/Binaries/Win32/TakedownGameServer-Win32-Shipping.exe", "/TakedownGame" ],
+
+	// Team Fortress 2
+	"232250": [ "/tf" ],
+
+	// Tower Unite
+	"439660": [ "/Tower" ],
+
+	// Zombie Panic Source
+	"17505": [ "/zps" ]
 }

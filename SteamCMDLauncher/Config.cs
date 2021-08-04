@@ -19,7 +19,7 @@ namespace SteamCMDLauncher
         private static string db_error = string.Empty;
 
         public const string INFO_COLLECTION = "ifo";
-        public const string SERVER_COLLECTION = "sc";
+        public const string SERVER_COLLECTION = "sc"; //TODO: Remove this table collection?
         public const string LOG_COLLECTION = "lg";
         public const string SERVER_INFO_COLLECTION = "sci";
         public const string SERVER_ALIAS_COLLECTION = "sca";
@@ -38,6 +38,7 @@ namespace SteamCMDLauncher
 
         private static Queue<BsonDocument> LogQueue;
 
+        //TODO: Make file if closing and stuff is still setting on LoqQueue (QueueRunner)
         private static Timer QueueRunner;
         private const int QueueRunner_Wait = 4000;
 
@@ -292,8 +293,6 @@ namespace SteamCMDLauncher
 
         public static bool ChangeServerFolder(string id, string old_location, string new_location)
         {
-            //TODO: Change it from 'sci' table
-
             db_error = string.Empty;
 
             ILiteCollection<BsonDocument> col;
@@ -302,16 +301,16 @@ namespace SteamCMDLauncher
             {
                 using (var db = new LiteDatabase(db_location))
                 {
-                    col = db.GetCollection(INFO_COLLECTION);
+                    col = db.GetCollection(SERVER_INFO_COLLECTION);
 
-                    var r = col.FindOne(Query.EQ("svr", old_location));
+                    var r = col.FindOne(Query.EQ("folder", old_location));
 
                     // Perform "INSERT" query if doesn't exist, else perform "UPDATE" query
                     if (r is null)
-                        col.Insert(new BsonDocument { ["_id"] = id, ["svr"] = new_location });
+                        col.Insert(new BsonDocument { ["_id"] = id, ["folder"] = new_location });
                     else
                     {
-                        r["svr"] = new_location;
+                        r["folder"] = new_location;
                         col.Update(r);
                     }
 
@@ -410,20 +409,25 @@ namespace SteamCMDLauncher
             });
         }
 
-        public static string FindGameID(string path)
+        public static string[] FindGameID(string path)
         {
+            var rList = new List<string>(10);
 
             JObject CurrentFiles = JObject.Parse(SteamCMDLauncher.Properties.Resources.server_file_search);
             string current_app_id;
 
             // .Name -> Key
             // .Value -> files ( '/' for folder, '.' for exe )
+            // Detection for exe, even if its absolute path ( / with an .exe or . )
+
             bool found = false;
             string val;
             string joined_path;
             foreach (var game in CurrentFiles)
             {
                 current_app_id = game.Key;
+
+                // TODO: Test to see if this folder and exe search works in 376030 ( ARK: Survival Evolved )
 
                 // Loop through each available folder or exe to find the game
                 foreach (var item in game.Value)
@@ -433,16 +437,19 @@ namespace SteamCMDLauncher
                     // Join the path and remove the first symbol ( / or . )
                     joined_path = Path.Combine(path, val.Substring(1, val.Length-1));
 
-                    found = (val.StartsWith("/")) ? 
+                    found = (val.StartsWith("/") && !val.Contains(".")) ? 
                             Directory.Exists(joined_path) :
                             File.Exists(joined_path);
 
-                    if (found) return current_app_id;
+                    if (found)
+                    {
+                        rList.Add(current_app_id); break;
+                    };
                 }
 
             }
 
-            return string.Empty;
+            return rList.ToArray();
         }
 
         #endregion

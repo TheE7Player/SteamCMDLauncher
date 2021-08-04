@@ -110,8 +110,6 @@ namespace SteamCMDLauncher
             folder_location = Config.GetFolder(string.Empty, string.Empty);
             if (folder_location.Length > 0)
             {
-                Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
-
                 Config.Log(folder_location);
 
                 if (!Card3.IsEnabled)
@@ -180,11 +178,28 @@ namespace SteamCMDLauncher
         private void ServerFolderButton_Click(object sender, RoutedEventArgs e)
         {
             folder_location = Config.GetFolder(null, "");
+
             if (folder_location.Length > 0)
             {
                 // Validate if the id is correct
+                var found_games = Config.FindGameID(folder_location);
+                string appid_loc = string.Empty;
 
-                string appid_loc = Config.FindGameID(folder_location);
+                // Creating the programic version of a dialog host (using MatieralDesigns)
+                if(found_games.Length > 0)
+                {
+                    var ehe = new UIComponents.DialogHostContent();
+                    var r = ehe.YesNoDialog("you stupid?");
+
+                    // TODO: DO something better here
+
+                    this.Dispatcher.Invoke(async () =>
+                    {
+                        Task<object> result = (Task<object>)await MaterialDesignThemes.Wpf.DialogHost.Show(r);
+                        result.Wait();
+                    });
+
+                }
 
                 if(string.IsNullOrEmpty(appid_loc))
                 {
@@ -205,7 +220,6 @@ namespace SteamCMDLauncher
                     return;
                 }
 
-                //Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
                 Config.AddServer(result, folder_location);
 
                 Config.Log(folder_location);
