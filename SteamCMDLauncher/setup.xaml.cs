@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace SteamCMDLauncher
 {
@@ -72,6 +73,48 @@ namespace SteamCMDLauncher
                 .Select( x => x["game"].ToString() ).ToList();
         }
 
+        private string Show_AG_Dialog(string[] games)
+        {
+            // Holds the current game it may have found
+            string current_game = string.Empty;
+            
+            string game_id = string.Empty;
+
+            // Holds the logic to show and change the dialog
+            UIComponents.DialogHostContent confirmDialog = new UIComponents.DialogHostContent(RootDialog);
+                  
+            // Holds the current found number (iterator)
+            int count = 1;
+           
+            // Holds the max found games (cached)
+            int max = games.Length;
+
+            // Loop through each game that was found
+            foreach (var game in games)
+            {
+                // Get the game name based on the 'appid' given
+                current_game = Config.GetGameByAppId(game);
+
+                // Change the dialog to reflect if that was the game that was found
+                confirmDialog.YesNoDialog($"Found Game {count++} of {max}", $"Is the game your adding '{current_game}'?");
+
+                // Show the dialog
+                confirmDialog.ShowDialog();
+
+                // Keep going if the result is pending (-1) or is false (0) - Do this until one is true (if)
+                if (confirmDialog.GetResult() == 1) { game_id = game; break; }
+
+            }
+
+            confirmDialog.Destory();
+           
+            confirmDialog = null;
+            
+            current_game = null;
+
+            return game_id;
+        }
+
         #region Events
         private void GameDropDown_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -119,10 +162,12 @@ namespace SteamCMDLauncher
 
         private void InstallServer_Click(object sender, RoutedEventArgs e)
         {
-            GameInstallName.Text = $"Now Installing:{Environment.NewLine}{selectedGame}";
-            GameInstallStatus.Text = $"Pre-running 'steamexe.exe' - waiting for result";
 
-            installDialog.IsOpen = true;
+            var installDialog = new UIComponents.DialogHostContent(RootDialog, false);
+
+            installDialog.GameInstallDialog(selectedGame);
+
+            installDialog.ChangePropertyText("GameInstallStatus", $"Pre-running 'steamexe.exe' - waiting for result");
 
             var cmd = new Component.SteamCMD(steamcmd_location);
 
@@ -150,28 +195,42 @@ namespace SteamCMDLauncher
 
             var main_win = new main_view();
 
-            var t = Task.Run(() =>
+            installDialog.ShowDialog();
+
+            var t = Task.Run(async () =>
             {
                 cmd.PreRun();
 
                 this.Dispatcher.Invoke(() =>
                 {
-                    GameInstallStatus.Text = $"Installing... Don't close this window";
+                    installDialog.ChangePropertyText("GameInstallStatus", "Installing... Don't close this window");
                 });
 
+                await Task.Delay(3000);
+
                 cmd.InstallGame(selectedGame_ID, folder_location);
-                this.Dispatcher.Invoke(() =>
+
+                await this.Dispatcher.Invoke(async () =>
                 {
-                    GameInstallStatus.Text = $"Installed! Return back to main page.";
-                    Task.Delay(100);
+                    installDialog.ChangePropertyText("GameInstallStatus", "Installed! Return back to main page.");
+
+                    await Task.Delay(100);
+                    
                     Config.AddServer(selectedGame_ID, folder_location);
-                    Task.Delay(2100);
-                    installDialog.IsOpen = false;
-                    Task.Delay(2100);
+
+                    await Task.Delay(2100);
+
+                    installDialog.CloseDialog();
+
+                    await Task.Delay(2100);
+
+                    installDialog.Destory();
+
                     main_win.Show();
-                    this.Close();                   
+
+                    this.Close();
                 });
-            });        
+            });
         }
 
         // Select file location for server (If installed already)
@@ -188,17 +247,10 @@ namespace SteamCMDLauncher
                 // Creating the programic version of a dialog host (using MatieralDesigns)
                 if(found_games.Length > 0)
                 {
-                    var ehe = new UIComponents.DialogHostContent();
-                    var r = ehe.YesNoDialog("you stupid?");
+                    string found_game = Show_AG_Dialog(found_games);
 
-                    // TODO: DO something better here
-
-                    this.Dispatcher.Invoke(async () =>
-                    {
-                        Task<object> result = (Task<object>)await MaterialDesignThemes.Wpf.DialogHost.Show(r);
-                        result.Wait();
-                    });
-
+                    if (!string.IsNullOrEmpty(found_game))
+                        appid_loc = found_game;
                 }
 
                 if(string.IsNullOrEmpty(appid_loc))
