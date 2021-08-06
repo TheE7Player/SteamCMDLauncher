@@ -132,7 +132,13 @@ namespace SteamCMDLauncher
         // "SteamCMD Location"
         private void SteamCMD_Click(object sender, RoutedEventArgs e)
         {
-            steamcmd_location = Config.GetFolder("steamcmd.exe", "The given path doesn't contain the 'steamcmd.exe' to install the game files! Try agin.");
+            //steamcmd_location = Config.GetFolder("steamcmd.exe", "The given path doesn't contain the 'steamcmd.exe' to install the game files! Try agin.");
+            steamcmd_location = Config.GetFolder("steamcmd.exe", new Action(() =>
+            {
+                var ui = new UIComponents.DialogHostContent(RootDialog);
+                ui.OKDialog("The given path doesn't contain the 'steamcmd.exe' to install the game files! Try agin.");
+                ui.ShowDialog();
+            }));
 
             if (steamcmd_location.Length > 0)
             {
@@ -253,22 +259,27 @@ namespace SteamCMDLauncher
                         appid_loc = found_game;
                 }
 
+                var dialog = new UIComponents.DialogHostContent(RootDialog);
+
                 if(string.IsNullOrEmpty(appid_loc))
                 {
-                    MessageBox.Show("Sorry but the program didn't manage to find the appid based on current folders\nPlease help by stating what commands and files to run that in this program.");
+                    dialog.OKDialog("Sorry but the program didn't manage to find the appid based on current folders\nPlease help by stating what commands and files to run that in this program.");
+                    dialog.ShowDialog();
                     return;
                 }
 
                 int result;
                 if(!Int32.TryParse(appid_loc, out result))
                 {
-                    MessageBox.Show($"Unable to support (from parsing) from id '{appid_loc}' - some features may be not implemented or available");
+                    dialog.OKDialog($"Unable to support (from parsing) from id '{appid_loc}' - some features may be not implemented or available");
+                    dialog.ShowDialog();
                     return;
                 }
 
                 if(!available_IDS.Any(x => x == result))
                 {
-                    MessageBox.Show($"Unable to support from id '{appid_loc}' - some features may be not implemented or available");
+                    dialog.OKDialog($"Unable to support from id '{appid_loc}' - some features may be not implemented or available");
+                    dialog.ShowDialog();
                     return;
                 }
 
@@ -276,7 +287,8 @@ namespace SteamCMDLauncher
 
                 Config.Log(folder_location);
 
-                MessageBox.Show("Server has been added - Returning to home screen");
+                dialog.OKDialog("Server has been added - Returning to home screen");
+                dialog.ShowDialog();
 
                 var mw = new main_view();
                 mw.Show();

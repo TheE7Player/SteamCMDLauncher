@@ -479,6 +479,30 @@ namespace SteamCMDLauncher
             return string.Empty;
         }
 
+        public static string GetFolder(string required_file, Action custom_action)
+        {
+            var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
+            dialog.InitialDirectory = "C:\\Users";
+            dialog.IsFolderPicker = true;
+
+            while (true)
+            {
+                if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
+                {
+                    if (!string.IsNullOrEmpty(required_file))
+                        if (!System.IO.File.Exists(System.IO.Path.Combine(dialog.FileName, required_file)))
+                        {
+                            custom_action();
+                            continue;
+                        }
+                    return dialog.FileName;
+                }
+                else { break; }
+            }
+
+            return string.Empty;
+        }
+
         public static void Log(string text) => System.Diagnostics.Debug.WriteLine(text);
         #endregion
     }

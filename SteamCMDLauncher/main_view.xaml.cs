@@ -19,11 +19,15 @@ namespace SteamCMDLauncher
     public partial class main_view : Window
     {
         Dictionary<string, string[]> servers;
+        UIComponents.DialogHostContent HostDialog;
 
         public main_view()
         {
             servers = Config.GetServers();
+
             InitializeComponent();
+
+            HostDialog = new UIComponents.DialogHostContent(RootDialog, true, true);
 
             UpdateRefreshButton();
 
@@ -47,7 +51,7 @@ namespace SteamCMDLauncher
 
             if (!System.IO.Directory.Exists(location))
             {
-                MessageBox.Show("Please select the new location of the server as the last one wasn't found or exists");
+                HostDialog.OKDialog("Please select the new location of the server as the last one wasn't found or exists");
 
                 folder_location = Config.GetFolder(string.Empty, string.Empty);
                 if (folder_location.Length > 0)
@@ -56,7 +60,7 @@ namespace SteamCMDLauncher
                     //Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
                     Config.Log(folder_location);
 
-                    MessageBox.Show("A restart is required to make full effect - Refreshing will not solve this.");
+                    HostDialog.OKDialog("A restart is required to make full effect - Refreshing will not solve this.");
                 } else { return; }
             }
             else
@@ -69,12 +73,12 @@ namespace SteamCMDLauncher
             {
                 if(!System.IO.Directory.Exists(servers[id][1]))
                 {
-                    MessageBox.Show($"That server location ({servers[id][1]}) doesn't exist anymore!\nCorrect it but stating the new location from 'View Folder' button");
+                    HostDialog.OKDialog($"That server location ({servers[id][1]}) doesn't exist anymore!\nCorrect it but stating the new location from 'View Folder' button");
                     return;
                 }
             } else
             {
-                MessageBox.Show("Internal Problem - Not cached servers, fault with server dictionary");
+                HostDialog.OKDialog("Internal Problem - Not cached servers, fault with server dictionary");
                 return;
             }
 

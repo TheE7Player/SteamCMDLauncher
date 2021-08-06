@@ -16,17 +16,20 @@ namespace SteamCMDLauncher.UIComponents
         private DispatcherFrame df;
         private bool? result;
         private bool isWaiting;
+        private bool forceOpenWhenCall = false;
 
         /// <summary>
         /// Setups a object to create a programatic dialoghost
         /// </summary>
         /// <param name="dialog">The dialog to load the components from</param>
         /// <param name="waitForAction">If this is used to get user input, if so it will wait for a result (bool)</param>
-        public DialogHostContent(DialogHost dialog, bool waitForAction = true)
+        /// <param name="openOnCall">If when calling any form of dialog method, to open once finished (false by default)</param>
+        public DialogHostContent(DialogHost dialog, bool waitForAction = true, bool openOnCall = false)
         {
             this._dialog = dialog;
 
             this.isWaiting = waitForAction;
+            this.forceOpenWhenCall = openOnCall;
 
             if(this.isWaiting)
                 df = new DispatcherFrame(true);
@@ -153,6 +156,8 @@ namespace SteamCMDLauncher.UIComponents
             stp.Children.Add(text);
 
             _dialog.DialogContent = stp;
+
+            if (forceOpenWhenCall) ShowDialog();
         }
 
         public void YesNoDialog(string title, string message)
@@ -191,6 +196,29 @@ namespace SteamCMDLauncher.UIComponents
             MainPanel.Children.Add(ButtonPanel);
 
             _dialog.DialogContent = MainPanel;
+
+            if (forceOpenWhenCall) ShowDialog();
+        }
+
+        public void OKDialog(string message)
+        {
+            Button Ok;
+
+            var MainPanel = new StackPanel();
+            
+            MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
+
+            Ok = new Button { Content = "OK", Width = 80 };
+
+            Ok.Click += (s, e) => { ExitState(); };
+
+            MainPanel.Children.Add(new TextBlock { Text = message, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 8) });
+
+            MainPanel.Children.Add(Ok);
+
+            _dialog.DialogContent = MainPanel;
+
+            if (forceOpenWhenCall) ShowDialog();
         }
 
         public void Destory()

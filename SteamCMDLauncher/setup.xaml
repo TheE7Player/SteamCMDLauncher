@@ -21,17 +21,7 @@
 
         <materialDesign:DialogHost Grid.RowSpan="3" x:Name="RootDialog" IsOpen="False" >
             <materialDesign:DialogHost.DialogContent>
-                <!-- TODO: Remove the old dialog context completly? -->
-                <StackPanel><!--
-                    <TextBlock x:Name="GameInstallName" Text="Now Installing ${GAME}" FontWeight="Bold" FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    <ProgressBar
-                        Style="{DynamicResource MaterialDesignCircularProgressBar}"
-                        HorizontalAlignment="Center" Margin="0,20,0,25"
-                        IsIndeterminate="True"
-                        Value="0" />
-                    <TextBlock Text="Depending on file size and bandwidth, this may take a while" FontSize="10" TextWrapping="Wrap" HorizontalAlignment="Center" FontStyle="Italic"/>
-                    <TextBlock x:Name="GameInstallStatus" Text="..." FontWeight="Bold" FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center"/>
-               --> </StackPanel> 
+                <StackPanel></StackPanel> 
             </materialDesign:DialogHost.DialogContent>
         </materialDesign:DialogHost>
 
