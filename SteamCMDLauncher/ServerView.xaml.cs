@@ -36,6 +36,8 @@ namespace SteamCMDLauncher
             }
         }
 
+        private UIComponents.DialogHostContent dh;
+        
         public ServerView(string id, string alias)
         {
             this.id = id;
@@ -47,6 +49,7 @@ namespace SteamCMDLauncher
 
             InitializeComponent();
             this.DataContext = this;
+            this.dh = new UIComponents.DialogHostContent(RootDialog, true, true);
         }
 
         private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -87,6 +90,25 @@ namespace SteamCMDLauncher
             }
             
             waitTime.Start();
+        }
+
+        private void DeleteServer_Click(object sender, RoutedEventArgs e)
+        {
+            dh.YesNoDialog($"Delete {this.alias}", "Are you sure you want to do this? You can add this later on if need be.\nIt will only remove the instance - not the server folder.", new Action(() =>
+            {
+                bool result = Config.RemoveServer(id);
+
+                if(!result)
+                {
+                    dh.OKDialog("Error with deleting the server from collection and alias - If needed, clear the cache fully on next startup.\nHold 'R_CTRL' until 3 beeps are heard in next bootup.");
+                    return;
+                }
+
+                dh.OKDialog("Server memory for this server location and alias is now forgotten.\nReturning home.");
+                
+                // Force the click of the back button with this return logic already in it
+                ReturnBack.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            }));
         }
 
         private void ReturnBack_Click(object sender, RoutedEventArgs e)

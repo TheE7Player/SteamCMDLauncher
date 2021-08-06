@@ -12,11 +12,13 @@ namespace SteamCMDLauncher.UIComponents
 {
     public class DialogHostContent
     {
+        #region Properties
         private DialogHost _dialog;
         private DispatcherFrame df;
         private bool? result;
         private bool isWaiting;
         private bool forceOpenWhenCall = false;
+        #endregion
 
         /// <summary>
         /// Setups a object to create a programatic dialoghost
@@ -31,10 +33,11 @@ namespace SteamCMDLauncher.UIComponents
             this.isWaiting = waitForAction;
             this.forceOpenWhenCall = openOnCall;
 
-            if(this.isWaiting)
+            if (this.isWaiting)
                 df = new DispatcherFrame(true);
         }
 
+        #region States/Modifiers
         /// <summary>
         /// Changes an element in the dialog (IF) the element supports ".Text" property
         /// </summary>
@@ -48,18 +51,18 @@ namespace SteamCMDLauncher.UIComponents
             var components = ((StackPanel)this._dialog.DialogContent).Children.OfType<FrameworkElement>();
 
             dynamic obj = null;
-            
+
             foreach (FrameworkElement component in components)
             {
-                
+
                 if (!component.Name.Same(name)) continue;
 
                 obj = component;
-                
+
                 try
                 {
                     obj.Text = context;
-                    
+
                     return true;
                 }
                 catch (Exception)
@@ -76,7 +79,7 @@ namespace SteamCMDLauncher.UIComponents
             if (result == null) return -1;
 
             bool initialValue = (bool)result;
-           
+
             result = null;
 
             return Convert.ToInt32(initialValue);
@@ -91,22 +94,31 @@ namespace SteamCMDLauncher.UIComponents
                 df = new DispatcherFrame(true);
             }
 
-            _dialog.IsOpen = false;       
+            _dialog.IsOpen = false;
         }
 
         public void ShowDialog()
         {
-            if(this._dialog.IsOpen)
+            if (this._dialog.IsOpen)
                 this._dialog.IsOpen = false;
 
             this._dialog.IsOpen = true;
 
-            if(isWaiting)
+            if (isWaiting)
                 System.Windows.Threading.Dispatcher.PushFrame(df);
         }
 
         public void CloseDialog() => ExitState();
 
+        public void Destory()
+        {
+            df = null;
+            _dialog = null;
+            result = null;
+        }
+        #endregion
+
+        #region Dialogs
         public void GameInstallDialog(string game)
         {
             var stp = new StackPanel();
@@ -114,9 +126,12 @@ namespace SteamCMDLauncher.UIComponents
 
             TextBlock gameText = new TextBlock()
             {
-                Text = $"Now Installing:{Environment.NewLine}{game}", FontWeight = FontWeights.Bold,
-                FontSize = 14, TextWrapping = TextWrapping.Wrap, 
-                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
+                Text = $"Now Installing:{Environment.NewLine}{game}",
+                FontWeight = FontWeights.Bold,
+                FontSize = 14,
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
             };
 
             ProgressBar pg = new ProgressBar()
@@ -129,7 +144,7 @@ namespace SteamCMDLauncher.UIComponents
 
             // Turn the progressbar into a circular one
             pg.SetResourceReference(Control.StyleProperty, "MaterialDesignCircularProgressBar");
-       
+
             TextBlock status = new TextBlock()
             {
                 Text = "Depending on file size and bandwidth, this may take a while",
@@ -160,34 +175,54 @@ namespace SteamCMDLauncher.UIComponents
             if (forceOpenWhenCall) ShowDialog();
         }
 
-        public void YesNoDialog(string title, string message)
+        /// <summary>
+        /// Shows a dialog with 2 buttons, with callback ready if needed
+        /// </summary>
+        /// <param name="title">The title given to the dialog</param>
+        /// <param name="message">The context of the dialog</param>
+        /// <param name="callback">The action to perform on YES result</param>
+        public void YesNoDialog(string title, string message, Action callback = null)
         {
             Button Yes, No;
-            
+
             var MainPanel = new StackPanel();
-            
+
             var ButtonPanel = new StackPanel();
 
             ButtonPanel.Orientation = Orientation.Horizontal;
-            
+
             ButtonPanel.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
-            
-            ButtonPanel.Margin = new System.Windows.Thickness(0,10,0,5);
+
+            ButtonPanel.Margin = new System.Windows.Thickness(0, 10, 0, 5);
 
             MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
 
-            MainPanel.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0,4,0,2) });
-            
+            MainPanel.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 2) });
+
             MainPanel.Children.Add(new Separator() { Margin = new Thickness(0, 0, 0, 5) });
-            
+
             MainPanel.Children.Add(new TextBlock { Text = message, FontSize = 16, TextWrapping = TextWrapping.Wrap });
 
             Yes = new Button { Content = "Yes", Margin = new Thickness(0, 0, 5, 0) };
 
             No = new Button { Content = "No", Margin = new Thickness(5, 0, 0, 0) };
 
-            Yes.Click += (s, e) => { result = true; ExitState(); }; 
-            No.Click += (s, e) => { result = false; ExitState(); };
+            Yes.Click += (s, e) =>
+            {
+
+                if (callback is null)
+                    result = true;
+                else
+                    callback.Invoke();
+
+                ExitState();
+            };
+
+            No.Click += (s, e) =>
+            {
+                result = false;
+                ExitState();
+            };
 
             ButtonPanel.Children.Add(Yes);
 
@@ -205,7 +240,7 @@ namespace SteamCMDLauncher.UIComponents
             Button Ok;
 
             var MainPanel = new StackPanel();
-            
+
             MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
 
             Ok = new Button { Content = "OK", Width = 80 };
@@ -220,13 +255,6 @@ namespace SteamCMDLauncher.UIComponents
 
             if (forceOpenWhenCall) ShowDialog();
         }
-
-        public void Destory()
-        {
-            df = null;
-            _dialog = null;
-            result = null;
-        }
-
+        #endregion
     }
 }

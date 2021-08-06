@@ -103,8 +103,26 @@ namespace SteamCMDLauncher
             if(Config.Require_Get_Server)
                 servers = Config.GetServers();
 
+            // Textblock which shows if no servers were found
+            TextBlock text = new TextBlock()
+            {
+                Text = "No Servers Were Found - Add Some!",
+                FontWeight = FontWeights.DemiBold, FontSize = 20, Foreground = new SolidColorBrush(Colors.White)
+            };
+
+            ServerStack.VerticalAlignment = (servers?.Count == 0) ? VerticalAlignment.Top : VerticalAlignment.Center;
+
             // Loop over each record stored
-            if (servers is null) return;
+            if (servers?.Count == 0)
+            {
+                ServerStack.Children.Add(text);
+
+                // Dereference the object as we don't need it anymore
+                Card = null; text = null;
+                GC.WaitForFullGCComplete(); GC.Collect();
+
+                return;
+            }
 
             foreach (var item in servers)
             {

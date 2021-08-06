@@ -18,8 +18,7 @@ namespace SteamCMDLauncher
 
         private static string db_error = string.Empty;
 
-        public const string INFO_COLLECTION = "ifo";
-        public const string SERVER_COLLECTION = "sc"; //TODO: Remove this table collection?
+        public const string INFO_COLLECTION = "ifo";        
         public const string LOG_COLLECTION = "lg";
         public const string SERVER_INFO_COLLECTION = "sci";
         public const string SERVER_ALIAS_COLLECTION = "sca";
@@ -33,7 +32,7 @@ namespace SteamCMDLauncher
             FolderChange = 1, AliasChange = 2,
 
             // Server running/status codes
-            ServerRun = 3, ServerStop = 4, ServerError = 5, ServerValidate = 6, ServerUpdate = 7
+            ServerRun = 3, ServerStop = 4, ServerError = 5, ServerValidate = 6, ServerUpdate = 7, ServerRemove = 8
         }
 
         private static Queue<BsonDocument> LogQueue;
@@ -138,6 +137,46 @@ namespace SteamCMDLauncher
                         Require_Get_Server = true;
 
                     AddLog(u_id, LogType.ServerAdd, $"New server added with ID: {u_id}");
+
+                    return true;
+                }
+            }
+            catch (Exception _)
+            {
+                db_error = _.Message;
+            }
+
+            return false;
+        }
+
+        public static bool RemoveServer(string id)
+        {
+            db_error = string.Empty;
+
+            ILiteCollection<BsonDocument> col;
+
+            try
+            {
+                using (var db = new LiteDatabase(db_location))
+                {
+                    col = db.GetCollection(SERVER_INFO_COLLECTION);
+
+                    int eee = col.DeleteMany(x => x["_id"] == id);
+
+                    if (eee == 0)
+                    {
+                        db_error = "Couldn't find any server with given ID";
+                        return false; 
+                    }
+
+                    col = db.GetCollection(SERVER_ALIAS_COLLECTION);
+
+                    // We don't care much if this one fails - but should it be considered?
+                    col.DeleteMany(x => x["_id"] == id);
+
+                    db.Rebuild();
+
+                    AddLog(id, LogType.ServerRemove, $"Deleted server with ID: {id}");
 
                     return true;
                 }
@@ -426,8 +465,6 @@ namespace SteamCMDLauncher
             foreach (var game in CurrentFiles)
             {
                 current_app_id = game.Key;
-
-                // TODO: Test to see if this folder and exe search works in 376030 ( ARK: Survival Evolved )
 
                 // Loop through each available folder or exe to find the game
                 foreach (var item in game.Value)

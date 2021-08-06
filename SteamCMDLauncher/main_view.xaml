@@ -32,7 +32,6 @@
         </Grid>
         <Grid Grid.Row="1">
             <TextBlock FontSize="22" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,20,0,0">Welcome! Select a server to view or launch:</TextBlock>
-
         </Grid>
         <Grid Grid.Row="2">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
