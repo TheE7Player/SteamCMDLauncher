@@ -121,6 +121,12 @@
   <data name="dedicated_server_list" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\dedicated_server_list.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="game_setting_740" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\game_setting_740.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="game_setting_740_en" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\game_setting_740_en.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
   <data name="server_file_search" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\server_file_search.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>

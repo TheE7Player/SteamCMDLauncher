@@ -71,7 +71,64 @@ namespace SteamCMDLauncher.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to // Game Settings for CSGO (740 - Parent 730)
+        ///{
+        ///  // Key: Tab, Value: Children/Options
+        ///  // Hashtag: For translations (Hint to find the correct string for the current language)
+        ///
+        ///  &quot;#General&quot;: {
+        ///    &quot;#Server_Name&quot;: {
+        ///      &quot;text&quot;: &quot;#Server_Name&quot;,
+        ///      &quot;type&quot;: &quot;input&quot;,
+        ///      &quot;can_leave_blank&quot;: true,
+        ///      &quot;default&quot;: &quot;Counter-Strike: Global Offsensive&quot;
+        ///    },
+        ///    &quot;#Server_Tick&quot;: {
+        ///      &quot;text&quot;: &quot;#Is_128_Tick&quot;,
+        ///      &quot;type&quot;: &quot;check&quot;,
+        ///      &quot;default&quot;: false,
+        ///      &quot;hint&quot;:  &quot;#Is_128_Tick_Hint&quot;
+        ///   [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string game_setting_740 {
+            get {
+                return ResourceManager.GetString("game_setting_740", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string game_setting_740_en {
+            get {
+                return ResourceManager.GetString("game_setting_740_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///	// Look at: https://steamdb.info/depot/X/
+        ///	// Replace &apos;X&apos; with depot id (usually offset by 1 on wards -&gt; 4021 (4020 + 1)
+        ///
+        ///	// [NOTE] Currently all Windows depots - None for Linux or Mac OS yet
+        ///
+        ///	// Garrys Mod
+        ///	&quot;4020&quot;: [ &quot;/garrysmod&quot; ],
+        ///
+        ///	// CSGO
+        ///	&quot;740&quot;: [ &quot;/csgo&quot; ],
+        ///
+        ///	// CS 1.6 / Half Life
+        ///	&quot;90&quot;: [ &quot;/cstrike&quot; ],
+        ///
+        ///	// 7 Days to Die
+        ///	&quot;294420&quot;: [ &quot;.7DaysToDieServer.exe&quot;, &quot;/7DaysToDieServer_Data&quot; ],
+        ///
+        ///	// ASTRONEER
+        ///	&quot;728470&quot;: [ &quot;/Astro&quot; ],
+        ///
+        ///	// Age of Chivalry
+        ///	&quot;17515&quot;: [ &quot;/ageofchivalry [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string server_file_search {
             get {

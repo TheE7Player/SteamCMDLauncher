@@ -33,6 +33,12 @@
     <None Update="Resources\dedicated_server_list.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Resources\game_setting_740.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\game_setting_740_en.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\server_file_search.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

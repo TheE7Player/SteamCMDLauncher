@@ -81,11 +81,14 @@ namespace SteamCMDLauncher
                 HostDialog.OKDialog("Internal Problem - Not cached servers, fault with server dictionary");
                 return;
             }
-
+            
+            var app_id = servers[id][0];
+            
             servers = null;
+            
             GC.Collect();
 
-            var server_window = new ServerView(id, al);
+            var server_window = new ServerView(id, al, app_id);
             server_window.Show();
             this.Close();
         }

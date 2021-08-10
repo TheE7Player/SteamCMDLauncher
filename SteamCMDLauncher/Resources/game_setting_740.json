@@ -1,0 +1,24 @@
+// Game Settings for CSGO (740 - Parent 730)
+{
+  // Key: Tab, Value: Children/Options
+  // Hashtag: For translations (Hint to find the correct string for the current language)
+
+  "#General": {
+    "#Server_Name": {
+      "text": "#Server_Name",
+      "type": "input",
+      "can_leave_blank": true,
+      "default": "Counter-Strike: Global Offsensive",
+      "command": "hostname \"$0\"",
+      "command_prefix": "-"
+    },
+    "#Server_Tick": {
+      "text": "#Is_128_Tick",
+      "type": "check",
+      "default": false,
+      "hint": "#Is_128_Tick_Hint",
+      "command": "tickrate $0",
+      "command_prefix": "-"
+    }
+  }
+}

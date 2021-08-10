@@ -15,6 +15,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="120"></RowDefinition>
+            <RowDefinition Height="100"></RowDefinition>
             <RowDefinition Height="121*"></RowDefinition>
         </Grid.RowDefinitions>
         <materialDesign:DialogHost Grid.RowSpan="3" x:Name="RootDialog" IsOpen="False" >
@@ -44,10 +45,46 @@
                     </Binding>
                 </TextBox.Text>
             </TextBox>
-            <Button Click="DeleteServer_Click" Margin="470,-487,720,0" Width="75" Height="50" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Button Click="DeleteServer_Click" Margin="470,-24,720,0" Width="75" Height="50" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <materialDesign:PackIcon Kind="Delete" Foreground="White" Width="35" Height="35"/>
             </Button>
-
+        </Grid>
+        <Grid Grid.Row="2">
+            <StackPanel Orientation="Horizontal" Margin="25,0,25,20">
+                <GroupBox Header="Server Actions" Width="240" Height="300" Margin="0,0,30,0">
+                    <StackPanel>
+                        <TextBlock Foreground="White" 
+                                   FontWeight="DemiBold"
+                                   Text="Status:"
+                                   FontSize="18" Margin="5,10,5,5"/>
+                        <TextBlock x:Name="tb_Status" Foreground="White"
+                                   FontWeight="DemiBold"
+                                   Text="Offline"
+                                   FontSize="16" Margin="5,10,5,10"/>
+                        <Button Margin="0,20,0,10" x:Name="ToggleServer" Click="ToggleServer_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon VerticalAlignment="Center" Kind="PlayArrow" Margin="0,0,5,0" Foreground="White" Width="25" Height="25"/>
+                                <TextBlock VerticalAlignment="Center">Start Server</TextBlock>
+                            </StackPanel>
+                        </Button>
+                        <Button Margin="0,10,0,10">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon VerticalAlignment="Center" Kind="ClockCheckOutline" Margin="0,0,5,0" Foreground="White" Width="22" Height="22"/>
+                                <TextBlock VerticalAlignment="Center">Validate Server</TextBlock>
+                            </StackPanel>
+                        </Button>
+                        <Button Margin="0,10,0,10">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon VerticalAlignment="Center" Kind="Update" Margin="0,0,5,0" Foreground="White" Width="25" Height="25"/>
+                                <TextBlock VerticalAlignment="Center">Update Server</TextBlock>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox x:Name="ServerGroupBox" Header="Server Settings" Width="944">
+                   
+                </GroupBox>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>

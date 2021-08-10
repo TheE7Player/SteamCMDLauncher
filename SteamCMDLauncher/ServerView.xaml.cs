@@ -19,7 +19,7 @@ namespace SteamCMDLauncher
     public partial class ServerView : Window
     {
         private Timer waitTime;
-        private string id, alias;
+        private string id, alias, appid;
         private bool prevent_update = false;
 
         private string current_alias = string.Empty;
@@ -37,15 +37,30 @@ namespace SteamCMDLauncher
         }
 
         private UIComponents.DialogHostContent dh;
-        
-        public ServerView(string id, string alias)
+        private Component.GameSettingManager gsm;
+
+        private bool toggleServerState = false;
+
+        public ServerView(string id, string alias, string app_id = "")
         {
             this.id = id;
             this.alias = alias;
+            this.appid = (string.IsNullOrEmpty(app_id)) ? string.Empty : app_id;
 
             waitTime = new Timer(1000);
             waitTime.Elapsed += TimerElapsed;
             waitTime.AutoReset = true;
+
+            gsm = new Component.GameSettingManager(appid);
+
+            if(!gsm.ResourceFolderFound)
+                MessageBox.Show("Failed to find the resource folder - please ensure your not running outside the application folder!");
+
+            if (!gsm.Supported)
+                MessageBox.Show("Game not supported yet");
+
+            if (!gsm.LanguageSupported)
+                MessageBox.Show("The current config file for this game is in ENGLISH for now: Please contribrute to translating it!");
 
             InitializeComponent();
             this.DataContext = this;
@@ -109,6 +124,31 @@ namespace SteamCMDLauncher
                 // Force the click of the back button with this return logic already in it
                 ReturnBack.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }));
+        }
+
+        private void ToggleServer_Click(object sender, RoutedEventArgs e)
+        {
+            // Start/Stop Server button
+
+            // Perform the toggle
+            toggleServerState = !toggleServerState;
+
+            // We cannot just set content, as this clears the icon as well - We need to get the stackpanel instance
+            // [NOTE]: This acts like a ref state, don't need to reassign the data
+            StackPanel buttonState = (StackPanel)ToggleServer.Content;
+
+            // [0] PackIcon, [1] TextBlock
+
+            // Cast the children object to 'PackIcon' and changes its kind (icon/symbol) based on the state
+            ((MaterialDesignThemes.Wpf.PackIcon)buttonState.Children[0]).Kind = (toggleServerState) ? 
+                MaterialDesignThemes.Wpf.PackIconKind.Stop : 
+                MaterialDesignThemes.Wpf.PackIconKind.PlayArrow;
+
+            // Cast the children object to 'TextBlock' then changes its text property based on the state given
+            ((TextBlock)buttonState.Children[1]).Text = (toggleServerState) ? 
+                "Stop Server" : "Start Server";
+
+            tb_Status.Text = (toggleServerState) ? "Server Running" : "Server Halted";
         }
 
         private void ReturnBack_Click(object sender, RoutedEventArgs e)

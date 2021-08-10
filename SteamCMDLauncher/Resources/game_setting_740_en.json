@@ -1,0 +1,7 @@
+// Language Game Settings for CSGO (740 - Parent 730)
+{
+	"#General": "General",
+	"#Server_Name": "Server Name",
+	"#Is_128_Tick": "Is 128 Tick",
+	"#Is_128_Tick_Hint": "If true, it will run the server on 128 tick - 64 tick if unchecked."
+}
