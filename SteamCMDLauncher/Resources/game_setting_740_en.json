@@ -3,5 +3,10 @@
 	"#General": "General",
 	"#Server_Name": "Server Name",
 	"#Is_128_Tick": "Is 128 Tick",
-	"#Is_128_Tick_Hint": "If true, it will run the server on 128 tick - 64 tick if unchecked."
+	"#Is_128_Tick_Hint": "If true, it will run the server on 128 tick - 64 tick if unchecked.",
+	"#Is_Lan": "LAN only",
+	"#Is_Lan_Hint": "Prevent the server from hosting publically, only people with router access can join",
+	"#Server_Pass": "Server Password",
+	"#Server_Pass_Hint": "Sets the password for anyone connecting to the server (Recommended)",
+	"#Server_Pass_Alert":  "If blank, the program will generate a secure password for you"
 }

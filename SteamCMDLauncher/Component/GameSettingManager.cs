@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System.Linq;
 using System.IO;
 using Newtonsoft.Json.Linq;
+using System.Windows.Controls;
 
 namespace SteamCMDLauncher.Component
 {
@@ -20,6 +21,55 @@ namespace SteamCMDLauncher.Component
         private Dictionary<string, string> language;
         private Dictionary<string, Dictionary<string, Dictionary<string, string>>> controls;
 
+        private void SetLanguage(string path)
+        {
+            string lFile;
+
+            // Remove any comments if any
+            lFile = String.Join(null, File.ReadAllLines(path)
+                .Where(x => !x.Contains("//"))
+                .ToArray());
+
+            language = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string,string>>(lFile);
+                
+            lFile = null;
+        }
+
+        private void SetControls(string path)
+        {
+            string lFile;
+            
+            // Remove any comments if any
+            lFile = String.Join(null, File.ReadAllLines(path)
+                .Where(x => !x.Contains("//"))
+                .ToArray());
+
+            var cont = (JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(lFile);
+
+            controls = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
+
+            string fixed_name_tab;
+            string fixed_control_name;
+            foreach (var tab in cont.Properties())
+            {
+                fixed_name_tab = GetLangRef(tab.Name);
+
+                controls.Add(fixed_name_tab, new Dictionary<string, Dictionary<string, string>>());
+
+                foreach (var ctrl in tab.Children<JObject>().Properties())
+                {
+                    fixed_control_name = GetLangRef(ctrl.Name);
+                    controls[fixed_name_tab].Add(fixed_control_name, new Dictionary<string, string>());
+                    foreach (var attr in ctrl.Children<JObject>().Properties())
+                    {
+                        controls[fixed_name_tab][fixed_control_name].Add(GetLangRef(attr.Name), GetLangRef(attr.Value.ToString()));
+                    }
+                }
+            }
+
+            lFile = null;
+        }
+
         public GameSettingManager(string appid)
         {
             var resource = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
@@ -31,7 +81,6 @@ namespace SteamCMDLauncher.Component
             }
 
             ResourceFolderFound = true;
-            //game_setting_
             
             // Get all the files in the current directory
             var files = Directory.GetFiles(resource);
@@ -40,57 +89,23 @@ namespace SteamCMDLauncher.Component
             
             //TODO: Go language setting validation here
             LanguageSupported = files.Any(x => x.EndsWith($"game_setting_{appid}_en.json"));
-            
-            string langFile, lFile;
+
+            string langFile;
 
             if (LanguageSupported)
             {
                 langFile = files.First(x => x.EndsWith($"game_setting_{appid}_en.json"));
-                
-                // Remove any comments if any
-                lFile = String.Join(null, File.ReadAllLines(langFile)
-                    .Where(x => !x.Contains("//"))
-                    .ToArray());
-
-                language = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string,string>>(lFile);
-                
-                lFile = null; langFile = null;
+                SetLanguage(langFile);
             }
 
-            if(Supported)
+            if (Supported)
             {
                 langFile = files.First(x => x.EndsWith($"game_setting_{appid}.json"));
 
-                // Remove any comments if any
-                lFile = String.Join(null, File.ReadAllLines(langFile)
-                    .Where(x => !x.Contains("//"))
-                    .ToArray());
-
-                var cont = (JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(lFile);
-
-                controls = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
-
-                string fixed_name_tab;
-                string fixed_control_name;
-                foreach (var tab in cont.Properties())
-                {
-                    fixed_name_tab = GetLangRef(tab.Name);
-
-                    controls.Add(fixed_name_tab, new Dictionary<string, Dictionary<string, string>>());
-
-                    foreach (var ctrl in tab.Children<JObject>().Properties())
-                    {
-                        fixed_control_name = GetLangRef(ctrl.Name);
-                        controls[fixed_name_tab].Add(fixed_control_name, new Dictionary<string, string>());
-                        foreach (var attr in ctrl.Children<JObject>().Properties())
-                        {
-                            controls[fixed_name_tab][fixed_control_name].Add(GetLangRef(attr.Name), GetLangRef(attr.Value.ToString()));
-                        }
-                    }
-                }
-
-                lFile = null; langFile = null;
+                SetControls(langFile);
             }
+
+            langFile = null;
         }   
     
         /// <summary>
@@ -99,5 +114,35 @@ namespace SteamCMDLauncher.Component
         /// <param name="ref_t">The reference string (#) to translate</param>
         /// <returns>Returns its translated self if exists, else it returns its natural unedited form</returns>
         private string GetLangRef(string ref_t) => (language.ContainsKey(ref_t)) ? language[ref_t] : ref_t;
+
+        public TabControl GetControls()
+        {
+            // Create the control
+            var returnControl = new TabControl();
+
+            TabItem currentTab = new TabItem();
+
+            StackPanel grid = new StackPanel();
+
+            // Now get the elemements
+            foreach (var tab in controls)
+            {
+                // Add the tab category
+                currentTab.Header = tab.Key;
+
+                // Now we'll add the controls onto here
+                foreach (var ctrl in tab.Value)
+                {
+                    grid.Children.Add(new UIComponents.GameSettingControl(ctrl.Value).GetCompoent());
+                }
+
+                // Then assign it
+                currentTab.Content = grid;
+
+                returnControl.Items.Add(currentTab);
+            }
+
+            return returnControl;
+        }
     }
 }

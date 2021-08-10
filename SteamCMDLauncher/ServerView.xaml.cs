@@ -63,7 +63,12 @@ namespace SteamCMDLauncher
                 MessageBox.Show("The current config file for this game is in ENGLISH for now: Please contribrute to translating it!");
 
             InitializeComponent();
+
+            // Data context is used for binding, do not remove!
             this.DataContext = this;
+
+            ServerGroupBox.Content = gsm.GetControls();
+
             this.dh = new UIComponents.DialogHostContent(RootDialog, true, true);
         }
 
