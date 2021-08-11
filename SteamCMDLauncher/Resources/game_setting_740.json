@@ -8,7 +8,8 @@
       "text": "#Server_Name",
       "type": "input",
       "can_leave_blank": true,
-      "default": "Counter-Strike: Global Offsensive",
+      "placeholder": "Counter-Strike: Global Offsensive",
+      "width": 300,
       "command": "hostname \"$0\"",
       "command_prefix": "-"
     },
@@ -17,9 +18,11 @@
       "type": "pass",
       "can_leave_blank": true,
       "hint": "#Server_Pass_Hint",
+      "width": 200,
       "command": "sv_password $0",
       "command_prefix": "-",
-      "alert": "#Server_Pass_Alert"
+      "alert": "#Server_Pass_Alert",
+      "placeholder": "#Server_Pass_PlaceHolder"
     },
     "Server_Tick": {
       "text": "#Is_128_Tick",

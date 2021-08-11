@@ -21,6 +21,9 @@ namespace SteamCMDLauncher.Component
         private Dictionary<string, string> language;
         private Dictionary<string, Dictionary<string, Dictionary<string, string>>> controls;
 
+        public delegate void view_hint_dialog(string hint);
+        public event view_hint_dialog View_Dialog;
+
         private void SetLanguage(string path)
         {
             string lFile;
@@ -37,6 +40,8 @@ namespace SteamCMDLauncher.Component
 
         private void SetControls(string path)
         {
+            Config.Log("[GSM] Got JSON to read properties from...");
+
             string lFile;
             
             // Remove any comments if any
@@ -48,10 +53,14 @@ namespace SteamCMDLauncher.Component
 
             controls = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
 
+            Config.Log("[GSM] Parsing Data...");
+
             string fixed_name_tab;
             string fixed_control_name;
             foreach (var tab in cont.Properties())
             {
+                Config.Log($"[GSM] Hanlding {tab.Name}");
+
                 fixed_name_tab = GetLangRef(tab.Name);
 
                 controls.Add(fixed_name_tab, new Dictionary<string, Dictionary<string, string>>());
@@ -66,7 +75,7 @@ namespace SteamCMDLauncher.Component
                     }
                 }
             }
-
+            Config.Log("[GSM] Handling Complete");
             lFile = null;
         }
 
@@ -104,7 +113,7 @@ namespace SteamCMDLauncher.Component
 
                 SetControls(langFile);
             }
-
+            
             langFile = null;
         }   
     
@@ -115,15 +124,24 @@ namespace SteamCMDLauncher.Component
         /// <returns>Returns its translated self if exists, else it returns its natural unedited form</returns>
         private string GetLangRef(string ref_t) => (language.ContainsKey(ref_t)) ? language[ref_t] : ref_t;
 
+        private void PassDialog(string hint)
+        {
+            View_Dialog.Invoke(hint);
+        }
+
         public TabControl GetControls()
         {
+            Config.Log("[GSM] Rendering the components to main view...");
+
             // Create the control
             var returnControl = new TabControl();
 
             TabItem currentTab = new TabItem();
 
             StackPanel grid = new StackPanel();
-
+            
+            UIComponents.GameSettingControl ctrl_apnd;
+            
             // Now get the elemements
             foreach (var tab in controls)
             {
@@ -133,7 +151,12 @@ namespace SteamCMDLauncher.Component
                 // Now we'll add the controls onto here
                 foreach (var ctrl in tab.Value)
                 {
-                    grid.Children.Add(new UIComponents.GameSettingControl(ctrl.Value).GetCompoent());
+                    Config.Log($"[GSM] Rendering {ctrl.Key}");
+                    ctrl_apnd = new UIComponents.GameSettingControl(ctrl.Value);
+
+                    ctrl_apnd.View_Dialog += PassDialog;
+
+                    grid.Children.Add(ctrl_apnd.GetCompoent());
                 }
 
                 // Then assign it
@@ -141,7 +164,7 @@ namespace SteamCMDLauncher.Component
 
                 returnControl.Items.Add(currentTab);
             }
-
+            Config.Log("[GSM] Rendering complete");
             return returnControl;
         }
     }

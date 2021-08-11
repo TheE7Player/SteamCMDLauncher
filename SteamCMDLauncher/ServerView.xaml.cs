@@ -38,7 +38,6 @@ namespace SteamCMDLauncher
 
         private UIComponents.DialogHostContent dh;
         private Component.GameSettingManager gsm;
-
         private bool toggleServerState = false;
 
         public ServerView(string id, string alias, string app_id = "")
@@ -68,8 +67,16 @@ namespace SteamCMDLauncher
             this.DataContext = this;
 
             ServerGroupBox.Content = gsm.GetControls();
+            
+            gsm.View_Dialog += OnHint;
 
             this.dh = new UIComponents.DialogHostContent(RootDialog, true, true);
+        }
+
+        private void OnHint(string hint)
+        {
+            //Console.WriteLine(hint);
+            dh.OKDialog(hint);
         }
 
         private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)

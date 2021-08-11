@@ -8,5 +8,6 @@
 	"#Is_Lan_Hint": "Prevent the server from hosting publically, only people with router access can join",
 	"#Server_Pass": "Server Password",
 	"#Server_Pass_Hint": "Sets the password for anyone connecting to the server (Recommended)",
-	"#Server_Pass_Alert":  "If blank, the program will generate a secure password for you"
+	"#Server_Pass_Alert": "If blank, the program will generate a secure password for you",
+	"#Server_Pass_PlaceHolder":  "Auto-Generated Password"
 }
