@@ -3,15 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using SteamCMDLauncher.UIComponents.GameSettingComponent;
+using System.Linq;
 
 namespace SteamCMDLauncher.UIComponents
 {
     public class GameSettingControl : ISettingControl
     {
-        public enum ControlType
-        {
-            Input, Box, Pass
-        }
 
         public delegate void view_hint_dialog(string hint);
         public event view_hint_dialog View_Dialog;
@@ -20,11 +18,18 @@ namespace SteamCMDLauncher.UIComponents
         public string Hint { get; set; }
         public string Command { get; set; }
         public string defaultValue { get; set; }
+        public string PlaceHolder { get; set; }
+        
         public bool canBeBlank { get; set; }
-
+        public double Width { get; set; }
+        
         private string alert_message;
-        private Control ctrl;
-        private ControlType cType;
+        private ISettingConstruct ctrl;
+
+        public GameSettingControl()
+        {
+
+        }
 
         public GameSettingControl(Dictionary<string, string> control)
         {
@@ -37,68 +42,59 @@ namespace SteamCMDLauncher.UIComponents
             if (control.ContainsKey("hint"))
                 Hint = control["hint"];
 
-            if (control.ContainsKey("type"))
+            if (control.ContainsKey("default"))
+                defaultValue = control["default"];
+
+            if (control.ContainsKey("placeholder"))
+                PlaceHolder = control["placeholder"];
+
+            if (control.ContainsKey("width"))
             {
-                switch (control["type"])
-                {               
-                    case "input": { 
-                        ctrl = new TextBox();
-                        cType = ControlType.Input;
-
-                        if (control.ContainsKey("default"))
-                            ((TextBox)ctrl).Text = control["default"];
-
-                        if (control.ContainsKey("placeholder"))
-                        {
-                            ((TextBox)ctrl).SetValue(MaterialDesignThemes.Wpf.HintAssist.HintProperty, control["placeholder"]);
-                        }
-
-                        if (control.ContainsKey("width"))
-                        {
-                            if(!Double.TryParse(control["width"], out double w))
-                            {
-                               Config.Log($"[GSM] Cannot accept width of '{control["width"]}' - Ignoring size...");
-                            }
-
-                            ((TextBox)ctrl).Width = w;
-                        }
-                        break; 
-                    }
-                    case "check": { 
-                        ctrl = new CheckBox();
-                        cType = ControlType.Box;
-                        break;
-                    };
-                    case "pass":
-                    {
-                        ctrl = new PasswordBox();
-                        cType = ControlType.Pass;
-
-                        if (control.ContainsKey("placeholder"))
-                        {
-                            ((PasswordBox)ctrl).SetValue(MaterialDesignThemes.Wpf.HintAssist.HintProperty, control["placeholder"]);
-                        }
-
-                        if (control.ContainsKey("width"))
-                        {
-                            if (!Double.TryParse(control["width"], out double w))
-                            {
-                                Config.Log($"[GSM] Cannot accept width of '{control["width"]}' - Ignoring size...");
-                            }
-
-                            ((PasswordBox)ctrl).Width = w;
-                        }
-
-                        break;
-                    };
-                    default: break;
+                if (!Double.TryParse(control["width"], out double w))
+                {
+                    Config.Log($"[GSM] Cannot accept width of '{control["width"]}' - Ignoring size...");
+                    Width = -1;
+                    return;
                 }
+                Width = w;
             }
-
+            
             if(control.ContainsKey("command"))
             {
                 string prefex = control.ContainsKey("command_prefix") ? control["command_prefix"] : string.Empty;
-                Command = $"{prefex}{control["command_prefix"]}".Trim();
+                Command = $"{prefex}{control["command"]}".Trim();
+            }
+
+            if(control.ContainsKey("can_leave_blank"))
+            {
+                canBeBlank = (control["can_leave_blank"] == "True");
+            }
+
+            if (control.ContainsKey("type"))
+            {
+                switch (control["type"])
+                {
+                    case "input": ctrl = new GSInput(this); break;
+                    case "pass": ctrl = new GSPass(this); break;
+                    case "check": {
+                        string[] val = null;
+                        
+                        if(control.ContainsKey("returns"))
+                        {
+                           val = control["returns"].Split(',').Select(x => x.Trim()).ToArray();
+                           ctrl = new GSCheck(this, (val.Length>= 2) ? val : null);
+                        } 
+                        else
+                        {
+                           Config.Log($"[GSM] Checkbox '{Heading}' doesn't return any true or false state, consider a different component!");
+                           ctrl = new GSCheck(this);
+                        }                     
+                    } 
+                    break;
+                    default:
+                        Config.Log($"[GSM] Cannot find object instance for '{control["type"]}' - Ignoring that controll all together...");
+                        break;
+                }
             }
         }
 
@@ -107,8 +103,32 @@ namespace SteamCMDLauncher.UIComponents
             Grid.SetRow(ctrl, r); Grid.SetColumn(ctrl, c);
         }
 
-        internal UIElement GetCompoent()
+        public GameSettingControl DeepClone()
         {
+            var new_ent = new GameSettingControl()
+            {
+                Heading = this.Heading,
+                Hint = this.Hint,
+                Command = this.Command,
+                canBeBlank = this.canBeBlank,
+                PlaceHolder = this.PlaceHolder,
+                alert_message = this.alert_message,
+                Width = this.Width,
+                defaultValue = this.defaultValue
+            };
+            new_ent.View_Dialog = this.View_Dialog;
+            new_ent.ctrl = this.ctrl;
+            return new_ent;
+        }
+
+        public string GetArg() => ctrl.GetParam();
+
+        internal UIElement GetComponent()
+        {
+            if (ctrl is null) return null;
+
+            Control r_ctrl = ctrl.GetComponent();
+
             var tb = new TextBlock();
             tb.Text = Heading;
             tb.Padding = new Thickness(5,0,15,0);
@@ -126,22 +146,22 @@ namespace SteamCMDLauncher.UIComponents
             sp.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(200, GridUnitType.Auto) });
 
             sp.RowDefinitions.Add(new RowDefinition());
-        
-            if (cType == ControlType.Box)
+
+            if (r_ctrl.GetType() == typeof(CheckBox))
             {
-                sp.Children.Add(ctrl);
+                sp.Children.Add(r_ctrl);
                 sp.Children.Add(tb);
-                
+
                 SetGrid(tb, 0, 1);
-                SetGrid(ctrl, 0, 0);
-            } 
+                SetGrid(r_ctrl, 0, 0);
+            }
             else
             {
                 sp.Children.Add(tb);
-                sp.Children.Add(ctrl);
-                
+                sp.Children.Add(r_ctrl);
+
                 SetGrid(tb, 0, 0);
-                SetGrid(ctrl, 0, 1);
+                SetGrid(r_ctrl, 0, 1);
             }
 
             // Add Hint button (if any hints)

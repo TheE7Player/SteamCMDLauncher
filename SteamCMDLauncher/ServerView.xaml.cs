@@ -40,6 +40,8 @@ namespace SteamCMDLauncher
         private Component.GameSettingManager gsm;
         private bool toggleServerState = false;
 
+        private DateTime timeStart;
+
         public ServerView(string id, string alias, string app_id = "")
         {
             this.id = id;
@@ -73,12 +75,8 @@ namespace SteamCMDLauncher
             this.dh = new UIComponents.DialogHostContent(RootDialog, true, true);
         }
 
-        private void OnHint(string hint)
-        {
-            //Console.WriteLine(hint);
-            dh.OKDialog(hint);
-        }
-
+        private void OnHint(string hint) => dh.OKDialog(hint);
+        
         private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             // Work around for: 'The calling thread must be STA' error
@@ -91,9 +89,7 @@ namespace SteamCMDLauncher
                 {
                     alias = ServerAlias.Text.Trim();
                     Config.ChangeServerAlias(id, ServerAlias.Text.Trim());
-                    //Console.Beep();
                 }
-
             });
             waitTime.Interval = 1000;
         }
@@ -160,7 +156,25 @@ namespace SteamCMDLauncher
             ((TextBlock)buttonState.Children[1]).Text = (toggleServerState) ? 
                 "Stop Server" : "Start Server";
 
-            tb_Status.Text = (toggleServerState) ? "Server Running" : "Server Halted";
+
+            if(toggleServerState)
+            {
+                string arg = gsm.GetRunArgs();
+
+                timeStart = DateTime.Now;
+                Config.Log($"Running Server with Args: {arg}");
+
+                tb_Status.Text = "Server Running";
+            } 
+            else
+            {
+                // Get the total duration of the server being alive
+                TimeSpan TotalTime = DateTime.Now - timeStart;
+
+
+                tb_Status.Text = $"Server Halted\n{Math.Round(TotalTime.TotalMinutes, 2)} minutes";
+            }
+
         }
 
         private void ReturnBack_Click(object sender, RoutedEventArgs e)

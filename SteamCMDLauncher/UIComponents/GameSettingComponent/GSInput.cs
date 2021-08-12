@@ -1,0 +1,46 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Windows.Controls;
+
+namespace SteamCMDLauncher.UIComponents.GameSettingComponent
+{
+    class GSInput : ISettingConstruct
+    {
+        private TextBox tb;
+
+        public GameSettingControl self { get; set; }
+
+        public GSInput(GameSettingControl self)
+        {
+            this.self = self;
+            tb = new TextBox();
+        }
+
+        public Control GetComponent()
+        {         
+            tb.Text = self.defaultValue;
+
+            if(!string.IsNullOrEmpty(self.PlaceHolder))
+                tb.SetValue(MaterialDesignThemes.Wpf.HintAssist.HintProperty, self.PlaceHolder);
+
+            if (self.Width > -1)
+                tb.Width = self.Width;
+
+            return tb;
+        }
+
+        public void Discard()
+        {
+            self = null;
+        }
+
+        public string GetParam()
+        {
+            if (self.canBeBlank && string.IsNullOrWhiteSpace(tb.Text))
+                return null;
+
+            return self.Command.Replace("$", tb.Text);
+        }
+    }
+}

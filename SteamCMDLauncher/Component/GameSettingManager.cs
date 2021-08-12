@@ -20,6 +20,7 @@ namespace SteamCMDLauncher.Component
 
         private Dictionary<string, string> language;
         private Dictionary<string, Dictionary<string, Dictionary<string, string>>> controls;
+        private UIComponents.GameSettingControl[] componenets;
 
         public delegate void view_hint_dialog(string hint);
         public event view_hint_dialog View_Dialog;
@@ -33,8 +34,8 @@ namespace SteamCMDLauncher.Component
                 .Where(x => !x.Contains("//"))
                 .ToArray());
 
-            language = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string,string>>(lFile);
-                
+            language = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(lFile);
+
             lFile = null;
         }
 
@@ -43,7 +44,7 @@ namespace SteamCMDLauncher.Component
             Config.Log("[GSM] Got JSON to read properties from...");
 
             string lFile;
-            
+
             // Remove any comments if any
             lFile = String.Join(null, File.ReadAllLines(path)
                 .Where(x => !x.Contains("//"))
@@ -83,19 +84,19 @@ namespace SteamCMDLauncher.Component
         {
             var resource = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
 
-            if(!Directory.Exists(resource))
+            if (!Directory.Exists(resource))
             {
                 Config.Log($"[GSM] Resource folder was not found - Got '{resource}'");
                 Supported = false; ResourceFolderFound = false; return;
             }
 
             ResourceFolderFound = true;
-            
+
             // Get all the files in the current directory
             var files = Directory.GetFiles(resource);
 
             Supported = files.Any(x => x.EndsWith($"game_setting_{appid}.json"));
-            
+
             //TODO: Go language setting validation here
             LanguageSupported = files.Any(x => x.EndsWith($"game_setting_{appid}_en.json"));
 
@@ -113,10 +114,10 @@ namespace SteamCMDLauncher.Component
 
                 SetControls(langFile);
             }
-            
+
             langFile = null;
-        }   
-    
+        }
+
         /// <summary>
         /// Gets the current computer languages version of the referenced string
         /// </summary>
@@ -139,9 +140,14 @@ namespace SteamCMDLauncher.Component
             TabItem currentTab = new TabItem();
 
             StackPanel grid = new StackPanel();
-            
+
             UIComponents.GameSettingControl ctrl_apnd;
-            
+            System.Windows.UIElement ctrl_output;
+
+            grid.Margin = new System.Windows.Thickness(5, 10, 5, 5);
+
+            var compList = new List<UIComponents.GameSettingControl>();
+
             // Now get the elemements
             foreach (var tab in controls)
             {
@@ -152,11 +158,18 @@ namespace SteamCMDLauncher.Component
                 foreach (var ctrl in tab.Value)
                 {
                     Config.Log($"[GSM] Rendering {ctrl.Key}");
+
                     ctrl_apnd = new UIComponents.GameSettingControl(ctrl.Value);
 
                     ctrl_apnd.View_Dialog += PassDialog;
 
-                    grid.Children.Add(ctrl_apnd.GetCompoent());
+                    ctrl_output = ctrl_apnd.GetComponent();
+
+                    if (ctrl_output != null)
+                    { 
+                        grid.Children.Add(ctrl_output);
+                        compList.Add(ctrl_apnd.DeepClone());
+                    }
                 }
 
                 // Then assign it
@@ -164,8 +177,27 @@ namespace SteamCMDLauncher.Component
 
                 returnControl.Items.Add(currentTab);
             }
+
             Config.Log("[GSM] Rendering complete");
+            controls = null; ctrl_apnd = null; ctrl_apnd = null;
+
+            // Store reference it
+            componenets = compList.ToArray();
+            compList.Clear(); compList = null;
+
             return returnControl;
+        }
+
+        public string GetRunArgs()
+        {
+            var sb = new StringBuilder();
+
+            foreach (var item in componenets)
+            {
+                sb.Append($"{item.GetArg()} ");
+            }
+
+            return sb.ToString();
         }
     }
 }

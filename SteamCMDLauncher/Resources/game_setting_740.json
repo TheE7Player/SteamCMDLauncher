@@ -10,7 +10,7 @@
       "can_leave_blank": true,
       "placeholder": "Counter-Strike: Global Offsensive",
       "width": 300,
-      "command": "hostname \"$0\"",
+      "command": "hostname \"$\"",
       "command_prefix": "-"
     },
     "Password_SVR": {
@@ -19,7 +19,7 @@
       "can_leave_blank": true,
       "hint": "#Server_Pass_Hint",
       "width": 200,
-      "command": "sv_password $0",
+      "command": "sv_password \"$\"",
       "command_prefix": "-",
       "alert": "#Server_Pass_Alert",
       "placeholder": "#Server_Pass_PlaceHolder"
@@ -29,7 +29,8 @@
       "type": "check",
       "default": false,
       "hint": "#Is_128_Tick_Hint",
-      "command": "tickrate $0",
+      "returns": "64, 128",
+      "command": "tickrate $",
       "command_prefix": "-"
     },
     "Server_Lan": {
@@ -37,7 +38,8 @@
       "type": "check",
       "default": false,
       "hint": "#Is_Lan_Hint",
-      "command": "sv_lan $0",
+      "returns": "0, 1",
+      "command": "sv_lan $",
       "command_prefix": "-"
     }
   }
