@@ -23,7 +23,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         {
             if (!string.IsNullOrEmpty(self.defaultValue))
             {
-                cb.IsChecked = (self.defaultValue == "true");
+                cb.IsChecked = self.defaultValue == "True";
             }
 
             return cb;
@@ -38,7 +38,11 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         {
             if(valueReturn != null)
             {
-                int state = (bool)(cb.IsChecked) ? 1 : 0;
+                int state = (bool)cb.IsChecked ? 1 : 0;
+
+                // Check if element is null (denoted with '_') - If so ignore it
+                if (valueReturn[state] == "_") return string.Empty;
+
                 return self.Command.Replace("$", valueReturn[state]);
             }
 

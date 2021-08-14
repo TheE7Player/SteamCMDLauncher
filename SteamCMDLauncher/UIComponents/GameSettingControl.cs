@@ -24,6 +24,7 @@ namespace SteamCMDLauncher.UIComponents
         public double Width { get; set; }
         
         private string alert_message;
+
         private ISettingConstruct ctrl;
 
         public GameSettingControl()
@@ -76,21 +77,35 @@ namespace SteamCMDLauncher.UIComponents
                 {
                     case "input": ctrl = new GSInput(this); break;
                     case "pass": ctrl = new GSPass(this); break;
+                    case "combo": { 
+                            ctrl = new GSCombo(this);
+
+                            if (control.ContainsKey("dir"))
+                                ((GSCombo)ctrl).SetComboDir(control["dir"]);
+
+                            if (control.ContainsKey("combo-target"))
+                                ((GSCombo)ctrl).SetComboPattern(control["combo-target"]);
+
+                            if (control.ContainsKey("combo-range"))
+                                ((GSCombo)ctrl).SetNumberRange(control["combo-range"]);
+
+                        } break;
                     case "check": {
-                        string[] val = null;
+                            string[] val = null;
                         
-                        if(control.ContainsKey("returns"))
-                        {
-                           val = control["returns"].Split(',').Select(x => x.Trim()).ToArray();
-                           ctrl = new GSCheck(this, (val.Length>= 2) ? val : null);
-                        } 
-                        else
-                        {
-                           Config.Log($"[GSM] Checkbox '{Heading}' doesn't return any true or false state, consider a different component!");
-                           ctrl = new GSCheck(this);
-                        }                     
-                    } 
-                    break;
+                            if(control.ContainsKey("returns"))
+                            {
+                               val = control["returns"].Split(',').Select(x => x.Trim()).ToArray();
+                               ctrl = new GSCheck(this, (val.Length>= 2) ? val : null);
+                            } 
+                            else
+                            {
+                               Config.Log($"[GSM] Checkbox '{Heading}' doesn't return any true or false state, consider a different component!");
+                               ctrl = new GSCheck(this);
+                            }
+
+                            break;
+                    }
                     default:
                         Config.Log($"[GSM] Cannot find object instance for '{control["type"]}' - Ignoring that controll all together...");
                         break;

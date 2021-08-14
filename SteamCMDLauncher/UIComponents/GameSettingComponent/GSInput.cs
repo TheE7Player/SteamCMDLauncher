@@ -18,7 +18,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         }
 
         public Control GetComponent()
-        {         
+        {    
             tb.Text = self.defaultValue;
 
             if(!string.IsNullOrEmpty(self.PlaceHolder))

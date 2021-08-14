@@ -51,8 +51,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
             if (!string.IsNullOrEmpty(self.PlaceHolder))
                 pb.SetValue(MaterialDesignThemes.Wpf.HintAssist.HintProperty, self.PlaceHolder);
 
-            if (self.Width > -1)
-                pb.Width = self.Width;
+            if (self.Width > -1) pb.Width = self.Width;
 
             pb.PasswordChanged += (s, e) =>
             {
@@ -60,6 +59,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
                 UsingAutoPass = pw.Password.Length == 0;
             };
+
             return pb;
         }
 
@@ -70,7 +70,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
         public string GetParam()
         {
-            return self.Command.Replace("$", (UsingAutoPass) ? AutoPass : pb.Password);
+            return self.Command.Replace("$", UsingAutoPass ? AutoPass : pb.Password);
         }
     }
 }

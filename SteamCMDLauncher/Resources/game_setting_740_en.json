@@ -1,6 +1,7 @@
 // Language Game Settings for CSGO (740 - Parent 730)
 {
 	"#General": "General",
+	"#Misc": "Misc",
 	"#Server_Name": "Server Name",
 	"#Is_128_Tick": "Is 128 Tick",
 	"#Is_128_Tick_Hint": "If true, it will run the server on 128 tick - 64 tick if unchecked.",
@@ -9,5 +10,10 @@
 	"#Server_Pass": "Server Password",
 	"#Server_Pass_Hint": "Sets the password for anyone connecting to the server (Recommended)",
 	"#Server_Pass_Alert": "If blank, the program will generate a secure password for you",
-	"#Server_Pass_PlaceHolder":  "Auto-Generated Password"
+	"#Server_Pass_PlaceHolder": "Auto-Generated Password",
+	"#Is_Vac": "VAC Enabled",
+	"#Is_Vac_Hint": "Enables to server to use VAC for secuity, Disable if server intentions are to cheat/modify files",
+	"#Svr-Map": "Map",
+	"#Svr-Map-Hint": "Select the map to load when first launched - Can be changed running runtime.",
+	"#MaxP": "Max Players"
 }

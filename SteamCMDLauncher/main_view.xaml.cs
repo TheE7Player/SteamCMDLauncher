@@ -57,7 +57,7 @@ namespace SteamCMDLauncher
                 if (folder_location.Length > 0)
                 {
                     Config.ChangeServerFolder(id, location, folder_location);
-                    //Config.AddEntry_BJSON("svr", folder_location, Config.INFO_COLLECTION);
+
                     Config.Log(folder_location);
 
                     HostDialog.OKDialog("A restart is required to make full effect - Refreshing will not solve this.");
@@ -83,12 +83,12 @@ namespace SteamCMDLauncher
             }
             
             var app_id = servers[id][0];
-            
+            var folder = servers[id][1];
             servers = null;
             
             GC.Collect();
 
-            var server_window = new ServerView(id, al, app_id);
+            var server_window = new ServerView(id, al, folder, app_id);
             server_window.Show();
             this.Close();
         }

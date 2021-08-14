@@ -18,6 +18,9 @@ namespace SteamCMDLauncher.Component
         public bool ResourceFolderFound { get; private set; }
         public bool LanguageSupported { get; private set; }
 
+        private string targetExecutable;
+        private string targetDictionary;
+
         private Dictionary<string, string> language;
         private Dictionary<string, Dictionary<string, Dictionary<string, string>>> controls;
         private UIComponents.GameSettingControl[] componenets;
@@ -53,12 +56,40 @@ namespace SteamCMDLauncher.Component
             var cont = (JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(lFile);
 
             controls = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
+      
+            if(cont.ContainsKey("setup"))
+            {
+                Config.Log("[GSM] Parsing Setup Data...");
+
+                JToken target_kv = cont["setup"]["target"];
+
+                if (target_kv == null)
+                {
+                    Config.Log("[GSM] No existing \"target\" key found in json - this is needed to run the server application!");
+                    Supported = false; return;
+                }
+
+                targetExecutable = target_kv.ToString();
+
+                target_kv = null;
+
+            } else
+            {
+                Config.Log("[GSM] No existing \"setup\" key found in json - this is needed to run the server application!");
+                Supported = false; return;
+            }
 
             Config.Log("[GSM] Parsing Data...");
 
             string fixed_name_tab;
             string fixed_control_name;
-            foreach (var tab in cont.Properties())
+
+            // [NEW] As non-hashtag now exists "setup", best to filter prior to iteration
+            IEnumerable<JProperty> iterable_fields = cont.Properties().Where(x => x.Name[0] == '#');
+
+            string carry_dir = "carry-dir";
+
+            foreach (var tab in iterable_fields)
             {
                 Config.Log($"[GSM] Hanlding {tab.Name}");
 
@@ -73,14 +104,25 @@ namespace SteamCMDLauncher.Component
                     foreach (var attr in ctrl.Children<JObject>().Properties())
                     {
                         controls[fixed_name_tab][fixed_control_name].Add(GetLangRef(attr.Name), GetLangRef(attr.Value.ToString()));
+                    
+                        // If "carry_dir" key is present, pass in the root folder as value
+                        if(attr.Name == carry_dir)
+                        {
+                            controls[fixed_name_tab][fixed_control_name].Add("dir", targetDictionary);
+                        }
                     }
                 }
             }
             Config.Log("[GSM] Handling Complete");
-            lFile = null;
+            lFile = null; carry_dir = null;
         }
 
-        public GameSettingManager(string appid)
+        /// <summary>
+        /// Sets up the folder on where it will executable and what settings to fetch
+        /// </summary>
+        /// <param name="appid">The id to get the correct .json to read the settings from</param>
+        /// <param name="folderLocation">The folder will the directory location to run the server from</param>
+        public GameSettingManager(string appid, string folderLocation)
         {
             var resource = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
 
@@ -92,6 +134,14 @@ namespace SteamCMDLauncher.Component
 
             ResourceFolderFound = true;
 
+            // Store where the server folder is at root
+            if(!Directory.Exists(folderLocation))
+            {
+                Config.Log($"[GSM] Server Root Folder is invalid or missing - Got '{folderLocation}'");
+                Supported = false; return;
+            }
+            targetDictionary = folderLocation;
+            
             // Get all the files in the current directory
             var files = Directory.GetFiles(resource);
 
@@ -125,10 +175,7 @@ namespace SteamCMDLauncher.Component
         /// <returns>Returns its translated self if exists, else it returns its natural unedited form</returns>
         private string GetLangRef(string ref_t) => (language.ContainsKey(ref_t)) ? language[ref_t] : ref_t;
 
-        private void PassDialog(string hint)
-        {
-            View_Dialog.Invoke(hint);
-        }
+        private void PassDialog(string hint) => View_Dialog.Invoke(hint);
 
         public TabControl GetControls()
         {
@@ -146,7 +193,7 @@ namespace SteamCMDLauncher.Component
 
             grid.Margin = new System.Windows.Thickness(5, 10, 5, 5);
 
-            var compList = new List<UIComponents.GameSettingControl>();
+            List<UIComponents.GameSettingControl> compList = new List<UIComponents.GameSettingControl>();
 
             // Now get the elemements
             foreach (var tab in controls)
@@ -176,6 +223,10 @@ namespace SteamCMDLauncher.Component
                 currentTab.Content = grid;
 
                 returnControl.Items.Add(currentTab);
+
+                // Reset for the next one if any
+                currentTab = new TabItem();
+                grid = new StackPanel();
             }
 
             Config.Log("[GSM] Rendering complete");
@@ -190,12 +241,9 @@ namespace SteamCMDLauncher.Component
 
         public string GetRunArgs()
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
 
-            foreach (var item in componenets)
-            {
-                sb.Append($"{item.GetArg()} ");
-            }
+            foreach (var item in componenets) { sb.Append($"{item.GetArg()} "); }
 
             return sb.ToString();
         }

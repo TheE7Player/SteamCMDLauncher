@@ -19,7 +19,7 @@ namespace SteamCMDLauncher
     public partial class ServerView : Window
     {
         private Timer waitTime;
-        private string id, alias, appid;
+        private string id, alias, appid, folder;
         private bool prevent_update = false;
 
         private string current_alias = string.Empty;
@@ -42,7 +42,7 @@ namespace SteamCMDLauncher
 
         private DateTime timeStart;
 
-        public ServerView(string id, string alias, string app_id = "")
+        public ServerView(string id, string alias, string folder, string app_id = "")
         {
             this.id = id;
             this.alias = alias;
@@ -52,7 +52,7 @@ namespace SteamCMDLauncher
             waitTime.Elapsed += TimerElapsed;
             waitTime.AutoReset = true;
 
-            gsm = new Component.GameSettingManager(appid);
+            gsm = new Component.GameSettingManager(appid, folder);
 
             if(!gsm.ResourceFolderFound)
                 MessageBox.Show("Failed to find the resource folder - please ensure your not running outside the application folder!");
@@ -170,7 +170,6 @@ namespace SteamCMDLauncher
             {
                 // Get the total duration of the server being alive
                 TimeSpan TotalTime = DateTime.Now - timeStart;
-
 
                 tb_Status.Text = $"Server Halted\n{Math.Round(TotalTime.TotalMinutes, 2)} minutes";
             }
