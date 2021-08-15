@@ -422,7 +422,7 @@ namespace SteamCMDLauncher
             }
         }
     
-        private static void AddLog(string id, LogType lType, string details)
+        public static void AddLog(string id, LogType lType, string details)
         {
             if (LogQueue is null)
                 LogQueue = new Queue<BsonDocument>();

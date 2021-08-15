@@ -32,5 +32,10 @@ namespace SteamCMDLauncher.UIComponents
         /// Turns if the component is empty, useful for components which cannot be left blank
         /// </summary>
         public abstract bool IsEmpty { get; }
+
+        /// <summary>
+        /// Used when storing variables
+        /// </summary>
+        public abstract string SaveValue { get; }
     }
 }

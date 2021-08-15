@@ -51,6 +51,45 @@ namespace SteamCMDLauncher.Component
         }
 
         /// <summary>
+        /// Creates an update or verify window for the execution if supported
+        /// </summary>
+        /// <param name="id">The appid to verify or update</param>
+        /// <param name="folder">The folder of where it will perform the actions</param>
+        /// <param name="update">True to update and ignore verifying, False to verify files as well (as updating - takes longer)</param>
+        public void Verify(int id, string folder, bool update = false)
+        {
+            Process process = new Process();
+            process.StartInfo.FileName = this.launch_location;
+            process.StartInfo.CreateNoWindow = false;
+            process.StartInfo.UseShellExecute = false;
+
+            string extra_tag = string.Empty;
+
+            if (id >= 90 && id <= 99)
+            {
+                string game_name = Config.GetGameByAppId(id.ToString());
+                switch (game_name)
+                {
+                    case "Counter-Strike: Condition Zero": extra_tag = "+app_set_config \"90 mod czero\""; break;
+                    case "Day of Defeat": extra_tag = "+app_set_config \"90 mod dod\""; break;
+                    case "Deathmatch Classic": extra_tag = "+app_set_config \"90 mod dmc\""; break;
+                    case "Ricochet": extra_tag = "+app_set_config \"90 mod ricochet\""; break;
+                    case "Team Fortress Classic": extra_tag = "	+app_set_config \"90 mod tfc\""; break;
+                    case "Half-Life: Opposing Force": extra_tag = "+app_set_config \"90 mod gearbox\""; break;
+                }
+            }
+
+            if(update)
+                process.StartInfo.Arguments = $"+login anonymous +force_install_dir \"{folder}\" +app_update {id} {extra_tag} +exit".Trim();
+            else
+                process.StartInfo.Arguments = $"+login anonymous +force_install_dir \"{folder}\" +app_update {id} {extra_tag} validate +exit".Trim();
+
+            process.Start();
+
+            process.WaitForExit();
+        }
+
+        /// <summary>
         /// Runs the "steamcmd.exe" prior to installation, allows the exe to update itself if needs be
         /// </summary>
         /// <returns></returns>
@@ -84,7 +123,7 @@ namespace SteamCMDLauncher.Component
                 id = 90;
             }
 
-            process.StartInfo.Arguments = $"+login anonymous +force_install_dir {location} {additional_arg} +app_update {id} +quit";
+            process.StartInfo.Arguments = $"+login anonymous +force_install_dir \"{location}\" {additional_arg} +app_update {id} +quit";
 
             process.Start();
 

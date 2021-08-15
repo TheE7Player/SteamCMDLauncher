@@ -1,0 +1,52 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SteamCMDLauncher.Views"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" x:Class="SteamCMDLauncher.Views.extra"
+        mc:Ignorable="d"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Title="extra" Height="450" Width="800" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" AllowsTransparency="True" Background="Transparent">
+    <Grid>
+        <materialDesign:DialogHost x:Name="RootDialog" IsOpen="False" >
+            <materialDesign:DialogHost.DialogContent>
+                <StackPanel></StackPanel>
+            </materialDesign:DialogHost.DialogContent>
+        </materialDesign:DialogHost>
+        <materialDesign:Card Margin="200,55,200,100" materialDesign:ShadowAssist.ShadowDepth="Depth4" UniformCornerRadius="12" Height="auto">
+            <StackPanel>
+                <TextBlock FontSize="17" 
+                           FontWeight="DemiBold" 
+                           Padding="7" Margin="0,4,0,10" 
+                           VerticalAlignment="Center" HorizontalAlignment="Center" 
+                           TextWrapping="Wrap">SteamCMDLauncher V0.1 Advanced Menu</TextBlock>
+                <GroupBox Header="Database Related"
+                  Style="{DynamicResource MaterialDesignGroupBox}"
+                  Margin="12" materialDesign:ShadowAssist.ShadowDepth="Depth2"
+                  BorderThickness="0">
+                    <StackPanel>
+                        <CheckBox FontSize="13" Style="{DynamicResource MaterialDesignAccentCheckBox}" Margin="0,5,0,5" IsChecked="{Binding DeleteDB}">Delete Database Content</CheckBox>
+                        <CheckBox FontSize="13" Style="{DynamicResource MaterialDesignAccentCheckBox}" Margin="0,5,0,5" IsChecked="{Binding ClearLog}">Delete Activity Logging (Server Actions etc)</CheckBox>
+                    </StackPanel>
+                </GroupBox>
+
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" TextWrapping="Wrap" FontSize="14" FontStyle="Italic" HorizontalAlignment="Center">Note: Any of these actions are not backup in case of a fault - use at your own discretion...</TextBlock>
+                    <Button Margin="12" Padding="8" Grid.Column="0" Grid.Row="1" Click="ReturnButton_Click">Return</Button>
+                    <Button Margin="12" Padding="8" Grid.Column="1" Grid.Row="1" Click="ConfirmButton_Click">Confirm</Button>
+                </Grid>
+            </StackPanel>
+        </materialDesign:Card>
+    </Grid>
+</Window>

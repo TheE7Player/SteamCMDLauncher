@@ -51,7 +51,7 @@
         </Grid>
         <Grid Grid.Row="2">
             <StackPanel Orientation="Horizontal" Margin="25,0,25,20">
-                <GroupBox Header="Server Actions" Width="240" Height="300" Margin="0,0,30,0">
+                <GroupBox Header="Server Actions" Width="240" Height="350" Margin="0,0,30,0">
                     <StackPanel>
                         <TextBlock Foreground="White" 
                                    FontWeight="DemiBold"
@@ -67,16 +67,22 @@
                                 <TextBlock VerticalAlignment="Center">Start Server</TextBlock>
                             </StackPanel>
                         </Button>
-                        <Button Margin="0,10,0,10">
+                        <Button Margin="0,10,0,10" Click="ValidateServer_Click">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon VerticalAlignment="Center" Kind="ClockCheckOutline" Margin="0,0,5,0" Foreground="White" Width="22" Height="22"/>
                                 <TextBlock VerticalAlignment="Center">Validate Server</TextBlock>
                             </StackPanel>
                         </Button>
-                        <Button Margin="0,10,0,10">
+                        <Button Margin="0,10,0,10" Click="UpdateButton_Click">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon VerticalAlignment="Center" Kind="Update" Margin="0,0,5,0" Foreground="White" Width="25" Height="25"/>
                                 <TextBlock VerticalAlignment="Center">Update Server</TextBlock>
+                            </StackPanel>
+                        </Button>
+                        <Button Margin="0,10,0,10" Click="SaveConfig_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon VerticalAlignment="Center" Kind="ContentSave" Margin="0,0,5,0" Foreground="White" Width="25" Height="25"/>
+                                <TextBlock VerticalAlignment="Center">Save Settings</TextBlock>
                             </StackPanel>
                         </Button>
                     </StackPanel>

@@ -10,6 +10,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SteamCMDLauncher
 {
@@ -18,7 +20,7 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class ServerView : Window
     {
-        private Timer waitTime;
+        private System.Timers.Timer waitTime;
         private string id, alias, appid, folder;
         private bool prevent_update = false;
 
@@ -47,8 +49,9 @@ namespace SteamCMDLauncher
             this.id = id;
             this.alias = alias;
             this.appid = (string.IsNullOrEmpty(app_id)) ? string.Empty : app_id;
+            this.folder = folder;
 
-            waitTime = new Timer(1000);
+            waitTime = new System.Timers.Timer(1000);
             waitTime.Elapsed += TimerElapsed;
             waitTime.AutoReset = true;
 
@@ -132,6 +135,42 @@ namespace SteamCMDLauncher
                 // Force the click of the back button with this return logic already in it
                 ReturnBack.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }));
+        }
+
+        private void DoVerification(bool update = false)
+        {
+            Config.AddLog(id, update ? Config.LogType.ServerUpdate : Config.LogType.ServerValidate, "Operation Started");
+            dh.ForceDialog((update) ?
+            "Server is now updating.\nThis may take a long while..."
+            : "Server is now validating and updating.\nThis may take a long while...", new Task(() =>
+            {
+                var cmdLoc = Config.GetEntryByKey("cmd", Config.INFO_COLLECTION);
+
+                Component.SteamCMD cmd = new Component.SteamCMD(cmdLoc);
+
+                cmd.Verify(Convert.ToInt32(appid), folder, update);
+
+                this.Dispatcher.Invoke(() =>
+                {
+                    dh.CloseDialog();
+                });
+            }));
+            Config.AddLog(id, update ? Config.LogType.ServerUpdate : Config.LogType.ServerValidate, "Operation Finished");
+        }
+
+        private void ValidateServer_Click(object sender, RoutedEventArgs e)
+        {
+            DoVerification();
+        }
+
+        private void UpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            DoVerification(true);
+        }
+
+        private void SaveConfig_Click(object sender, RoutedEventArgs e)
+        {
+            // Save config button
         }
 
         private void ToggleRunButton()

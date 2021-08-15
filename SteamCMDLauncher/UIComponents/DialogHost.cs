@@ -116,6 +116,9 @@ namespace SteamCMDLauncher.UIComponents
             _dialog = null;
             result = null;
         }
+
+        public void IsWaiting(bool result) => isWaiting = result;
+
         #endregion
 
         #region Dialogs
@@ -254,6 +257,27 @@ namespace SteamCMDLauncher.UIComponents
             _dialog.DialogContent = MainPanel;
 
             if (forceOpenWhenCall) ShowDialog();
+        }
+
+        /// <summary>
+        /// Forces an non-closable dialog, can only be close by force (.CloseDialog())
+        /// </summary>
+        /// <param name="message">The context/text to show</param>
+        /// <param name="pre_callback">The action/method to take before showing the dialog</param>
+        public void ForceDialog(string message, Task pre_callback = null)
+        {
+            var MainPanel = new StackPanel();
+
+            MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
+
+            MainPanel.Children.Add(new TextBlock { Text = message, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 8) });
+
+            _dialog.DialogContent = MainPanel;
+
+            if (!(pre_callback is null)) pre_callback.Start();
+
+            if (forceOpenWhenCall) ShowDialog();
+
         }
         #endregion
     }

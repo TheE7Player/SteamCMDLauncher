@@ -28,6 +28,8 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         private string default_value;
         private string number_range;
 
+        public string SaveValue { get { return cb.SelectedValue.ToString(); } }
+
         public GSCombo(GameSettingControl self)
         {
             this.self = self;

@@ -25,6 +25,8 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
             }
         }
 
+        public string SaveValue { get { return tb.Text.Trim(); } }
+
         public GSInput(GameSettingControl self)
         {
             this.self = self;

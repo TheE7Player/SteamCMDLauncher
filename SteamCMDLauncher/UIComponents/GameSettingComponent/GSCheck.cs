@@ -15,6 +15,8 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         // This component will not likely return true or false due to its nature
         public bool IsEmpty { get { return false; } }
 
+        public string SaveValue { get { return cb.IsChecked.ToString(); } }
+
         public GSCheck(GameSettingControl self, string[] return_value = null)
         {
             this.self = self;

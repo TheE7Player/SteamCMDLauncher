@@ -174,7 +174,7 @@ namespace SteamCMDLauncher.Component
 
             Supported = files.Any(x => x.EndsWith($"game_setting_{appid}.json"));
 
-            //TODO: Go language setting validation here
+            //TODO: Go language setting validation here (based on windows running language)
             LanguageSupported = files.Any(x => x.EndsWith($"game_setting_{appid}_en.json"));
 
             string langFile;
