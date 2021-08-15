@@ -20,6 +20,7 @@ namespace SteamCMDLauncher.Component
 
         private string targetExecutable;
         private string targetDictionary;
+        private string PreArguments;
 
         private Dictionary<string, string> language;
         private Dictionary<string, Dictionary<string, Dictionary<string, string>>> controls;
@@ -27,6 +28,13 @@ namespace SteamCMDLauncher.Component
 
         public delegate void view_hint_dialog(string hint);
         public event view_hint_dialog View_Dialog;
+
+        public string GetExePath => Path.Combine(targetDictionary, targetExecutable);
+
+        /// <summary>
+        /// Gets any additional arguments to append to the start if given by the json file
+        /// </summary>
+        public string GetPreArg => PreArguments;
 
         private void SetLanguage(string path)
         {
@@ -73,10 +81,29 @@ namespace SteamCMDLauncher.Component
 
                 target_kv = null;
 
-            } else
+            } 
+            else
             {
                 Config.Log("[GSM] No existing \"setup\" key found in json - this is needed to run the server application!");
                 Supported = false; return;
+            }
+
+            //PreArguments
+            if(cont.ContainsKey("setup"))
+            {
+                Config.Log("[GSM] Fetching pre-commands set by game config json...");
+
+                JToken target_kv = cont["setup"]["precommands"];
+
+                if (target_kv == null)
+                {
+                    Config.Log("[GSM] No existing \"precommands\" key found in json - Ignoring, this may cause lanuch issues!");
+                    Supported = false; return;
+                }
+
+                PreArguments = target_kv.ToString();
+
+                target_kv = null;
             }
 
             Config.Log("[GSM] Parsing Data...");
@@ -206,7 +233,7 @@ namespace SteamCMDLauncher.Component
                 {
                     Config.Log($"[GSM] Rendering {ctrl.Key}");
 
-                    ctrl_apnd = new UIComponents.GameSettingControl(ctrl.Value);
+                    ctrl_apnd = new UIComponents.GameSettingControl(ctrl.Key, ctrl.Value);
 
                     ctrl_apnd.View_Dialog += PassDialog;
 
@@ -220,7 +247,12 @@ namespace SteamCMDLauncher.Component
                 }
 
                 // Then assign it
-                currentTab.Content = grid;
+                currentTab.Content = new ScrollViewer()
+                {
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    Content = grid
+                };
 
                 returnControl.Items.Add(currentTab);
 
@@ -246,6 +278,22 @@ namespace SteamCMDLauncher.Component
             foreach (var item in componenets) { sb.Append($"{item.GetArg()} "); }
 
             return sb.ToString();
+        }
+
+        public string[] RequiredFields()
+        {
+            List<string> r = new List<string>();
+
+            foreach (UIComponents.GameSettingControl comp in componenets)
+            {
+                if (!comp.canBeBlank)
+                {
+                    if (comp.IsEmpty())
+                        r.Add(comp.blank_error);
+                }
+            }
+
+            return r.ToArray();
         }
     }
 }

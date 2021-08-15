@@ -14,10 +14,11 @@ namespace SteamCMDLauncher.Component
         private string launch_location;
 
         private string additional_arg = string.Empty;
+        private string pre_arg = string.Empty;
 
-        public SteamCMD(string exe_directory)
+        public SteamCMD(string exe_directory, bool steamCMD = true)
         {
-            string location = Path.Combine(exe_directory, "steamcmd.exe");
+            string location = steamCMD ? Path.Combine(exe_directory, "steamcmd.exe") : exe_directory;
 
             this.launch_location = location;
 
@@ -31,9 +32,22 @@ namespace SteamCMDLauncher.Component
         /// Needed if multiple games share the same ID
         /// </summary>
         /// <param name="arg">Argument to download the current version</param>
-        public void AddArgument(string arg)
+        public void AddArgument(string arg, string pre_arg = "")
         {
             additional_arg = arg;
+            this.pre_arg = pre_arg;
+        }
+
+        public void Run()
+        {
+            Process process = new Process();
+            process.StartInfo.FileName = this.launch_location;
+            process.StartInfo.CreateNoWindow = false;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.Arguments = $"{pre_arg} {additional_arg}";
+            process.Start();
+
+            process.WaitForExit();
         }
 
         /// <summary>

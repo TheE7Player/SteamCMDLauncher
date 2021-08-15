@@ -22,7 +22,10 @@ namespace SteamCMDLauncher.UIComponents
         
         public bool canBeBlank { get; set; }
         public double Width { get; set; }
-        
+
+        public string name;
+        public string blank_error;
+
         private string alert_message;
 
         private ISettingConstruct ctrl;
@@ -32,8 +35,10 @@ namespace SteamCMDLauncher.UIComponents
 
         }
 
-        public GameSettingControl(Dictionary<string, string> control)
+        public GameSettingControl(string name, Dictionary<string, string> control)
         {
+            this.name = name;
+
             if (control.ContainsKey("text"))
                 Heading = control["text"];
 
@@ -70,6 +75,9 @@ namespace SteamCMDLauncher.UIComponents
             {
                 canBeBlank = (control["can_leave_blank"] == "True");
             }
+
+            if (control.ContainsKey("blank_alert"))
+                blank_error = control["blank_alert"];
 
             if (control.ContainsKey("type"))
             {
@@ -122,6 +130,7 @@ namespace SteamCMDLauncher.UIComponents
         {
             var new_ent = new GameSettingControl()
             {
+                name = this.name,
                 Heading = this.Heading,
                 Hint = this.Hint,
                 Command = this.Command,
@@ -129,7 +138,8 @@ namespace SteamCMDLauncher.UIComponents
                 PlaceHolder = this.PlaceHolder,
                 alert_message = this.alert_message,
                 Width = this.Width,
-                defaultValue = this.defaultValue
+                defaultValue = this.defaultValue,
+                blank_error = this.blank_error
             };
             new_ent.View_Dialog = this.View_Dialog;
             new_ent.ctrl = this.ctrl;
@@ -137,6 +147,8 @@ namespace SteamCMDLauncher.UIComponents
         }
 
         public string GetArg() => ctrl.GetParam();
+
+        public bool IsEmpty() => ctrl.IsEmpty;
 
         internal UIElement GetComponent()
         {

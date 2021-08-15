@@ -3,7 +3,8 @@
   // Key: Tab, Value: Children/Options
   // Hashtag: For translations (Hint to find the correct string for the current language)
   "setup": {
-    "target": "srcds.exe"
+    "target": "srcds.exe",
+    "precommands": "-game csgo -console"
   },
   "#General": {
     "Server_Name": {
@@ -26,24 +27,17 @@
       "alert": "#Server_Pass_Alert",
       "placeholder": "#Server_Pass_PlaceHolder"
     },
-    "Server_Tick": {
-      "text": "#Is_128_Tick",
-      "type": "check",
-      "default": false,
-      "hint": "#Is_128_Tick_Hint",
-      "returns": "64, 128",
-      "command": "tickrate $",
-      "command_prefix": "-"
-    },
-    "Server_Lan": {
-      "text": "#Is_Lan",
-      "type": "check",
-      "default": false,
-      "hint": "#Is_Lan_Hint",
-      "returns": "0, 1",
-      "command": "sv_lan $",
-      "command_prefix": "-"
-    },
+    "Auth_Token": {
+      "text": "#Server_Auth",
+      "type": "pass",
+      "can_leave_blank": false,
+      "hint": "#Server_Auth_Hint",
+      "width": 200,
+      "command": "sv_setsteamaccount \"$\"",
+      "command_prefix": "+",
+      "alert": "#Server_Auth_Alert",
+      "blank_alert":  "#Server_Auth_Empty"
+    },  
     "Server_Vac": {
       "text": "#Is_Vac",
       "type": "check",
@@ -69,9 +63,27 @@
       "text": "#MaxP",
       "type": "combo",
       "default": "1",
-      "combo-range": "1-50", 
-      "command": "maxplayers $",
-      "command_prefix": "+"
-    }
+      "combo-range": "1-50",
+      "command": "maxplayers_override $",
+      "command_prefix": "-"
+    },
+    "Server_Tick": {
+      "text": "#Is_128_Tick",
+      "type": "check",
+      "default": false,
+      "hint": "#Is_128_Tick_Hint",
+      "returns": "64, 128",
+      "command": "tickrate $",
+      "command_prefix": "-"
+    },
+    "Server_Lan": {
+      "text": "#Is_Lan",
+      "type": "check",
+      "default": false,
+      "hint": "#Is_Lan_Hint",
+      "returns": "0, 1",
+      "command": "sv_lan $",
+      "command_prefix": "-"
+    },
   }
 }

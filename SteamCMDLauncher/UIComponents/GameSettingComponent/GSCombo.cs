@@ -12,6 +12,15 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         private ComboBox cb;
 
         public GameSettingControl self { get; set; }
+        
+        public bool IsEmpty { 
+            get
+            {
+                if(cb is null) return true;
+
+                return false;
+            }
+        }
 
         private string dir_path;
         private string dir_parse;

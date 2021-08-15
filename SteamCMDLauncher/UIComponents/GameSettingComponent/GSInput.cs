@@ -11,6 +11,20 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
         public GameSettingControl self { get; set; }
 
+        public bool IsEmpty
+        {
+            get
+            {
+                if (tb is null) return true;
+
+                if (string.IsNullOrEmpty(tb.Text)) return true;
+
+                if (tb.Text.Length < 1) return true;
+
+                return false;
+            }
+        }
+
         public GSInput(GameSettingControl self)
         {
             this.self = self;
@@ -18,8 +32,9 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         }
 
         public Control GetComponent()
-        {    
-            tb.Text = self.defaultValue;
+        {
+            if (!string.IsNullOrEmpty(self.defaultValue))
+                tb.Text = self.defaultValue;
 
             if(!string.IsNullOrEmpty(self.PlaceHolder))
                 tb.SetValue(MaterialDesignThemes.Wpf.HintAssist.HintProperty, self.PlaceHolder);

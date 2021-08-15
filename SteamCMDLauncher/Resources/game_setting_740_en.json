@@ -15,5 +15,9 @@
 	"#Is_Vac_Hint": "Enables to server to use VAC for secuity, Disable if server intentions are to cheat/modify files",
 	"#Svr-Map": "Map",
 	"#Svr-Map-Hint": "Select the map to load when first launched - Can be changed running runtime.",
-	"#MaxP": "Max Players"
+	"#MaxP": "Max Players",
+	"#Server_Auth": "GSLT Token",
+	"#Server_Auth_Hint": "GSLT - Game Server Login Token\nNeeded to make server public",
+	"#Server_Auth_Alert": "A token is requried to allow others to connect to your server, Visit: www.steamcommunity.com/dev/managegameservers",
+	"#Server_Auth_Empty":  "GLST wasn't added or is empty - Please insert token to start the server."
 }

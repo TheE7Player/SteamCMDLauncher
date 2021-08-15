@@ -134,10 +134,8 @@ namespace SteamCMDLauncher
             }));
         }
 
-        private void ToggleServer_Click(object sender, RoutedEventArgs e)
+        private void ToggleRunButton()
         {
-            // Start/Stop Server button
-
             // Perform the toggle
             toggleServerState = !toggleServerState;
 
@@ -155,16 +153,50 @@ namespace SteamCMDLauncher
             // Cast the children object to 'TextBlock' then changes its text property based on the state given
             ((TextBlock)buttonState.Children[1]).Text = (toggleServerState) ? 
                 "Stop Server" : "Start Server";
+        }
 
+        private void ToggleServer_Click(object sender, RoutedEventArgs e)
+        {
+            // Start/Stop Server button
+            ToggleRunButton();
 
-            if(toggleServerState)
+            if (toggleServerState)
             {
-                string arg = gsm.GetRunArgs();
+                //Check if any fields that are required are filled
+                var any_required_empty = gsm.RequiredFields();
+
+                if(any_required_empty.Length > 0)
+                {
+                    var sb = new StringBuilder();
+
+                    sb.AppendLine("The following faults were caused by fields that require input:\n");
+                    
+                    foreach (var err in any_required_empty)
+                    {
+                        sb.AppendLine(err);
+                    }
+                    
+                    dh.OKDialog(sb.ToString());
+                    
+                    sb.Clear(); sb = null;
+                    
+                    ToggleRunButton();
+                    return;
+                }
+
+                var cmd = new Component.SteamCMD(gsm.GetExePath, false);
+
+                cmd.AddArgument(gsm.GetRunArgs(), gsm.GetPreArg);
 
                 timeStart = DateTime.Now;
-                Config.Log($"Running Server with Args: {arg}");
+                Config.Log($"Running Server with set Args");
 
                 tb_Status.Text = "Server Running";
+
+                cmd.Run();
+
+                // Pre-invoke the button, to update the UI state
+                ToggleServer.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             } 
             else
             {

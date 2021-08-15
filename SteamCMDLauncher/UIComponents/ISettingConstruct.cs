@@ -27,5 +27,10 @@ namespace SteamCMDLauncher.UIComponents
         /// </summary>
         /// <returns></returns>
         public abstract string GetParam();
+
+        /// <summary>
+        /// Turns if the component is empty, useful for components which cannot be left blank
+        /// </summary>
+        public abstract bool IsEmpty { get; }
     }
 }

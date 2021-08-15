@@ -11,6 +11,18 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
         public GameSettingControl self { get; set; }
 
+        public bool IsEmpty
+        {
+            get
+            {
+                if (pb is null) return true;
+
+                if (pb.Password.Length < 1) return true;
+
+                return false;
+            }
+        }
+
         public bool UsingAutoPass { get; set; }
 
         public string AutoPass { get; set; }
