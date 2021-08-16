@@ -46,7 +46,9 @@
       "returns": "insecure, _",
       "command": "$",
       "command_prefix": "-"
-    },
+    }
+  },
+  "#Misc": {
     "Server_Map": {
       "text": "#Svr-Map",
       "type": "combo",
@@ -56,9 +58,24 @@
       "hint": "#Svr-Map-Hint",
       "command": "map \"$\"",
       "command_prefix": "-"
-    }
-  },
-  "#Misc": {
+    },
+    "Server_GameMode": {
+      "text": "#SVR_GameMode",
+      "type": "combo",
+      "default": "Casual",
+      "combo-strict": {
+        "Casual": "game_type 0 +game_mode 0",
+        "Competitve": "game_type 0 +game_mode 1",
+        "Wingman": "game_type 0 +game_mode 2",
+        "Weapon Expert": "game_type 0 +game_mode 3",
+        "Arms Race": "game_type 1 +game_mode 0",
+        "Demolition": "game_type 1 +game_mode 1",
+        "Deathmatch": "game_type 1 +game_mode 2",
+        "Danger Zone": "game_type 6 +game_mode 0"
+      },
+      "command": "$",
+      "command_prefix": "+"
+    },
     "Max-Players": {
       "text": "#MaxP",
       "type": "combo",
@@ -84,6 +101,6 @@
       "returns": "0, 1",
       "command": "sv_lan $",
       "command_prefix": "-"
-    },
+    }
   }
 }

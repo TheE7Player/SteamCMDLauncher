@@ -19,5 +19,6 @@
 	"#Server_Auth": "GSLT Token",
 	"#Server_Auth_Hint": "GSLT - Game Server Login Token\nNeeded to make server public",
 	"#Server_Auth_Alert": "A token is requried to allow others to connect to your server, Visit: www.steamcommunity.com/dev/managegameservers",
-	"#Server_Auth_Empty":  "GLST wasn't added or is empty - Please insert token to start the server."
+	"#Server_Auth_Empty": "GLST wasn't added or is empty - Please insert token to start the server.",
+	"#SVR_GameMode":  "Game Mode"
 }

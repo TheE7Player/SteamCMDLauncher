@@ -35,10 +35,8 @@ namespace SteamCMDLauncher.UIComponents
 
         }
 
-        public GameSettingControl(string name, Dictionary<string, string> control)
+        private void SetDefaults(Dictionary<string, string> control)
         {
-            this.name = name;
-
             if (control.ContainsKey("text"))
                 Heading = control["text"];
 
@@ -69,6 +67,7 @@ namespace SteamCMDLauncher.UIComponents
             {
                 string prefex = control.ContainsKey("command_prefix") ? control["command_prefix"] : string.Empty;
                 Command = $"{prefex}{control["command"]}".Trim();
+                prefex = null;
             }
 
             if(control.ContainsKey("can_leave_blank"))
@@ -78,6 +77,16 @@ namespace SteamCMDLauncher.UIComponents
 
             if (control.ContainsKey("blank_alert"))
                 blank_error = control["blank_alert"];
+
+            
+        }
+
+        public GameSettingControl(string name, Dictionary<string, string> control)
+        {
+            this.name = name;
+            
+            //TODO: Does 'ref' have any form of good?
+            SetDefaults(control);
 
             if (control.ContainsKey("type"))
             {
@@ -91,12 +100,25 @@ namespace SteamCMDLauncher.UIComponents
                             if (control.ContainsKey("dir"))
                                 ((GSCombo)ctrl).SetComboDir(control["dir"]);
 
-                            if (control.ContainsKey("combo-target"))
-                                ((GSCombo)ctrl).SetComboPattern(control["combo-target"]);
+                            if(control.ContainsKey("combo-strict"))
+                            {
+                                Dictionary<string, string> dict = control["combo-strict"] // Get the string
+                                .Split(new[] { '\r', '\n' }) // Split by new line (return line)
+                                .Where(x => x.Length > 1) // Filter out empty space by getting > 1 len only
+                                .Select(y => y.Replace("\"", "").Replace(",", "") // Remove the string quotes, and commas
+                                .Split(':')) // Split based on the kv spliter
+                                .ToDictionary(result => result[0].Trim(), res => res[1].Trim()); // Then turn the split into a dictionary
+                                
+                                ((GSCombo)ctrl).SetStrictValues(dict);
+                            }
+                            else
+                            {
+                                if (control.ContainsKey("combo-target"))
+                                    ((GSCombo)ctrl).SetComboPattern(control["combo-target"]);
 
-                            if (control.ContainsKey("combo-range"))
-                                ((GSCombo)ctrl).SetNumberRange(control["combo-range"]);
-
+                                if (control.ContainsKey("combo-range"))
+                                    ((GSCombo)ctrl).SetNumberRange(control["combo-range"]);
+                            }
                         } break;
                     case "check": {
                             string[] val = null;
