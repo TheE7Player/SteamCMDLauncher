@@ -37,5 +37,11 @@ namespace SteamCMDLauncher.UIComponents
         /// Used when storing variables
         /// </summary>
         public abstract string SaveValue { get; }
+
+        /// <summary>
+        /// Loads a value from a config file
+        /// </summary>
+        /// <param name="value">Value to evaulate to the desired control</param>
+        public abstract void LoadValue(string value);
     }
 }

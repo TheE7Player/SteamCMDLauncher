@@ -150,6 +150,10 @@ namespace SteamCMDLauncher.UIComponents
 
         public bool IsEmpty() => ctrl.IsEmpty;
 
+        public string SaveValue() => ctrl.SaveValue;
+
+        public void LoadValue(string val) => ctrl.LoadValue(val);
+
         internal UIElement GetComponent()
         {
             if (ctrl is null) return null;

@@ -30,11 +30,20 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         public string SaveValue { 
             get {
 
-                var encr = new Component.Encryption();
+                if (IsEmpty) return null;
 
-                return encr.AES_Encrypt(pb.Password); 
-            
-            } }
+                Component.Encryption encr = new Component.Encryption();
+
+                return encr.AES_Encrypt(pb.Password);
+            } 
+        }
+
+        public void LoadValue(string value)
+        {
+            Component.Encryption encr = new Component.Encryption();
+
+            pb.Password = encr.AES_Decrypt(value);
+        }
 
         public GSPass(GameSettingControl self)
         {

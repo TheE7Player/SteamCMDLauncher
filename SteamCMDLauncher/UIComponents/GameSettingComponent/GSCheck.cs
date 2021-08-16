@@ -53,5 +53,17 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
             return self.Command;
         }
+
+        public void LoadValue(string value)
+        {
+            string r = value.ToLower().Trim();
+
+            switch (r)
+            {
+                case "true": cb.IsChecked = true; break;
+                case "false": cb.IsChecked = false; break;
+                default: Config.Log($"[GSM] Cannot parse Checkbox '{r}' - Setting false by default");  cb.IsChecked = false; break;
+            }
+        }
     }
 }

@@ -540,6 +540,39 @@ namespace SteamCMDLauncher
             return string.Empty;
         }
 
+        /// <summary>
+        /// Opens the file dialog, expecting the type requested only
+        /// </summary>
+        /// <param name="target_type">The file extension to find (.txt, .cfg etc)</param>
+        /// <returns>Absolute Path to the file, null if cancelled</returns>
+        public static string GetFile(string target_type)
+        {
+            var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
+
+            string target_dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "configs");
+
+            if (!Directory.Exists(target_dir))
+                Directory.CreateDirectory(target_dir);
+
+            dialog.InitialDirectory = target_dir;
+
+            dialog.Title = "Select the .cfg you need";
+            dialog.EnsureFileExists = true;
+            dialog.EnsurePathExists = true;
+
+            while (true)
+            {
+                if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
+                {
+                    if(Path.GetExtension(dialog.FileName) == target_type)
+                        return dialog.FileName;
+                }
+                else { break; }
+            }
+
+            return string.Empty;
+        }
+
         public static void Log(string text) => System.Diagnostics.Debug.WriteLine(text);
         #endregion
     }

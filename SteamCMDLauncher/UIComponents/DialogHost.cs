@@ -279,6 +279,37 @@ namespace SteamCMDLauncher.UIComponents
             if (forceOpenWhenCall) ShowDialog();
 
         }
+        
+        public void InputDialog(string title, string message, Action<string> result)
+        {
+            StackPanel MainPanel = new StackPanel();
+
+            Button btn = new Button() { Content = "Submit" };
+            TextBox tb = new TextBox() { Margin = new Thickness(5) };
+
+            MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
+
+            MainPanel.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 2) });
+
+            MainPanel.Children.Add(new Separator() { Margin = new Thickness(0, 0, 0, 5) });
+
+            MainPanel.Children.Add(new TextBlock { Text = message, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 8) });
+
+            MainPanel.Children.Add(tb);
+
+            btn.Click += (_, e) =>
+            {
+                result(tb.Text.Trim());
+                CloseDialog();
+            };
+
+            MainPanel.Children.Add(btn);
+
+            _dialog.DialogContent = MainPanel;
+
+            if (forceOpenWhenCall) ShowDialog();
+        }
+
         #endregion
     }
 }

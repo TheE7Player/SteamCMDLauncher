@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace SteamCMDLauncher
 {
@@ -170,7 +163,60 @@ namespace SteamCMDLauncher
 
         private void SaveConfig_Click(object sender, RoutedEventArgs e)
         {
+            //TODO: Make saving easier if pre-loaded
+
             // Save config button
+            string[] file = gsm.GetSafeConfig();
+
+            bool suitable = true;
+            string name = string.Empty;
+
+            dh.InputDialog("Save Configuration File", "The config file will be saved near the .exe location - what shall you call it?", new Action<string>((t) =>
+            {
+                // Validating if the name is suitable
+                suitable = t.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) < 0;
+                name = t;
+            }));
+
+            if(!suitable)
+            {
+                dh.OKDialog($"Couldn't accept '{name}' as it contains illegal characters for a file name\nTry again with a better one!");
+                return;
+            }
+
+            Config.Log("[CFG] Creating config file");
+
+            // Lets get the path sorted...
+            string cfg_path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "configs");
+
+            if (!Directory.Exists(cfg_path))
+                Directory.CreateDirectory(cfg_path);
+
+            string file_location = Path.Combine(cfg_path, $"{name}.cfg");
+
+            File.WriteAllLines(file_location, file);
+
+            dh.YesNoDialog("Reveal File", "The config file was successful!\nWould you like to access it directly right now?", new Action(() =>
+            {
+                System.Diagnostics.Process.Start("explorer.exe", file_location);
+            }));
+
+            file_location = null;
+            cfg_path = null;
+            name = null;
+            file = null;
+        }
+
+        private void LoadConfig_Click(object sender, RoutedEventArgs e)
+        {
+            // Load config file
+            string file = Config.GetFile(".cfg");
+            
+            if (string.IsNullOrEmpty(file)) return;
+
+            Config.Log("[CFG] Loading settings from config file");
+
+            gsm.SetConfigFiles(File.ReadAllLines(file));
         }
 
         private void ToggleRunButton()

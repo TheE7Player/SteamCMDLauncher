@@ -295,5 +295,50 @@ namespace SteamCMDLauncher.Component
 
             return r.ToArray();
         }
+
+        public string[] GetSafeConfig()
+        {
+            List<string> output = new List<string>();
+
+            output.Add("# Config - Please do not modify anyone (including the hash values) as it may corrupt it on load");
+            output.Add("# Only values that contain a default or added value will be amended");
+            
+            string safe_value = string.Empty;
+
+            foreach (var ctrl in componenets)
+            {
+                safe_value = ctrl.SaveValue();
+                
+                if (string.IsNullOrEmpty(safe_value)) continue;
+                
+                output.Add($"{ctrl.name}={safe_value}");
+            }
+
+            return output.ToArray();
+        }
+    
+        public void SetConfigFiles(string[] contents)
+        {
+            IEnumerable<string[]> iteration = contents
+                .Where(x => !x.StartsWith('#')) // Remove any lines with comments
+                .Select(x => x.Split(new[] { '=' }, 2));
+
+            foreach (string[] ctrl in iteration)
+            {
+                UIComponents.GameSettingControl elem = componenets.FirstOrDefault(x => x.name == ctrl[0]);
+
+                if(elem is null)
+                {
+                    Config.Log($"[CFG] Couldn't find control called '{ctrl[0]}' with value '{ctrl[1]}' - Double check this exists or wrong/old file!");
+                    continue;
+                }
+
+                Config.Log($"[CFG] Loading value for {elem.name}");
+                
+                elem.LoadValue(ctrl[1]);
+            }
+
+            Config.Log("[CFG] Loading has finished");
+        }
     }
 }

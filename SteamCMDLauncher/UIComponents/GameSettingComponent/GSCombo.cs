@@ -30,6 +30,18 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
         public string SaveValue { get { return cb.SelectedValue.ToString(); } }
 
+        public void LoadValue(string value)
+        {
+            //TODO: Check if such value exists in combo
+
+            var obj = cb.Items.Cast<object>().FirstOrDefault(x => string.Compare(x.ToString(), value) == 0);
+
+            if (obj is null)
+                cb.SelectedIndex = 0;
+            else
+                cb.SelectedIndex = cb.Items.IndexOf(obj);
+        }
+
         public GSCombo(GameSettingControl self)
         {
             this.self = self;
