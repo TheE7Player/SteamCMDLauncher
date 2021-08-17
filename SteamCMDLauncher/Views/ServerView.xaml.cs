@@ -37,8 +37,12 @@ namespace SteamCMDLauncher
 
         private DateTime timeStart;
 
+        public bool IsReady { get; private set; }
+        public string NotReadyReason { get; private set; }
+
         public ServerView(string id, string alias, string folder, string app_id = "")
         {
+            this.IsReady = false;
             this.id = id;
             this.alias = alias;
             this.appid = (string.IsNullOrEmpty(app_id)) ? string.Empty : app_id;
@@ -50,14 +54,23 @@ namespace SteamCMDLauncher
 
             gsm = new Component.GameSettingManager(appid, folder);
 
-            if(!gsm.ResourceFolderFound)
-                MessageBox.Show("Failed to find the resource folder - please ensure your not running outside the application folder!");
+            if (!gsm.ResourceFolderFound)
+            {
+                NotReadyReason = "Failed to find the resource folder - please ensure your not running outside the application folder!"; 
+                return; 
+            }
 
             if (!gsm.Supported)
-                MessageBox.Show("Game not supported yet");
+            {
+                NotReadyReason = "Game not supported yet"; 
+                return; 
+            }
 
             if (!gsm.LanguageSupported)
-                MessageBox.Show("The current config file for this game is in ENGLISH for now: Please contribrute to translating it!");
+            {
+                NotReadyReason = "The current config file for this game is in ENGLISH for now: Please contribrute to translating it!"; 
+                return; 
+            }
 
             InitializeComponent();
 
@@ -69,6 +82,8 @@ namespace SteamCMDLauncher
             gsm.View_Dialog += OnHint;
 
             this.dh = new UIComponents.DialogHostContent(RootDialog, true, true);
+
+            IsReady = true;
         }
 
         private void OnHint(string hint) => dh.OKDialog(hint);
@@ -293,15 +308,27 @@ namespace SteamCMDLauncher
 
         }
 
-        private void ReturnBack_Click(object sender, RoutedEventArgs e)
+        private void ReturnToHomePage()
         {
             this.id = null;
             this.alias = null;
 
             // Load the main window again
             main_view mv = new main_view();
+            mv.Closed += App.Window_Closed;
             mv.Show();
 
+            App.CancelClose = false;
+            //this.Close();
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            ReturnToHomePage();
+        }
+
+        private void ReturnBack_Click(object sender, RoutedEventArgs e)
+        {
             this.Close();
         }
     }

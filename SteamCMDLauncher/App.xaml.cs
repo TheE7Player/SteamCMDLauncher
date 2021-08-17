@@ -14,6 +14,8 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class App : Application
     {
+        public static bool CancelClose = false;
+
         private void Cleanup()
         {
             Window extra_min = new Views.extra();
@@ -21,7 +23,6 @@ namespace SteamCMDLauncher
             if(Keyboard.IsKeyDown(Key.RightShift))
             {
                 Console.Beep();
-                //System.Threading.Thread.Sleep(1000);
 
                 extra_min.ShowDialog();
             }
@@ -44,14 +45,15 @@ namespace SteamCMDLauncher
             else 
                 mainWindow = new main_view();
 
-            mainWindow.Show(); mainWindow.Focus();
+            mainWindow.Show();
+            mainWindow.Focus();
             mainWindow.Closed += Window_Closed;
         }
 
-        private void Window_Closed(object sender, EventArgs e)
+        public static void Window_Closed(object sender, EventArgs e)
         {
-            //Console.Beep();
-            Environment.Exit(0);
+            if (!CancelClose)
+            { Environment.Exit(0); }
         }
     }
 }

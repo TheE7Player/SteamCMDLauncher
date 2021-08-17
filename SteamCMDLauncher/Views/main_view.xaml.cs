@@ -69,28 +69,37 @@ namespace SteamCMDLauncher
 
         private void loadServerView(string id, string al)
         {
-            if(!(servers is null))
+            if (!(servers is null))
             {
-                if(!System.IO.Directory.Exists(servers[id][1]))
+                if (!System.IO.Directory.Exists(servers[id][1]))
                 {
                     HostDialog.OKDialog($"That server location ({servers[id][1]}) doesn't exist anymore!\nCorrect it but stating the new location from 'View Folder' button");
                     return;
                 }
-            } else
+            }
+            else
             {
                 HostDialog.OKDialog("Internal Problem - Not cached servers, fault with server dictionary");
                 return;
             }
-            
-            var app_id = servers[id][0];
-            var folder = servers[id][1];
-            servers = null;
-            
-            GC.Collect();
 
-            var server_window = new ServerView(id, al, folder, app_id);
-            server_window.Show();
-            this.Close();
+            string app_id = servers[id][0];
+            string folder = servers[id][1];
+
+            ServerView server_window = new ServerView(id, al, folder, app_id);
+
+            if (server_window.IsReady)
+            { 
+                server_window.Show();
+                servers = null;
+                GC.Collect();
+                app_id = null; folder = null;
+                App.CancelClose = true;
+                this.Close();
+            } else
+            {
+                HostDialog.OKDialog(server_window.NotReadyReason);
+            }
         }
 
         // Better over-head heap: -0.39KB (+824 objects)
