@@ -39,19 +39,19 @@ namespace SteamCMDLauncher
 
             Window mainWindow;
 
-            if (!Config.DatabaseExists && !Config.HasServers())
+            if (!Config.DatabaseExists || !Config.HasServers())
                 mainWindow = new Setup();
             else 
                 mainWindow = new main_view();
 
             mainWindow.Show(); mainWindow.Focus();
-            //mainWindow.Closed += Window_Closed;
+            mainWindow.Closed += Window_Closed;
         }
 
-        /*private void Window_Closed(object sender, EventArgs e)
+        private void Window_Closed(object sender, EventArgs e)
         {
-            // Code for after window closes goes here.
-            //MessageBox.Show("Goodbye World!");
-        }*/
+            //Console.Beep();
+            Environment.Exit(0);
+        }
     }
 }
