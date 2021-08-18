@@ -231,7 +231,26 @@ namespace SteamCMDLauncher
 
             Config.Log("[CFG] Loading settings from config file");
 
-            gsm.SetConfigFiles(File.ReadAllLines(file));
+            var LoadTask = Task.Run(async () =>
+            {
+                this.Dispatcher.Invoke(() =>
+                {
+                    dh.IsWaiting(false);
+                    dh.ShowBufferingDialog();
+                });
+                
+                await Task.Delay(1000);
+
+                this.Dispatcher.Invoke(() =>
+                {
+                    dh.IsWaiting(false);
+                    dh.ShowBufferingDialog();                   
+                    gsm.SetConfigFiles(File.ReadAllLines(file), new Action(() => {               
+                        dh.CloseDialog();
+                        dh.IsWaiting(true);
+                    }));
+                });
+            });
         }
 
         private void ToggleRunButton()

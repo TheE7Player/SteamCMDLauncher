@@ -308,6 +308,32 @@ namespace SteamCMDLauncher.UIComponents
             if (forceOpenWhenCall) ShowDialog();
         }
 
+        /// <summary>
+        /// Shows a rotating dialog with no text - used to show back-end progress tasks
+        /// </summary>
+        public void ShowBufferingDialog()
+        {
+            StackPanel stp = new StackPanel();
+            
+            stp.Margin = new Thickness(20);
+
+            ProgressBar pg = new ProgressBar()
+            {
+                Value = 0,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                IsIndeterminate = true
+            };
+            
+            // Turn the progressbar into a circular one
+            pg.SetResourceReference(Control.StyleProperty, "MaterialDesignCircularProgressBar");
+            
+            stp.Children.Add(pg);
+
+            _dialog.DialogContent = stp;
+
+            if (forceOpenWhenCall) ShowDialog();
+        }
+
         #endregion
     }
 }

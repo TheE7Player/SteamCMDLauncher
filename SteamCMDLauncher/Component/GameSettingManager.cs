@@ -137,7 +137,20 @@ namespace SteamCMDLauncher.Component
                 foreach (var ctrl in tab.Children<JObject>().Properties())
                 {
                     fixed_control_name = GetLangRef(ctrl.Name);
+                    
                     controls[fixed_name_tab].Add(fixed_control_name, new Dictionary<string, string>());
+                    
+                    if(ctrl.Value.GetType() == typeof(JArray))
+                    {
+                        JArray to_fix = (JArray)ctrl.Value;
+
+                        string output = string.Join('|', to_fix);
+
+                        controls[fixed_name_tab][fixed_control_name].Add(string.Empty, output);
+
+                        output = null; to_fix = null;
+                    }
+
                     foreach (var attr in ctrl.Children<JObject>().Properties())
                     {
                         controls[fixed_name_tab][fixed_control_name].Add(GetLangRef(attr.Name), GetLangRef(attr.Value.ToString()));
@@ -214,6 +227,15 @@ namespace SteamCMDLauncher.Component
 
         private void PassDialog(string hint) => View_Dialog.Invoke(hint);
 
+        private bool ValidateIO(string validate)
+        {
+            bool isFolder = !validate.Contains('.');
+
+            string entity = string.Concat(targetDictionary, validate);
+
+            return (isFolder) ? Directory.Exists(entity) : File.Exists(entity);
+        }
+
         public TabControl GetControls()
         {
             Config.Log("[GSM] Rendering the components to main view...");
@@ -237,6 +259,36 @@ namespace SteamCMDLauncher.Component
             {
                 // Add the tab category
                 currentTab.Header = tab.Key;
+
+                if(tab.Value.ContainsKey("validate-folder"))
+                {
+                    // Safely (Try-less catch) the files to validate
+                    if(!tab.Value["validate-folder"].TryGetValue(string.Empty, out string rule_set))
+                    {
+                        throw new Exception($"Broken 'validate-folder' rule from tab '{tab.Key}'");
+                    }
+
+                    // Set to false by default
+                    bool found = false;
+
+                    // Validate the files and folder
+                    foreach (string item in rule_set.Split('|'))
+                    {
+                        found = ValidateIO(item);
+
+                        if (found)
+                        {
+                            Config.Log($"[GSM] Found required file to enable {currentTab.Header} tab");
+                            break;
+                        }
+                    }
+
+                    if(!found)
+                    {
+                        Config.Log($"[GSM] Not found required file to enable {currentTab.Header} tab - disabling it");
+                        currentTab.IsEnabled = false;
+                    }
+                }
 
                 // Now we'll add the controls onto here
                 foreach (var ctrl in tab.Value)
@@ -306,7 +358,7 @@ namespace SteamCMDLauncher.Component
             return r.ToArray();
         }
 
-        public string[] GetSafeConfig()
+        public string[] GetSafeConfig(Action OnComplete = null)
         {
             List<string> output = new List<string>();
 
@@ -324,10 +376,12 @@ namespace SteamCMDLauncher.Component
                 output.Add($"{ctrl.name}={safe_value}");
             }
 
+            if (OnComplete != null) OnComplete();
+
             return output.ToArray();
         }
     
-        public void SetConfigFiles(string[] contents)
+        public void SetConfigFiles(string[] contents, Action OnComplete = null)
         {
             IEnumerable<string[]> iteration = contents
                 .Where(x => !x.StartsWith('#')) // Remove any lines with comments
@@ -349,6 +403,8 @@ namespace SteamCMDLauncher.Component
             }
 
             Config.Log("[CFG] Loading has finished");
+            
+            if (OnComplete != null) OnComplete();
         }
     }
 }

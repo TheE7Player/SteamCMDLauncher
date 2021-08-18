@@ -202,7 +202,7 @@ namespace SteamCMDLauncher
 
             installDialog.ShowDialog();
 
-            var t = Task.Run(async () =>
+            Task _ = Task.Run(async () =>
             {
                 cmd.PreRun();
 

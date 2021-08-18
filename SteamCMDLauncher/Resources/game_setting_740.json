@@ -11,7 +11,7 @@
       "text": "#Server_Name",
       "type": "input",
       "can_leave_blank": true,
-      "placeholder": "Counter-Strike: Global Offsensive",
+      "placeholder": "Counter-Strike: Global Offensive",
       "width": 300,
       "command": "hostname $",
       "command_prefix": "+"
@@ -103,7 +103,19 @@
       "command_prefix": "-"
     }
   },
-  "": {
-
+  "#SourceMod": {
+    "validate-folder": [
+      "\\csgo\\addons\\metamod\\sourcemod.vdf",
+      "\\csgo\\addons\\sourcemod\\"
+    ],
+    "SM_Admins": {
+      "text": "#SM-Admins",
+      "type": "input",
+      "can_leave_blank": true,
+      "placeholder": "\"STEAM_0:1:XXXXXXXX\" \"99:z\";\"STEAM_0:1:XXXXXXXX\" \"99:z\"",
+      "hint": "#SM-Admins-Hint",
+      "width": 600,
+      "write_to": "\\csgo\\addons\\sourcemod\\configs\\admins_simple.ini"
+    }
   }
 }
