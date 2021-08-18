@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SteamCMDLauncher.UIComponents
+﻿namespace SteamCMDLauncher.UIComponents
 {
     interface ISettingControl
     {

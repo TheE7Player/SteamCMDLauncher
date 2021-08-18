@@ -5,10 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 
 using Newtonsoft.Json.Linq;
-using Microsoft.WindowsAPICodePack.Dialogs;
-using System.IO;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 
 namespace SteamCMDLauncher
 {

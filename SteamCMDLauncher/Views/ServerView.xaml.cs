@@ -263,11 +263,11 @@ namespace SteamCMDLauncher
             if (toggleServerState)
             {
                 //Check if any fields that are required are filled
-                var any_required_empty = gsm.RequiredFields();
+                string[] any_required_empty = gsm.RequiredFields();
 
                 if(any_required_empty.Length > 0)
                 {
-                    var sb = new StringBuilder();
+                    StringBuilder sb = new StringBuilder();
 
                     sb.AppendLine("The following faults were caused by fields that require input:\n");
                     
@@ -278,9 +278,12 @@ namespace SteamCMDLauncher
                     
                     dh.OKDialog(sb.ToString());
                     
-                    sb.Clear(); sb = null;
+                    sb.Clear(); 
+                    
+                    sb = null;
                     
                     ToggleRunButton();
+
                     return;
                 }
 
@@ -289,6 +292,7 @@ namespace SteamCMDLauncher
                 cmd.AddArgument(gsm.GetRunArgs(), gsm.GetPreArg);
 
                 timeStart = DateTime.Now;
+
                 Config.Log($"Running Server with set Args");
 
                 tb_Status.Text = "Server Running";

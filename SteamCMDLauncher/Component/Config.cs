@@ -2,11 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
 using LiteDB;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace SteamCMDLauncher

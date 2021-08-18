@@ -102,5 +102,8 @@
       "command": "sv_lan $",
       "command_prefix": "-"
     }
+  },
+  "": {
+
   }
 }
