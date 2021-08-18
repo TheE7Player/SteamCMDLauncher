@@ -1,0 +1,35 @@
+﻿<Window x:Class="SteamCMDLauncher.Views.exception"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SteamCMDLauncher.Views"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Title="exception" Height="450" Width="800" WindowStyle="None" AllowsTransparency="True" Background="Transparent" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded">
+    <materialDesign:Card Margin="100" materialDesign:ShadowAssist.ShadowDepth="Depth4" UniformCornerRadius="12">
+        <StackPanel>
+           
+            <!-- Title Part -->
+            <StackPanel Orientation="Horizontal" Height="55" VerticalAlignment="Top" Margin="0,10,0,0" HorizontalAlignment="Center">
+                <materialDesign:PackIcon Kind="AlertCircle" Width="55" Height="55" Margin="10,0,10,0"/>
+                <TextBlock Style="{DynamicResource MaterialDesignHeadline5TextBlock}" VerticalAlignment="Center">Exception was not captured</TextBlock>
+            </StackPanel>
+            
+            <Separator Margin="0,10,0,10"></Separator>
+            
+            <StackPanel Margin="20,0,20,0">
+                <TextBlock Margin="0,0,0,10" x:Name="ExceptionType" Style="{DynamicResource MaterialDesignBody2TextBlock}">Exception Type: Exception</TextBlock>
+                <ScrollViewer Height="60" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible">
+                    <TextBlock x:Name="ExceptionMessage" Style="{DynamicResource MaterialDesignBody2TextBlock}" TextWrapping="Wrap">Message Type: Object was not found</TextBlock>
+                </ScrollViewer>
+                <TextBlock Margin="0,5,0,5" Style="{DynamicResource MaterialDesignBody3TextBlock}" HorizontalAlignment="Center">This exception has been logged to "/stderr". Please reference the file report to the error GitHub page.</TextBlock>
+            </StackPanel>
+            
+            <Button Width="100" Margin="0,10,0,0" HorizontalAlignment="Center" Click="Button_Click">Exit</Button>
+        </StackPanel>
+    </materialDesign:Card>
+</Window>

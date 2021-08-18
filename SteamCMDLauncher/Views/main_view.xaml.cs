@@ -96,7 +96,8 @@ namespace SteamCMDLauncher
                 app_id = null; folder = null;
                 App.CancelClose = true;
                 this.Close();
-            } else
+            } 
+            else
             {
                 HostDialog.OKDialog(server_window.NotReadyReason);
             }

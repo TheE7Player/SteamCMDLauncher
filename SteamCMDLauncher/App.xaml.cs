@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace SteamCMDLauncher
 {
@@ -15,6 +16,8 @@ namespace SteamCMDLauncher
     public partial class App : Application
     {
         public static bool CancelClose = false;
+
+        public static DateTime StartTime;
 
         private void Cleanup()
         {
@@ -30,6 +33,19 @@ namespace SteamCMDLauncher
 
         private void App_Startup(object sender, StartupEventArgs e)
         {
+
+            StartTime = DateTime.Now;
+
+            // Setting up exception handlers
+            Application.Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(AppDispatcherUnhandledException);
+
+            string stderr_loc = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "stderr");
+
+            if (!System.IO.Directory.Exists(stderr_loc))
+                System.IO.Directory.CreateDirectory(stderr_loc);
+
+            stderr_loc = null;
+
 #if RELEASE
             // Messagebox only shows IF the compiling is set to "RELEASE" / Production mode 
             MessageBox.Show("This program is in alpha stage and doesn't contain an updater - Keep up to date from GitHub or Discord Channel.");
@@ -48,6 +64,30 @@ namespace SteamCMDLauncher
             mainWindow.Show();
             mainWindow.Focus();
             mainWindow.Closed += Window_Closed;
+        }
+
+        void AppDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            // Show dialog if RELEASE only
+            #if RELEASE
+
+            ShowUnhandledException(e);    
+
+            #endif
+        }
+
+        void ShowUnhandledException(DispatcherUnhandledExceptionEventArgs e)
+        {
+            e.Handled = true;
+
+            Views.exception win = new Views.exception(e.Exception);
+
+            App.Current.MainWindow.Close();
+
+            win.ShowDialog();
+
+            Environment.Exit(0);
+
         }
 
         public static void Window_Closed(object sender, EventArgs e)

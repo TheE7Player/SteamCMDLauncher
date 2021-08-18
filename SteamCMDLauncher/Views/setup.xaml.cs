@@ -40,12 +40,12 @@ namespace SteamCMDLauncher
             {
                 var cmdLoc = Config.GetEntryByKey("cmd", Config.INFO_COLLECTION);
 
-                steamcmd_location = (!(cmdLoc is null)) ? cmdLoc.AsString : String.Empty;
+                steamcmd_location = (!(cmdLoc is null)) ? cmdLoc.AsString : string.Empty;
 
-                SteamCMDButton.IsEnabled = String.IsNullOrEmpty(steamcmd_location);
+                SteamCMDButton.IsEnabled = string.IsNullOrEmpty(steamcmd_location);
 
                 if (!SteamCMDButton.IsEnabled)
-                { 
+                {
                     SteamCMDButton.ToolTip = new ToolTip { Content = $"Already set to: {steamcmd_location}", IsOpen = true };
                     Card1.IsEnabled = true;
                 }
@@ -61,7 +61,7 @@ namespace SteamCMDLauncher
             string file = System.Text.Encoding.Default.GetString(SteamCMDLauncher.Properties.Resources.dedicated_server_list);
 
             JObject objectA = JObject.Parse(file);
-           
+            
             file = null;
 
             available_IDS = objectA["server"]
@@ -69,8 +69,8 @@ namespace SteamCMDLauncher
                 .Select(x => x.Value<int>("id")).ToArray();
 
             return objectA["server"]
-                .Children()              
-                .Select( x => x["game"].ToString() ).ToList();
+                .Children()
+                .Select(x => x["game"].ToString()).ToList();
         }
 
         private string Show_AG_Dialog(string[] games)
@@ -131,14 +131,16 @@ namespace SteamCMDLauncher
         #region Button Events
         // "SteamCMD Location"
         private void SteamCMD_Click(object sender, RoutedEventArgs e)
-        {
-            //steamcmd_location = Config.GetFolder("steamcmd.exe", "The given path doesn't contain the 'steamcmd.exe' to install the game files! Try agin.");
+        {        
             steamcmd_location = Config.GetFolder("steamcmd.exe", new Action(() =>
             {
                 var ui = new UIComponents.DialogHostContent(RootDialog);
                 ui.OKDialog("The given path doesn't contain the 'steamcmd.exe' to install the game files! Try agin.");
                 ui.ShowDialog();
+                this.Hide();
             }));
+            
+            this.Show();
 
             if (steamcmd_location.Length > 0)
             {
@@ -163,7 +165,7 @@ namespace SteamCMDLauncher
 
                 if (!Card3.IsEnabled)
                     Card3.IsEnabled = true;
-            }             
+            }
         }
 
         private void InstallServer_Click(object sender, RoutedEventArgs e)
