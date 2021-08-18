@@ -154,6 +154,13 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
         public string GetParam()
         {
+            // Validate if using strict mode
+            if(!(strict_val is null))
+            {
+                return self.Command.Replace("$", strict_val[cb.SelectedValue.ToString()]);
+            }
+
+
             return self.Command.Replace("$", cb.SelectedValue.ToString());
         }
     }

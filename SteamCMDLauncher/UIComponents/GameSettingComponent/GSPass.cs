@@ -55,7 +55,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
             Config.Log("[GSM] Generating Random Password");
 
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
 
             Random ran = new Random((int)DateTime.Now.Ticks);
 
@@ -64,16 +64,27 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
             int char_min = 33;
             int char_max = 126;
 
+            char selectedChar;
+
             for (int i = 0; sb.Length <= len; i++)
             {
-                sb.Append((char)ran.Next(char_min, char_max));
+                // Prevent unusual characters generating in auto-pass
+                while (true)
+                {
+                    selectedChar = (char)ran.Next(char_min, char_max);
+                    
+                    if(char.IsLetterOrDigit((selectedChar)))
+                        break;
+                }
+                
+                sb.Append(selectedChar);
             }
 
             AutoPass = sb.ToString();
 
             Config.Log("[GSM] Random password is set and waiting, if used.");
 
-            sb.Clear(); sb = null;
+            sb.Clear();
         }
 
         public Control GetComponent()

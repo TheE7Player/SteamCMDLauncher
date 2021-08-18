@@ -4,7 +4,7 @@
   // Hashtag: For translations (Hint to find the correct string for the current language)
   "setup": {
     "target": "srcds.exe",
-    "precommands": "-game csgo -console"
+    "precommands": "-game csgo -console +mapgroup mg_active"
   },
   "#General": {
     "Server_Name": {
@@ -13,8 +13,8 @@
       "can_leave_blank": true,
       "placeholder": "Counter-Strike: Global Offsensive",
       "width": 300,
-      "command": "hostname \"$\"",
-      "command_prefix": "-"
+      "command": "hostname $",
+      "command_prefix": "+"
     },
     "Password_SVR": {
       "text": "#Server_Pass",
@@ -22,8 +22,8 @@
       "can_leave_blank": true,
       "hint": "#Server_Pass_Hint",
       "width": 200,
-      "command": "sv_password \"$\"",
-      "command_prefix": "-",
+      "command": "sv_password $",
+      "command_prefix": "+",
       "alert": "#Server_Pass_Alert",
       "placeholder": "#Server_Pass_PlaceHolder"
     },
@@ -33,7 +33,7 @@
       "can_leave_blank": false,
       "hint": "#Server_Auth_Hint",
       "width": 200,
-      "command": "sv_setsteamaccount \"$\"",
+      "command": "sv_setsteamaccount $",
       "command_prefix": "+",
       "alert": "#Server_Auth_Alert",
       "blank_alert":  "#Server_Auth_Empty"
@@ -56,8 +56,8 @@
       "carry-dir": true,
       "combo-target": "\\csgo\\maps;*.bsp",
       "hint": "#Svr-Map-Hint",
-      "command": "map \"$\"",
-      "command_prefix": "-"
+      "command": "map $",
+      "command_prefix": "+"
     },
     "Server_GameMode": {
       "text": "#SVR_GameMode",
@@ -82,7 +82,7 @@
       "default": "1",
       "combo-range": "1-50",
       "command": "maxplayers_override $",
-      "command_prefix": "-"
+      "command_prefix": "+"
     },
     "Server_Tick": {
       "text": "#Is_128_Tick",
