@@ -7,7 +7,7 @@ namespace SteamCMDLauncher.Component
 {
     class Encryption
     {
-        // Orginal Owner: https://csharpcode.org/blog/simple-encryption-and-decryption-in-c/
+        // Original Owner: https://csharpcode.org/blog/simple-encryption-and-decryption-in-c/
 
         // [DON'T CHANGE - THIS WILL RESULT IN LOSS OF DATA]
         private static readonly byte[] fixed_pkey = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(getCPUID()));

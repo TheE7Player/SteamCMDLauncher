@@ -131,7 +131,7 @@ namespace SteamCMDLauncher.UIComponents
             icon.MouseEnter += (_, e) => { icon.Cursor = Cursors.Hand; };
             icon.MouseLeave += (_, e) => { icon.Cursor = Cursors.Arrow; };
 
-            // Now we sequently add the items into the panel
+            // Now we sequentially add the items into the panel
             panel.Children.Add(gameName);
             panel.Children.Add(seperator);
             panel.Children.Add(serverName);

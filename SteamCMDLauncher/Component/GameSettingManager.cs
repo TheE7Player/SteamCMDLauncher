@@ -10,8 +10,19 @@ namespace SteamCMDLauncher.Component
 {
     public class GameSettingManager
     {
+        /// <summary>
+        /// If the current game its processing its supported
+        /// </summary>
         public bool Supported { get; private set; }
+        
+        /// <summary>
+        /// If the '/resources/' folder is located near the exe path of execution
+        /// </summary>
         public bool ResourceFolderFound { get; private set; }
+        
+        /// <summary>
+        /// If the game config file supports the language of the user running the program
+        /// </summary>
         public bool LanguageSupported { get; private set; }
 
         private string targetExecutable;
@@ -25,6 +36,9 @@ namespace SteamCMDLauncher.Component
         public delegate void view_hint_dialog(string hint);
         public event view_hint_dialog View_Dialog;
 
+        /// <summary>
+        /// Get the exe path to launch the games dedicated server
+        /// </summary>
         public string GetExePath => Path.Combine(targetDictionary, targetExecutable);
 
         /// <summary>
@@ -93,7 +107,7 @@ namespace SteamCMDLauncher.Component
 
                 if (target_kv == null)
                 {
-                    Config.Log("[GSM] No existing \"precommands\" key found in json - Ignoring, this may cause lanuch issues!");
+                    Config.Log("[GSM] No existing \"precommands\" key found in json - Ignoring, this may cause launch issues!");
                     Supported = false; return;
                 }
 
@@ -114,7 +128,7 @@ namespace SteamCMDLauncher.Component
 
             foreach (var tab in iterable_fields)
             {
-                Config.Log($"[GSM] Hanlding {tab.Name}");
+                Config.Log($"[GSM] Handling {tab.Name}");
 
                 fixed_name_tab = GetLangRef(tab.Name);
 
@@ -218,7 +232,7 @@ namespace SteamCMDLauncher.Component
 
             List<UIComponents.GameSettingControl> compList = new List<UIComponents.GameSettingControl>();
 
-            // Now get the elemements
+            // Now get the elements
             foreach (var tab in controls)
             {
                 // Add the tab category

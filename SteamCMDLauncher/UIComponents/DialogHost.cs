@@ -19,7 +19,7 @@ namespace SteamCMDLauncher.UIComponents
         #endregion
 
         /// <summary>
-        /// Setups a object to create a programatic dialoghost
+        /// Setups a object to create a programmatic dialoghost
         /// </summary>
         /// <param name="dialog">The dialog to load the components from</param>
         /// <param name="waitForAction">If this is used to get user input, if so it will wait for a result (bool)</param>

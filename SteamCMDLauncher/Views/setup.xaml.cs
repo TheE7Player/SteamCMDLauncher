@@ -132,7 +132,7 @@ namespace SteamCMDLauncher
             steamcmd_location = Config.GetFolder("steamcmd.exe", new Action(() =>
             {
                 var ui = new UIComponents.DialogHostContent(RootDialog);
-                ui.OKDialog("The given path doesn't contain the 'steamcmd.exe' to install the game files! Try agin.");
+                ui.OKDialog("The given path doesn't contain the 'steamcmd.exe' to install the game files! Try again.");
                 ui.ShowDialog();
                 this.Hide();
             }));
@@ -184,7 +184,7 @@ namespace SteamCMDLauncher
 
             // Extra validation if the ID is 90 due to multiple games sharing them
 
-            // For the json, they increament to prevent duplicates
+            // For the json, they increment to prevent duplicates
             if (selectedGame_ID >= 90 && selectedGame_ID <= 99)
             {
                 switch (selectedGame)
@@ -249,7 +249,7 @@ namespace SteamCMDLauncher
                 var found_games = Config.FindGameID(folder_location);
                 string appid_loc = string.Empty;
 
-                // Creating the programic version of a dialog host (using MatieralDesigns)
+                // Creating the programmatic version of a dialog host (using MatieralDesigns)
                 if(found_games.Length > 0)
                 {
                     string found_game = Show_AG_Dialog(found_games);

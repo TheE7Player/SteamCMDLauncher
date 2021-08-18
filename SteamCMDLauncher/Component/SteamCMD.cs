@@ -113,7 +113,7 @@ namespace SteamCMDLauncher.Component
             process.StartInfo.CreateNoWindow = true;
             process.StartInfo.UseShellExecute = false;
 
-            // ID correction for mutliple games with same ID
+            // ID correction for multiple games with same ID
             if (id >= 90 && id <= 99)
             {
                 id = 90;

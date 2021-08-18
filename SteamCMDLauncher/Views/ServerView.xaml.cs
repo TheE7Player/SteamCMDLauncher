@@ -68,7 +68,7 @@ namespace SteamCMDLauncher
 
             if (!gsm.LanguageSupported)
             {
-                NotReadyReason = "The current config file for this game is in ENGLISH for now: Please contribrute to translating it!"; 
+                NotReadyReason = "The current config file for this game is in ENGLISH for now: Please contribute to translating it!"; 
                 return; 
             }
 

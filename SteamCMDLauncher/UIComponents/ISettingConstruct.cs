@@ -3,7 +3,7 @@
     interface ISettingConstruct
     {
         /// <summary>
-        /// The instace of the properties to read from/handle
+        /// The instance of the properties to read from/handle
         /// </summary>
         public abstract GameSettingControl self { get; set; }
         
@@ -37,7 +37,7 @@
         /// <summary>
         /// Loads a value from a config file
         /// </summary>
-        /// <param name="value">Value to evaulate to the desired control</param>
+        /// <param name="value">Value to evaluate to the desired control</param>
         public abstract void LoadValue(string value);
     }
 }

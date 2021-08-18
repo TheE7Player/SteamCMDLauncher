@@ -136,7 +136,7 @@ namespace SteamCMDLauncher.UIComponents
                             break;
                     }
                     default:
-                        Config.Log($"[GSM] Cannot find object instance for '{control["type"]}' - Ignoring that controll all together...");
+                        Config.Log($"[GSM] Cannot find object instance for '{control["type"]}' - Ignoring that control all together...");
                         break;
                 }
             }
