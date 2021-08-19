@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Timers;
+using System.Linq;
 
 namespace SteamCMDLauncher.Component
 {
@@ -28,9 +29,11 @@ namespace SteamCMDLauncher.Component
         /// Initializes the AFQ
         /// </summary>
         /// <param name="max_size">The max size to store, if hit max it auto-flushes</param>
-        /// <param name="max_wait_time">The max time to wait for another entity before flushing</param>
-        public AutoFlushQueue(int max_size, int max_wait_time = 4)
+        /// <param name="max_wait_time">The max time to wait for another entity before flushing (1s = 1000ms)</param>
+        public AutoFlushQueue(int max_size, int max_wait_time = 4000)
         {
+            Config.Log($"[AFQ] AutoFlushQueue has been generated with max size of: {max_size} and flush time of: {max_wait_time}ms");
+
             _queue = new T[max_size];
             pointer = 0; elements_assigned = 0;
 
@@ -57,13 +60,16 @@ namespace SteamCMDLauncher.Component
             _queue[pointer] = element;
             elements_assigned++;
             pointer++;
+
+            Config.Log("[AFQ] Element has been added");
         }
 
         private void DoFlush()
         {
-            T[] shallow_copy = new T[elements_assigned];
+            // Assign only elements that are not null
+            T[] shallow_copy = _queue.Where(x => x != null).ToArray();
 
-            Array.Copy(_queue, shallow_copy, elements_assigned);
+            Config.Log("[AFQ] DoFlush was called due to time schedule");
 
             OnFlushElapsed(shallow_copy);
 
