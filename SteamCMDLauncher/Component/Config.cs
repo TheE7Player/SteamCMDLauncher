@@ -32,7 +32,8 @@ namespace SteamCMDLauncher
             ServerRun = 3, ServerStop = 4, ServerError = 5, ServerValidate = 6, ServerUpdate = 7, ServerRemove = 8
         }
 
-        private static Queue<BsonDocument> LogQueue;
+        //private static Queue<BsonDocument> LogQueue;
+        private static Component.AutoFlushQueue<BsonDocument> LogQueue;
 
         //TODO: Make file if closing and stuff is still setting on LoqQueue (QueueRunner)
         private static Timer QueueRunner;
@@ -386,14 +387,8 @@ namespace SteamCMDLauncher
             }
         }
 
-        public static void RunLogQueue()
+        public static void RunLogQueue(BsonDocument[] elem)
         {
-            if (LogQueue is null) return;
-            if (LogQueue.Count == 0) return;
-
-            if(!(QueueRunner is null))
-                QueueRunner.Stop();
-
             db_error = string.Empty;
 
             ILiteCollection<BsonDocument> col;
@@ -401,15 +396,14 @@ namespace SteamCMDLauncher
             try
             {
                 Log("Runner Queue Log to DB");
+
                 using (var db = new LiteDatabase(db_location))
                 {
                     col = db.GetCollection(LOG_COLLECTION);
 
-                    BsonDocument item;
-                    while (LogQueue.Count > 0)
+                    for (int i = 0; i < elem.Length; i++)
                     {
-                        item = LogQueue.Dequeue();
-                        col.Insert(item);
+                        col.Insert(elem[0]);
                     }
 
                     col.EnsureIndex("svr_id");
@@ -423,6 +417,7 @@ namespace SteamCMDLauncher
     
         public static void AddLog(string id, LogType lType, string details)
         {
+            /*
             if (LogQueue is null)
                 LogQueue = new Queue<BsonDocument>();
 
@@ -439,6 +434,20 @@ namespace SteamCMDLauncher
             QueueRunner.Start();
 
             LogQueue.Enqueue(new BsonDocument
+            {
+                ["svr_id"] = id,
+                ["time"] = DateTime.Now.UTC_String(),
+                ["type"] = ((int)lType),
+                ["info"] = details
+            });*/
+
+            if (LogQueue is null)
+            { 
+                LogQueue = new Component.AutoFlushQueue<BsonDocument>(4);
+                LogQueue.OnFlushElapsed = RunLogQueue;
+            }
+
+            LogQueue.Add(new BsonDocument
             {
                 ["svr_id"] = id,
                 ["time"] = DateTime.Now.UTC_String(),
