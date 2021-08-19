@@ -34,12 +34,17 @@ namespace SteamCMDLauncher
             // Setting up exception handlers
             Application.Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(AppDispatcherUnhandledException);
 
-            string stderr_loc = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "stderr");
+            string file = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "stderr");
 
-            if (!System.IO.Directory.Exists(stderr_loc))
-                System.IO.Directory.CreateDirectory(stderr_loc);
+            if (!System.IO.Directory.Exists(file))
+                System.IO.Directory.CreateDirectory(file);
 
-            stderr_loc = null;
+            file = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+
+            if (!System.IO.Directory.Exists(file))
+                System.IO.Directory.CreateDirectory(file);
+
+            file = null;
 
 #if RELEASE
             // Messagebox only shows IF the compiling is set to "RELEASE" / Production mode 

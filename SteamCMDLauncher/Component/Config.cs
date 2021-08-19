@@ -15,7 +15,7 @@ namespace SteamCMDLauncher
 
         private static string db_error = string.Empty;
 
-        public const string INFO_COLLECTION = "ifo";        
+        public const string INFO_COLLECTION = "ifo";
         public const string LOG_COLLECTION = "lg";
         public const string SERVER_INFO_COLLECTION = "sci";
         public const string SERVER_ALIAS_COLLECTION = "sca";
@@ -37,6 +37,8 @@ namespace SteamCMDLauncher
         //TODO: Make file if closing and stuff is still setting on LoqQueue (QueueRunner)
         private static Timer QueueRunner;
         private const int QueueRunner_Wait = 4000;
+
+        private static string SessionFileName = string.Empty;
 
         #endregion
 
@@ -570,7 +572,28 @@ namespace SteamCMDLauncher
             return string.Empty;
         }
 
-        public static void Log(string text) => System.Diagnostics.Debug.WriteLine(text);
-        #endregion
+        public static void Log(string text) 
+        {
+            #if RELEASE
+                if(string.IsNullOrEmpty(SessionFileName))
+                {
+                    string logFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+
+                    if (!Directory.Exists(logFolder))
+                        Directory.CreateDirectory(logFolder);
+
+                    int currentNumber = Directory.GetFiles(logFolder).Length + 1;
+                    SessionFileName = Path.Combine(logFolder, $"scmdl_session_{currentNumber}.txt");
+                }
+
+                using (StreamWriter sw = File.AppendText(SessionFileName))
+                {
+                    sw.WriteLine($"[{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}] : {text}");
+                }
+            #else
+                System.Diagnostics.Debug.WriteLine(text);
+            #endif
+        }
+#endregion
     }
 }

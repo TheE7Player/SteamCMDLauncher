@@ -10,6 +10,7 @@ namespace SteamCMDLauncher.Component
 {
     public class GameSettingManager
     {
+        #region Properties/Variables
         /// <summary>
         /// If the current game its processing its supported
         /// </summary>
@@ -25,16 +26,13 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         public bool LanguageSupported { get; private set; }
 
-        private string targetExecutable;
-        private string targetDictionary;
-        private string PreArguments;
+        private string targetExecutable, targetDictionary, PreArguments;
 
         private Dictionary<string, string> language;
+        
         private Dictionary<string, Dictionary<string, Dictionary<string, string>>> controls;
+        
         private UIComponents.GameSettingControl[] componenets;
-
-        public delegate void view_hint_dialog(string hint);
-        public event view_hint_dialog View_Dialog;
 
         /// <summary>
         /// Get the exe path to launch the games dedicated server
@@ -45,7 +43,75 @@ namespace SteamCMDLauncher.Component
         /// Gets any additional arguments to append to the start if given by the json file
         /// </summary>
         public string GetPreArg => PreArguments;
+        
+        private void PassDialog(string hint) => View_Dialog.Invoke(hint);
+        
+        #endregion
 
+        #region Delegates and Events
+        public delegate void view_hint_dialog(string hint);
+        public event view_hint_dialog View_Dialog;
+        #endregion
+
+        /// <summary>
+        /// Sets up the folder on where it will executable and what settings to fetch
+        /// </summary>
+        /// <param name="appid">The id to get the correct .json to read the settings from</param>
+        /// <param name="folderLocation">The folder will the directory location to run the server from</param>
+        public GameSettingManager(string appid, string folderLocation)
+        {
+            var resource = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
+
+            if (!Directory.Exists(resource))
+            {
+                Config.Log($"[GSM] Resource folder was not found - Got '{resource}'");
+                Supported = false; ResourceFolderFound = false; return;
+            }
+
+            ResourceFolderFound = true;
+
+            // Store where the server folder is at root
+            if(!Directory.Exists(folderLocation))
+            {
+                Config.Log($"[GSM] Server Root Folder is invalid or missing - Got '{folderLocation}'");
+                Supported = false; return;
+            }
+            targetDictionary = folderLocation;
+            
+            // Get all the files in the current directory
+            var files = Directory.GetFiles(resource);
+
+            Supported = files.Any(x => x.EndsWith($"game_setting_{appid}.json"));
+
+            //TODO: Go language setting validation here (based on windows running language)
+            LanguageSupported = files.Any(x => x.EndsWith($"game_setting_{appid}_en.json"));
+
+            string langFile;
+
+            if (LanguageSupported)
+            {
+                langFile = files.First(x => x.EndsWith($"game_setting_{appid}_en.json"));
+                SetLanguage(langFile);
+            }
+
+            if (Supported)
+            {
+                langFile = files.First(x => x.EndsWith($"game_setting_{appid}.json"));
+
+                SetControls(langFile);
+            }
+
+            langFile = null;
+        }
+        
+        /// <summary>
+        /// Gets the current computer languages version of the referenced string
+        /// </summary>
+        /// <param name="ref_t">The reference string (#) to translate</param>
+        /// <returns>Returns its translated self if exists, else it returns its natural unedited form</returns>
+        private string GetLangRef(string ref_t) => (language.ContainsKey(ref_t)) ? language[ref_t] : ref_t;
+
+        #region Control Related
         private void SetLanguage(string path)
         {
             string lFile;
@@ -167,75 +233,6 @@ namespace SteamCMDLauncher.Component
             lFile = null; carry_dir = null;
         }
 
-        /// <summary>
-        /// Sets up the folder on where it will executable and what settings to fetch
-        /// </summary>
-        /// <param name="appid">The id to get the correct .json to read the settings from</param>
-        /// <param name="folderLocation">The folder will the directory location to run the server from</param>
-        public GameSettingManager(string appid, string folderLocation)
-        {
-            var resource = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
-
-            if (!Directory.Exists(resource))
-            {
-                Config.Log($"[GSM] Resource folder was not found - Got '{resource}'");
-                Supported = false; ResourceFolderFound = false; return;
-            }
-
-            ResourceFolderFound = true;
-
-            // Store where the server folder is at root
-            if(!Directory.Exists(folderLocation))
-            {
-                Config.Log($"[GSM] Server Root Folder is invalid or missing - Got '{folderLocation}'");
-                Supported = false; return;
-            }
-            targetDictionary = folderLocation;
-            
-            // Get all the files in the current directory
-            var files = Directory.GetFiles(resource);
-
-            Supported = files.Any(x => x.EndsWith($"game_setting_{appid}.json"));
-
-            //TODO: Go language setting validation here (based on windows running language)
-            LanguageSupported = files.Any(x => x.EndsWith($"game_setting_{appid}_en.json"));
-
-            string langFile;
-
-            if (LanguageSupported)
-            {
-                langFile = files.First(x => x.EndsWith($"game_setting_{appid}_en.json"));
-                SetLanguage(langFile);
-            }
-
-            if (Supported)
-            {
-                langFile = files.First(x => x.EndsWith($"game_setting_{appid}.json"));
-
-                SetControls(langFile);
-            }
-
-            langFile = null;
-        }
-
-        /// <summary>
-        /// Gets the current computer languages version of the referenced string
-        /// </summary>
-        /// <param name="ref_t">The reference string (#) to translate</param>
-        /// <returns>Returns its translated self if exists, else it returns its natural unedited form</returns>
-        private string GetLangRef(string ref_t) => (language.ContainsKey(ref_t)) ? language[ref_t] : ref_t;
-
-        private void PassDialog(string hint) => View_Dialog.Invoke(hint);
-
-        private bool ValidateIO(string validate)
-        {
-            bool isFolder = !validate.Contains('.');
-
-            string entity = string.Concat(targetDictionary, validate);
-
-            return (isFolder) ? Directory.Exists(entity) : File.Exists(entity);
-        }
-
         public TabControl GetControls()
         {
             Config.Log("[GSM] Rendering the components to main view...");
@@ -332,7 +329,18 @@ namespace SteamCMDLauncher.Component
 
             return returnControl;
         }
+        #endregion
 
+        #region Config Related
+        private bool ValidateIO(string validate)
+        {
+            bool isFolder = !validate.Contains('.');
+
+            string entity = string.Concat(targetDictionary, validate);
+
+            return (isFolder) ? Directory.Exists(entity) : File.Exists(entity);
+        }
+        
         public string GetRunArgs()
         {
             StringBuilder sb = new StringBuilder();
@@ -406,5 +414,6 @@ namespace SteamCMDLauncher.Component
             
             if (OnComplete != null) OnComplete();
         }
+        #endregion
     }
 }
