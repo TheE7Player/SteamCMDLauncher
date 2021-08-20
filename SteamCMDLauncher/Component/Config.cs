@@ -35,7 +35,7 @@ namespace SteamCMDLauncher
 
         //TODO: Make file if closing and stuff is still setting on LoqQueue (QueueRunner)
         private static Timer QueueRunner;
-        private const int QueueRunner_Wait = 4000;
+        private const int QueueRunner_Wait = 2000;
 
         private static string SessionFileName = string.Empty;
         private static readonly object db_lock = new object();
@@ -392,7 +392,7 @@ namespace SteamCMDLauncher
 
         public static void RunLogQueue(BsonDocument[] elem)
         {
-
+            if (elem is null) return;
 
             ILiteCollection<BsonDocument> col;
 
@@ -422,34 +422,10 @@ namespace SteamCMDLauncher
         }
     
         public static void AddLog(string id, LogType lType, string details)
-        {
-            /*
-            if (LogQueue is null)
-                LogQueue = new Queue<BsonDocument>();
-
-            if (QueueRunner is null)
-            { 
-                QueueRunner = new Timer(QueueRunner_Wait);
-                QueueRunner.AutoReset = true;
-                QueueRunner.Elapsed += (_, e) =>
-                {
-                    RunLogQueue();
-                };
-            }
-            
-            QueueRunner.Start();
-
-            LogQueue.Enqueue(new BsonDocument
-            {
-                ["svr_id"] = id,
-                ["time"] = DateTime.Now.UTC_String(),
-                ["type"] = ((int)lType),
-                ["info"] = details
-            });*/
-
+        {         
             if (LogQueue is null)
             { 
-                LogQueue = new Component.AutoFlushQueue<BsonDocument>(4, 2000);
+                LogQueue = new Component.AutoFlushQueue<BsonDocument>(4, QueueRunner_Wait);
                 LogQueue.OnFlushElapsed = RunLogQueue;
             }
 
