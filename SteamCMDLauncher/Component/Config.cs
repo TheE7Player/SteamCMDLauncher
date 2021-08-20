@@ -30,11 +30,7 @@ namespace SteamCMDLauncher
             ServerRun = 3, ServerStop = 4, ServerError = 5, ServerValidate = 6, ServerUpdate = 7, ServerRemove = 8
         }
 
-        //private static Queue<BsonDocument> LogQueue;
         private static Component.AutoFlushQueue<BsonDocument> LogQueue;
-
-        //TODO: Make file if closing and stuff is still setting on LoqQueue (QueueRunner)
-        private static Timer QueueRunner;
         private const int QueueRunner_Wait = 2000;
 
         private static string SessionFileName = string.Empty;
@@ -254,15 +250,17 @@ namespace SteamCMDLauncher
         {
             string file = System.Text.Encoding.Default.GetString(SteamCMDLauncher.Properties.Resources.dedicated_server_list);
 
-            Newtonsoft.Json.Linq.JObject objectA = Newtonsoft.Json.Linq.JObject.Parse(file);
+            Newtonsoft.Json.Linq.JObject jsonObject = Newtonsoft.Json.Linq.JObject.Parse(file);
 
             file = null;
 
-            return objectA["server"]
+            JToken GameEntity = jsonObject["server"]
                  .Children()
-                 .Where(x => x["id"].ToString() == id)
-                 .Single()
-                 .Value<string>("game");
+                 .FirstOrDefault(x => x["id"].ToString() == id);
+
+            jsonObject = null;
+
+            return GameEntity is null ? string.Empty : GameEntity["game"].ToString();
         }
 
         public static string GetCMDDirectory()

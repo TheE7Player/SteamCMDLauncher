@@ -24,7 +24,7 @@
         </materialDesign:DialogHost>
         <Grid Grid.Row="0">
             <TextBlock FontSize="36" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
-            <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">version 0.1</TextBlock>
+            <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">version 0.2</TextBlock>
             <Button Margin="1006,50,36,38" Click="NewServer_Click">Add Another Server</Button>
             <Button x:Name="RefreshServers" Margin="898,50,279,38" Click="RefreshServers_Click" >
                 <materialDesign:PackIcon Kind="RestartOff" Foreground="White" Height="25" Width="25"/>
