@@ -25,7 +25,7 @@
         </materialDesign:DialogHost>
         <Grid Grid.Row="0">
             <TextBlock FontSize="36" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
-            <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">version 0.1</TextBlock>
+            <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">Server View</TextBlock>
             <Button x:Name="ReturnBack" Margin="966,42,64,46" Click="ReturnBack_Click" Content="Return Back"/>
         </Grid>
         <Grid Grid.Row="1">

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Linq;
 
 namespace SteamCMDLauncher
 {
@@ -11,7 +12,7 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class main_view : Window
     {
-        Dictionary<string, string[]> servers;
+        Component.Struct.ServerCardInfo[] servers;
         UIComponents.DialogHostContent HostDialog;
 
         public main_view()
@@ -20,9 +21,11 @@ namespace SteamCMDLauncher
             if (App.CancelClose)
                 App.CancelClose = false;
 
-            servers = Config.GetServers();
+            servers = Config.GetServersNew();
 
             InitializeComponent();
+
+            AppVersion.Text = App.Version;
 
             HostDialog = new UIComponents.DialogHostContent(RootDialog, true, true);
 
@@ -31,18 +34,23 @@ namespace SteamCMDLauncher
             PopulateCards();
         }
 
+        private Component.Struct.ServerCardInfo GetServerByID(string id)
+        {
+            return servers.FirstOrDefault(x => x.Unique_ID == id);
+        }
+
         private void UpdateRefreshButton()
         {
             MaterialDesignThemes.Wpf.PackIcon refreshButtonIcon = (MaterialDesignThemes.Wpf.PackIcon)RefreshServers.Content;
 
-            refreshButtonIcon.Kind = (servers.Count > 0) ? 
+            refreshButtonIcon.Kind = (servers.Length > 0) ? 
                 MaterialDesignThemes.Wpf.PackIconKind.Restart :
                 MaterialDesignThemes.Wpf.PackIconKind.RestartOff;
 
-            RefreshServers.IsEnabled = servers.Count > 0;
+            RefreshServers.IsEnabled = servers.Length > 0;
         }
 
-        private void loadServerFolder(string id, string location)
+        private void LoadServerFolder(string id, string location)
         {
             string folder_location = string.Empty;
 
@@ -64,34 +72,36 @@ namespace SteamCMDLauncher
             System.Diagnostics.Process.Start("explorer.exe", location); 
         }
 
-        private void loadServerView(string id, string al)
+        private void LoadServerView(string id, string al)
         {
-            if (!(servers is null))
-            {
-                if (!System.IO.Directory.Exists(servers[id][1]))
-                {
-                    HostDialog.OKDialog($"That server location ({servers[id][1]}) doesn't exist anymore!\nCorrect it but stating the new location from 'View Folder' button");
-                    return;
-                }
-            }
-            else
+            if (servers is null)
             {
                 HostDialog.OKDialog("Internal Problem - Not cached servers, fault with server dictionary");
                 return;
             }
 
-            string app_id = servers[id][0];
-            string folder = servers[id][1];
+            Component.Struct.ServerCardInfo current_server = GetServerByID(id);
+            
+            if(current_server.IsEmpty)
+            {
+                HostDialog.OKDialog($"Problems attempting to find server id: {id}.\nThis is either a code fault or a database fault.");
+                return;
+            }
 
-            ServerView server_window = new ServerView(id, al, folder, app_id);
+            if (!System.IO.Directory.Exists(current_server.Folder))
+            {
+                HostDialog.OKDialog($"That server location ({current_server.Folder}) doesn't exist anymore!\nCorrect it but stating the new location from 'View Folder' button");
+                return;
+            }
+
+            ServerView server_window = new ServerView(id, al, current_server.Folder, current_server.GameID);
 
             if (server_window.IsReady)
             { 
-                server_window.Show();
+                server_window.Show();               
                 servers = null;
-                GC.Collect();
-                app_id = null; folder = null;
                 App.CancelClose = true;
+                GC.Collect();
                 this.Close();
             } 
             else
@@ -100,18 +110,17 @@ namespace SteamCMDLauncher
             }
         }
 
-        // Better over-head heap: -0.39KB (+824 objects)
         private void PopulateCards()
         {
             // Create a card instance
             var Card = new UIComponents.ServerCard();
 
-            Card.View_Server += loadServerView;
-            Card.View_Folder += loadServerFolder;
+            Card.View_Server += LoadServerView;
+            Card.View_Folder += LoadServerFolder;
 
             // Check if any updates are needed since last update
             if(Config.Require_Get_Server)
-                servers = Config.GetServers();
+                servers = Config.GetServersNew();
 
             // Textblock which shows if no servers were found
             TextBlock text = new TextBlock()
@@ -120,10 +129,10 @@ namespace SteamCMDLauncher
                 FontWeight = FontWeights.DemiBold, FontSize = 20, Foreground = new SolidColorBrush(Colors.White)
             };
 
-            ServerStack.VerticalAlignment = (servers?.Count == 0) ? VerticalAlignment.Top : VerticalAlignment.Center;
+            ServerStack.VerticalAlignment = (servers.Length == 0) ? VerticalAlignment.Top : VerticalAlignment.Center;
 
             // Loop over each record stored
-            if (servers?.Count == 0)
+            if (servers.Length == 0)
             {
                 ServerStack.Children.Add(text);
 
@@ -134,16 +143,9 @@ namespace SteamCMDLauncher
                 return;
             }
 
-            foreach (var item in servers)
+            foreach (Component.Struct.ServerCardInfo svr in servers)
             {
-                ServerStack.Children.Add(
-                    Card.CreateCard(
-                        Config.GetGameByAppId(item.Value[0]), // The games ID (740, 90 etc)
-                        item.Value[2], // The alias name if set by the user
-                        item.Value[1], // The folder of where the file is located
-                        item.Key // The _id from the database (unique id)
-                    )
-                );
+                ServerStack.Children.Add(Card.CreateCard(Config.GetGameByAppId(svr.GameID), svr.Alias, svr.Folder, svr.Unique_ID));
             }
 
             // Dereference the object as we don't need it anymore
@@ -152,7 +154,7 @@ namespace SteamCMDLauncher
             GC.WaitForFullGCComplete(); GC.Collect();
         }
 
-        private void refreshCards()
+        private void RefreshCards()
         {
             int len = ServerStack.Children.Count;
             for (int i = 0; i < len; i++)
@@ -174,14 +176,14 @@ namespace SteamCMDLauncher
             shown = !shown;
             if (shown) 
             { 
-                refreshCards(); 
+                RefreshCards(); 
                 UpdateRefreshButton(); 
             }
         }
 
         private void RefreshServers_Click(object sender, RoutedEventArgs e)
         {
-            refreshCards();
+            RefreshCards();
         }
     }
 }

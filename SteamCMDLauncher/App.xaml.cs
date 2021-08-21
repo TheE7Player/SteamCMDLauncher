@@ -12,6 +12,8 @@ namespace SteamCMDLauncher
     {
         public static bool CancelClose = false;
 
+        public static string Version = "Version 0.3";
+
         public static DateTime StartTime;
 
         private void Cleanup()

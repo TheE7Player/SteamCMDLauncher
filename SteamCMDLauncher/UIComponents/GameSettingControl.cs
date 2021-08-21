@@ -91,7 +91,15 @@ namespace SteamCMDLauncher.UIComponents
             {
                 switch (control["type"])
                 {
-                    case "input": ctrl = new GSInput(this); break;
+                    case "input": {                                 
+                            ctrl = new GSInput(this);
+
+                            if(control.ContainsKey("write_to"))
+                            {
+                                ((GSInput)ctrl).SetWritePath(control["write_to"]);
+                            }
+
+                        } break;
                     case "pass": ctrl = new GSPass(this); break;
                     case "combo": { 
                             ctrl = new GSCombo(this);
@@ -108,7 +116,9 @@ namespace SteamCMDLauncher.UIComponents
                                 .Split(':')) // Split based on the kv spliter
                                 .ToDictionary(result => result[0].Trim(), res => res[1].Trim()); // Then turn the split into a dictionary
                                 
-                                ((GSCombo)ctrl).SetStrictValues(dict);
+                                ((GSCombo)ctrl).SetStrictValues(new Dictionary<string, string>(dict));
+
+                                dict.Clear(); dict = null;
                             }
                             else
                             {
@@ -167,12 +177,16 @@ namespace SteamCMDLauncher.UIComponents
             return new_ent;
         }
 
-        public string GetArg() => ctrl.GetParam();
+        public string GetArg(string info = null) => ctrl.GetParam(info);
 
         public bool IsEmpty() => ctrl.IsEmpty;
 
         public string SaveValue() => ctrl.SaveValue;
 
+        public string GetStringType() => ctrl.GetControlType;
+
+        public T GetControlAsInstance<T>() => (T)ctrl;
+        
         public void LoadValue(string val) => ctrl.LoadValue(val);
 
         internal UIElement GetComponent()

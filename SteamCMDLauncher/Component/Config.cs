@@ -209,6 +209,57 @@ namespace SteamCMDLauncher
             }
         }
 
+        public static Component.Struct.ServerCardInfo[] GetServersNew()
+        {
+            Span<Component.Struct.ServerCardInfo> server_info = new Span<Component.Struct.ServerCardInfo>(new Component.Struct.ServerCardInfo[10]);
+
+            ILiteCollection<BsonDocument> col;
+            ILiteCollection<BsonDocument> aliases;
+            IEnumerable<BsonDocument> servers;
+            BsonDocument alias;
+
+            int spanIndex = 0;
+
+            try
+            {
+                lock (db_lock)
+                {
+                    using (var db = new LiteDatabase(db_location))
+                    {
+                        col = db.GetCollection(SERVER_INFO_COLLECTION);
+                        aliases = db.GetCollection(SERVER_ALIAS_COLLECTION);
+                        servers = col.FindAll();
+                      
+                        if (!(servers is null))
+                            foreach (BsonDocument item in servers)
+                            {
+                                alias = aliases.FindOne(Query.EQ("_id", item["_id"]));
+
+                                server_info[spanIndex] = new Component.Struct.ServerCardInfo()
+                                {
+                                    Unique_ID = item["_id"],
+                                    GameID = item["app_id"].RawValue.ToString(),
+                                    Folder = item["folder"],
+                                    Alias = alias is null ? string.Empty : alias["alias"].AsString
+                                };
+                                spanIndex++;                               
+                            }
+
+                        if (Require_Get_Server) Require_Get_Server = false;                      
+                    }
+                }
+            }
+            catch (Exception _)
+            {
+                throw new Exception(_.Message);
+            }
+
+            // Time to resize the span
+            server_info = server_info.Slice(0, spanIndex);
+
+            return server_info.ToArray();
+        }
+
         public static Dictionary<string, string[]> GetServers()
         {
             ILiteCollection<BsonDocument> col;
@@ -450,6 +501,7 @@ namespace SteamCMDLauncher
             bool found = false;
             string val;
             string joined_path;
+
             foreach (KeyValuePair<string, JToken> game in CurrentFiles)
             {
                 current_app_id = game.Key;
@@ -473,6 +525,9 @@ namespace SteamCMDLauncher
                 }
 
             }
+
+            val = null;
+            joined_path = null;
 
             return rList.ToArray();
         }

@@ -254,7 +254,7 @@ namespace SteamCMDLauncher.Component
             Config.Log("[GSM] Rendering the components to main view...");
 
             // Create the control
-            var returnControl = new TabControl();
+            TabControl returnControl = new TabControl();
 
             TabItem currentTab = new TabItem();
 
@@ -361,7 +361,26 @@ namespace SteamCMDLauncher.Component
         {
             StringBuilder sb = new StringBuilder();
 
-            foreach (var item in componenets) { sb.Append($"{item.GetArg()} "); }
+            char space = ' ';
+
+            foreach (var item in componenets) {
+
+                if(item.GetStringType() == "gsinput")
+                {
+                    UIComponents.GameSettingComponent.GSInput instance = item.GetControlAsInstance<UIComponents.GameSettingComponent.GSInput>();
+                    
+                    if(instance.WriteFilePath?.Length > 0)
+                        sb.Append(item.GetArg(targetDictionary));
+                    else
+                        sb.Append(item.GetArg());
+                }
+                else 
+                { 
+                    sb.Append(item.GetArg());
+                }
+
+                sb.Append(space);
+            }
 
             return sb.ToString();
         }

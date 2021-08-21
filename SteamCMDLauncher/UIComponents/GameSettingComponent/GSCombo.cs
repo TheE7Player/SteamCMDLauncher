@@ -11,7 +11,9 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         private ComboBox cb;
 
         public GameSettingControl self { get; set; }
-        
+
+        public string GetControlType => "gscombo";
+
         public bool IsEmpty {
             get
             {
@@ -151,11 +153,14 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
             self = null;
         }
 
-        public string GetParam()
+        public string GetParam(string info = null)
         {
             // Validate if using strict mode
             if(!(strict_val is null))
             {
+                if (strict_val.Count == 0)
+                    throw new Exception("GSCombo strict values were not assigned in HEAP. Coding fault!");
+
                 return self.Command.Replace("$", strict_val[cb.SelectedValue.ToString()]);
             }
 

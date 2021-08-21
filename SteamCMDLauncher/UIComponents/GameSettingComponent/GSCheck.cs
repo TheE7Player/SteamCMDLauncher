@@ -7,6 +7,8 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         CheckBox cb;
 
         public GameSettingControl self { get; set; }
+        public string GetControlType => "gscheck";
+
         private string[] valueReturn;
 
         // This component will not likely return true or false due to its nature
@@ -36,7 +38,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
             self = null;
         }
 
-        public string GetParam()
+        public string GetParam(string info = null)
         {
             if(valueReturn != null)
             {

@@ -10,6 +10,8 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
         public GameSettingControl self { get; set; }
 
+        public string GetControlType => "gspass";
+
         public bool IsEmpty
         {
             get
@@ -108,7 +110,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
             self = null;
         }
 
-        public string GetParam()
+        public string GetParam(string info = null)
         {
             return self.Command.Replace("$", UsingAutoPass ? AutoPass : pb.Password);
         }

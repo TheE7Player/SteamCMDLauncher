@@ -284,6 +284,7 @@ namespace SteamCMDLauncher
                 //Check if any fields that are required are filled
                 string[] any_required_empty = gsm.RequiredFields();
 
+                // If any fields that are required aren't filled, so an error stating which ones
                 if(any_required_empty.Length > 0)
                 {
                     StringBuilder sb = new StringBuilder();
