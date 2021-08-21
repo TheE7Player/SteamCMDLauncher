@@ -16,6 +16,10 @@ namespace SteamCMDLauncher
 
         public main_view()
         {
+            // App closing after select new server fix
+            if (App.CancelClose)
+                App.CancelClose = false;
+
             servers = Config.GetServers();
 
             InitializeComponent();

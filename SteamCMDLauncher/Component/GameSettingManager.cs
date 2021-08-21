@@ -5,6 +5,7 @@ using System.Linq;
 using System.IO;
 using Newtonsoft.Json.Linq;
 using System.Windows.Controls;
+using System.Globalization;
 
 namespace SteamCMDLauncher.Component
 {
@@ -60,7 +61,9 @@ namespace SteamCMDLauncher.Component
         /// <param name="folderLocation">The folder will the directory location to run the server from</param>
         public GameSettingManager(string appid, string folderLocation)
         {
-            var resource = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
+            string lang = GetLanguageType();
+
+            string resource = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
 
             if (!Directory.Exists(resource))
             {
@@ -76,32 +79,37 @@ namespace SteamCMDLauncher.Component
                 Config.Log($"[GSM] Server Root Folder is invalid or missing - Got '{folderLocation}'");
                 Supported = false; return;
             }
+
             targetDictionary = folderLocation;
-            
+
             // Get all the files in the current directory
-            var files = Directory.GetFiles(resource);
+            string[] files = Directory.GetFiles(resource);
+            string langFile = string.Empty;
 
-            Supported = files.Any(x => x.EndsWith($"game_setting_{appid}.json"));
+            string gameJson = $"game_setting_{appid}.json";
+            string langJson = $"game_setting_{appid}_{lang}.json";
 
-            //TODO: Go language setting validation here (based on windows running language)
-            LanguageSupported = files.Any(x => x.EndsWith($"game_setting_{appid}_en.json"));
+            Supported = files.Any(x => x.EndsWith(gameJson));
 
-            string langFile;
+            LanguageSupported = files.Any(x => x.EndsWith(langJson));
 
             if (LanguageSupported)
             {
-                langFile = files.First(x => x.EndsWith($"game_setting_{appid}_en.json"));
+                langFile = files.FirstOrDefault(x => x.EndsWith(langJson));
                 SetLanguage(langFile);
             }
 
             if (Supported)
             {
-                langFile = files.First(x => x.EndsWith($"game_setting_{appid}.json"));
-
+                langFile = files.FirstOrDefault(x => x.EndsWith(gameJson));
                 SetControls(langFile);
             }
 
             langFile = null;
+            files = null;
+            resource = null;
+            gameJson = null;
+            langJson = null;
         }
         
         /// <summary>
@@ -110,6 +118,15 @@ namespace SteamCMDLauncher.Component
         /// <param name="ref_t">The reference string (#) to translate</param>
         /// <returns>Returns its translated self if exists, else it returns its natural unedited form</returns>
         private string GetLangRef(string ref_t) => (language.ContainsKey(ref_t)) ? language[ref_t] : ref_t;
+
+        private string GetLanguageType()
+        {
+            // Get the current systems language
+            CultureInfo currentLang = CultureInfo.InstalledUICulture;
+            
+            // Get the 2 letters of that language selected
+            return currentLang.TwoLetterISOLanguageName;
+        }
 
         #region Control Related
         private void SetLanguage(string path)

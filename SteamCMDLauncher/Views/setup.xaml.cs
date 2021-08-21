@@ -27,6 +27,8 @@ namespace SteamCMDLauncher
         {
             first_time_run = firstrun;
 
+            App.CancelClose = true;
+
             InitializeComponent();
 
             ReturnBack.Visibility = (!first_time_run) ? Visibility.Visible : Visibility.Hidden;
