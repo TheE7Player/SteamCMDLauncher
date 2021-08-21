@@ -84,32 +84,31 @@ namespace SteamCMDLauncher.Component
 
             // Get all the files in the current directory
             string[] files = Directory.GetFiles(resource);
-            string langFile = string.Empty;
+            string langFile, gameFile = string.Empty;
 
             string gameJson = $"game_setting_{appid}.json";
             string langJson = $"game_setting_{appid}_{lang}.json";
 
-            Supported = files.Any(x => x.EndsWith(gameJson));
+            gameFile = files.FirstOrDefault(x => x.EndsWith(gameJson));
+            langFile = files.FirstOrDefault(x => x.EndsWith(langJson));
 
-            LanguageSupported = files.Any(x => x.EndsWith(langJson));
+            Supported = string.IsNullOrWhiteSpace(gameFile);
+            LanguageSupported = string.IsNullOrWhiteSpace(langFile);
 
             if (LanguageSupported)
             {
-                langFile = files.FirstOrDefault(x => x.EndsWith(langJson));
                 SetLanguage(langFile);
             }
 
             if (Supported)
             {
-                langFile = files.FirstOrDefault(x => x.EndsWith(gameJson));
-                SetControls(langFile);
+                SetControls(gameFile);
             }
 
-            langFile = null;
-            files = null;
-            resource = null;
-            gameJson = null;
-            langJson = null;
+            langFile = null; gameFile = null;
+            files = null; resource = null;
+            gameJson = null; langJson = null;
+            lang = null;
         }
         
         /// <summary>
