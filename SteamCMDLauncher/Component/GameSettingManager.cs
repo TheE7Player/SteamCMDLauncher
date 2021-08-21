@@ -92,8 +92,8 @@ namespace SteamCMDLauncher.Component
             gameFile = files.FirstOrDefault(x => x.EndsWith(gameJson));
             langFile = files.FirstOrDefault(x => x.EndsWith(langJson));
 
-            Supported = string.IsNullOrWhiteSpace(gameFile);
-            LanguageSupported = string.IsNullOrWhiteSpace(langFile);
+            Supported = !string.IsNullOrWhiteSpace(gameFile);
+            LanguageSupported = !string.IsNullOrWhiteSpace(langFile);
 
             if (LanguageSupported)
             {
