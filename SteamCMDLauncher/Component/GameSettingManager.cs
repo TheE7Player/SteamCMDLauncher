@@ -145,23 +145,25 @@ namespace SteamCMDLauncher.Component
         private void SetControls(string path)
         {
             Config.Log("[GSM] Got JSON to read properties from...");
-
-            string lFile;
-
+            
             // Remove any comments if any
-            lFile = String.Join(null, File.ReadAllLines(path)
-                .Where(x => !x.Contains("//"))
-                .ToArray());
+            string lFile = String.Join(null, File.ReadAllLines(path)
+            .Where(x => !x.Contains("//"))
+            .ToArray());
 
-            var cont = (JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(lFile);
+            JObject cont = (JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(lFile);
 
             controls = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
-      
-            if(cont.ContainsKey("setup"))
+            
+            lFile = null;
+
+            JToken target_kv;
+
+            if (cont.ContainsKey("setup"))
             {
                 Config.Log("[GSM] Parsing Setup Data...");
 
-                JToken target_kv = cont["setup"]["target"];
+                target_kv = cont["setup"]["target"];
 
                 if (target_kv == null)
                 {
@@ -185,7 +187,7 @@ namespace SteamCMDLauncher.Component
             {
                 Config.Log("[GSM] Fetching pre-commands set by game config json...");
 
-                JToken target_kv = cont["setup"]["precommands"];
+                target_kv = cont["setup"]["precommands"];
 
                 if (target_kv == null)
                 {
@@ -202,57 +204,84 @@ namespace SteamCMDLauncher.Component
 
             string fixed_name_tab;
             string fixed_control_name;
-
-            // [NEW] As non-hashtag now exists "setup", best to filter prior to iteration
-            IEnumerable<JProperty> iterable_fields = cont.Properties().Where(x => x.Name[0] == '#');
-
             string carry_dir = "carry-dir";
 
-            foreach (var tab in iterable_fields)
+            // [NEW] As non-hashtag now exists "setup", best to filter prior to iteration
+            IEnumerator<JProperty> iterable_fields = cont.Properties().Where(x => x.Name[0] == '#').GetEnumerator();
+
+            IEnumerator<JProperty> tab_control_parent = null;
+            IEnumerator<JProperty> tab_control_children = null;
+            JProperty tab = null;
+            JArray to_fix = null;
+
+            while(iterable_fields.MoveNext())
             {
+                // Get the property instance (control to created)
+                tab = iterable_fields.Current;
+                
                 Config.Log($"[GSM] Handling {tab.Name}");
 
+                // Get the translated text version of the control tab
                 fixed_name_tab = GetLangRef(tab.Name);
-
+                
+                // Add the control to the dictionary, and initialize the next information from the control attributes 
                 controls.Add(fixed_name_tab, new Dictionary<string, Dictionary<string, string>>());
 
-                foreach (var ctrl in tab.Children<JObject>().Properties())
+                // Now we get all the controls, this will be the parent of the children               
+                tab_control_parent = tab.Children<JObject>().Properties().GetEnumerator();
+
+                while(tab_control_parent.MoveNext())
                 {
-                    fixed_control_name = GetLangRef(ctrl.Name);
-                    
+                    // Get the components label in the users language (if support)
+                    fixed_control_name = GetLangRef(tab_control_parent.Current.Name);
+
+                    // Assign this to the control
                     controls[fixed_name_tab].Add(fixed_control_name, new Dictionary<string, string>());
-                    
-                    if(ctrl.Value.GetType() == typeof(JArray))
+
+                    // If the control type is just an array, assign the value and move on
+                    if (tab_control_parent.Current.Value.GetType() == typeof(JArray))
                     {
-                        JArray to_fix = (JArray)ctrl.Value;
+                        // Get the array object and cast it to an 'JArray' object
+                        to_fix = (JArray)tab_control_parent.Current.Value;
 
-                        string output = string.Join('|', to_fix);
-
-                        controls[fixed_name_tab][fixed_control_name].Add(string.Empty, output);
-
-                        output = null; to_fix = null;
+                        // Add to the control value
+                        controls[fixed_name_tab][fixed_control_name].Add(string.Empty, string.Join('|', to_fix));
                     }
 
-                    foreach (var attr in ctrl.Children<JObject>().Properties())
+                    // TODO: Should continue 'if' array is assigned?
+
+                    // Now we get the controls individual attributes
+                    tab_control_children = tab_control_parent.Current.Children<JObject>().Properties().GetEnumerator();
+
+                    while (tab_control_children.MoveNext())
                     {
-                        controls[fixed_name_tab][fixed_control_name].Add(GetLangRef(attr.Name), GetLangRef(attr.Value.ToString()));
-                    
+                        controls[fixed_name_tab][fixed_control_name].Add(
+                            GetLangRef(tab_control_children.Current.Name), 
+                            GetLangRef(tab_control_children.Current.Value.ToString()));
+
                         // If "carry_dir" key is present, pass in the root folder as value
-                        if(attr.Name == carry_dir)
+                        if(tab_control_children.Current.Name == carry_dir)
                         {
                             controls[fixed_name_tab][fixed_control_name].Add("dir", targetDictionary);
                         }
                     }
                 }
+
+                tab_control_children.Dispose();
+                tab_control_parent.Dispose();
             }
+
             Config.Log("[GSM] Handling Complete");
-            lFile = null; carry_dir = null;
+            tab = null;
+            tab_control_parent = null;
+            tab_control_children = null;
+            to_fix = null;
+
+            cont = null; lFile = null; carry_dir = null; iterable_fields = null; 
         }
 
         public TabControl GetControls()
         {
-            Config.Log("[GSM] Rendering the components to main view...");
-
             // Create the control
             TabControl returnControl = new TabControl();
 
@@ -337,11 +366,17 @@ namespace SteamCMDLauncher.Component
             }
 
             Config.Log("[GSM] Rendering complete");
-            controls = null; ctrl_apnd = null; ctrl_apnd = null;
+            controls = null; 
+            ctrl_apnd = null; 
+            ctrl_apnd = null;
 
             // Store reference it
             componenets = compList.ToArray();
-            compList.Clear(); compList = null;
+            compList = null;
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
 
             return returnControl;
         }
@@ -450,5 +485,22 @@ namespace SteamCMDLauncher.Component
             if (OnComplete != null) OnComplete();
         }
         #endregion
+
+        // Ensures that all objects created gets destroyed
+        public void Destory()
+        {
+
+            // Clear all possible strings
+            targetExecutable = null; 
+            targetDictionary = null; 
+            PreArguments = null;
+
+            // Clear the component array
+            componenets = null;
+
+            // Clear the language dictionary
+            language = null;
+            
+        }
     }
 }

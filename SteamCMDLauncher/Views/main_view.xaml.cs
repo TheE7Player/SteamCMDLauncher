@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -72,7 +71,7 @@ namespace SteamCMDLauncher
             System.Diagnostics.Process.Start("explorer.exe", location); 
         }
 
-        private void LoadServerView(string id, string al)
+        private void LoadServerView(string id)
         {
             if (servers is null)
             {
@@ -94,7 +93,7 @@ namespace SteamCMDLauncher
                 return;
             }
 
-            ServerView server_window = new ServerView(id, al, current_server.Folder, current_server.GameID);
+            ServerView server_window = new ServerView(id, current_server.Alias, current_server.Folder, current_server.GameID);
 
             if (server_window.IsReady)
             { 

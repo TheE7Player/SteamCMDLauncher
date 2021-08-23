@@ -334,8 +334,16 @@ namespace SteamCMDLauncher
 
         private void ReturnToHomePage()
         {
-            this.id = null;
-            this.alias = null;
+            id = null;
+            alias = null;
+            appid = null;
+            folder = null;
+
+            gsm.Destory();
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
 
             // Load the main window again
             main_view mv = new main_view();

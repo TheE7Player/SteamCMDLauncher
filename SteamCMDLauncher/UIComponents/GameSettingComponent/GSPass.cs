@@ -44,6 +44,8 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
             Component.Encryption encr = new Component.Encryption();
 
             pb.Password = encr.AES_Decrypt(value);
+
+            encr = null;
         }
 
         public GSPass(GameSettingControl self)
@@ -85,7 +87,8 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
             Config.Log("[GSM] Random password is set and waiting, if used.");
 
-            sb.Clear();
+            sb = null;
+            ran = null;
         }
 
         public Control GetComponent()
@@ -108,6 +111,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         public void Discard()
         {
             self = null;
+            pb = null;
         }
 
         public string GetParam(string info = null)

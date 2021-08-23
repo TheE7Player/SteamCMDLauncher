@@ -7,27 +7,27 @@ namespace SteamCMDLauncher.UIComponents
     public class ServerCard
     {
         #region Padding and Margins
-        private readonly Thickness card_padding = new Thickness(2, 10, 2, 5);
-        private readonly Thickness card_margin = new Thickness(10, 0, 10, 0);
+        private Thickness card_padding = new Thickness(2, 10, 2, 5);
+        private Thickness card_margin = new Thickness(10, 0, 10, 0);
 
-        private readonly Thickness btn_folder_margin = new Thickness(75, 5, 75, 10);
-        private readonly Thickness btn_view_margin = new Thickness(100, 0, 100, 0);
+        private Thickness btn_folder_margin = new Thickness(75, 5, 75, 10);
+        private Thickness btn_view_margin = new Thickness(100, 0, 100, 0);
 
-        private readonly Thickness pnl_game_title_margin = new Thickness(4, 0, 4, 10);
-        private readonly Thickness pnl_server_alias_margin = new Thickness(4, 0, 4, 40);
+        private Thickness pnl_game_title_margin = new Thickness(4, 0, 4, 10);
+        private Thickness pnl_server_alias_margin = new Thickness(4, 0, 4, 40);
 
-        private readonly Thickness sep_margin = new Thickness(0, 0, 0, 20);
+        private Thickness sep_margin = new Thickness(0, 0, 0, 20);
 
-        private readonly Thickness txt_game_margin = new Thickness(4, 0, 4, 10);
-        private readonly Thickness txt_alias_margin = new Thickness(4, 0, 4, 40);
+        private Thickness txt_game_margin = new Thickness(4, 0, 4, 10);
+        private Thickness txt_alias_margin = new Thickness(4, 0, 4, 40);
         
-        private readonly Thickness ico_margin = new Thickness(0, 0, 0, 10);
+        private Thickness ico_margin = new Thickness(0, 0, 0, 10);
         
         #endregion
 
         #region Cached variables
-        private const string btn_view_text = "View";
-        private const string btn_folder_text = "View Folder";
+        private string btn_view_text = "View";
+        private string btn_folder_text = "View Folder";
         
         private int server_count = 1;
         private readonly double WIDTH = 300;
@@ -37,7 +37,7 @@ namespace SteamCMDLauncher.UIComponents
 
         #region Events/Delegates
         // Function which describes how the event is triggered with arguments
-        public delegate void view_server_func(string unique_id, string alias);
+        public delegate void view_server_func(string unique_id);
 
         // Function which describes how the event triggers to open the server folder
         public delegate void view_folder(string unique_id, string location);
@@ -51,6 +51,15 @@ namespace SteamCMDLauncher.UIComponents
         {
             // Reset the server count if need be
             if (server_count > 1) server_count = 1;
+        }
+
+        ~ServerCard()
+        {
+            View_Folder -= View_Folder;
+            View_Server -= View_Server;
+
+            btn_view_text = null;
+            btn_folder_text = null;
         }
 
         public MaterialDesignThemes.Wpf.Card CreateCard(string game, string alias, string folder, string _id)
@@ -80,7 +89,7 @@ namespace SteamCMDLauncher.UIComponents
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = txt_game_margin
             };
-
+            
             string fixed_string = null;
 
             if (!string.IsNullOrEmpty(alias))
@@ -112,7 +121,7 @@ namespace SteamCMDLauncher.UIComponents
 
             // Add an event to the buttons
             viewButton.Click += (_, e) => { View_Folder?.Invoke(_id, folder);};
-            viewServer.Click += (_, e) => { View_Server?.Invoke(_id, fixed_string); };
+            viewServer.Click += (_, e) => { View_Server?.Invoke(_id); };
             
             bool folder_exists = System.IO.Directory.Exists(folder);
 
@@ -141,6 +150,14 @@ namespace SteamCMDLauncher.UIComponents
 
             // Append the panel to the card
             card.Content = panel;
+
+            // Do Any Cleanup
+            fixed_string = null;
+            icon = null;
+            panel = null;
+            viewButton = null; viewServer = null; 
+            gameName = null; serverName = null;
+            seperator = null;
 
             // Finish, time to return
             return card;

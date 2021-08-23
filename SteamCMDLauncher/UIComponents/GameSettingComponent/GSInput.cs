@@ -64,6 +64,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
         public void Discard()
         {
             self = null;
+            tb = null;
         }
 
         public string GetParam(string info = null)

@@ -35,6 +35,8 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
         public void Discard()
         {
+            cb = null;
+            valueReturn = null;
             self = null;
         }
 

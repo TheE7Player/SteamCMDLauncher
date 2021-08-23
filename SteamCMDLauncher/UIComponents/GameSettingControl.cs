@@ -29,55 +29,49 @@ namespace SteamCMDLauncher.UIComponents
 
         private ISettingConstruct ctrl;
 
+        // Destructor
+        ~GameSettingControl()
+        {
+            // Dereferencing all string/reference data types
+            Heading = null;
+            Hint = null;
+            Command = null;
+            defaultValue = null;
+            PlaceHolder = null;
+            name = null;
+            blank_error = null;
+            alert_message = null;
+
+            // Unhooking the event
+            if(View_Dialog != null)
+                View_Dialog -= View_Dialog;
+
+            if(ctrl != null) 
+            {
+                // Dereference any extra references in the object
+                string t_type = ctrl.GetControlType;
+                bool successful = false;
+                
+                switch (t_type)
+                {
+                    case "gsinput": GetControlAsInstance<GSInput>().Discard(); successful = true; break;
+                    case "gscheck": GetControlAsInstance<GSCheck>().Discard(); successful = true; break;
+                    case "gscombo": GetControlAsInstance<GSCombo>().Discard(); successful = true; break;
+                    case "gspass": GetControlAsInstance<GSPass>().Discard(); successful = true;  break;
+                }
+
+                if(!successful)
+                    throw new Exception($"[GSC] Unknown control type to parse to: {ctrl.GetControlType}");
+
+                t_type = null;
+                // Dereference the control
+                ctrl = null;
+            }
+        }
+
         public GameSettingControl()
         {
 
-        }
-
-        private void SetDefaults(Dictionary<string, string> control)
-        {
-            if (control.ContainsKey("text"))
-                Heading = control["text"];
-
-            if (control.ContainsKey("alert"))
-                alert_message = control["alert"];
-
-            if (control.ContainsKey("hint"))
-                Hint = control["hint"];
-
-            if (control.ContainsKey("default"))
-                defaultValue = control["default"];
-
-            if (control.ContainsKey("placeholder"))
-                PlaceHolder = control["placeholder"];
-
-            if (control.ContainsKey("width"))
-            {
-                if (!Double.TryParse(control["width"], out double w))
-                {
-                    Config.Log($"[GSM] Cannot accept width of '{control["width"]}' - Ignoring size...");
-                    Width = -1;
-                    return;
-                }
-                Width = w;
-            }
-            
-            if(control.ContainsKey("command"))
-            {
-                string prefex = control.ContainsKey("command_prefix") ? control["command_prefix"] : string.Empty;
-                Command = $"{prefex}{control["command"]}".Trim();
-                prefex = null;
-            }
-
-            if(control.ContainsKey("can_leave_blank"))
-            {
-                canBeBlank = (control["can_leave_blank"] == "True");
-            }
-
-            if (control.ContainsKey("blank_alert"))
-                blank_error = control["blank_alert"];
-
-            
         }
 
         public GameSettingControl(string name, Dictionary<string, string> control)
@@ -150,6 +144,52 @@ namespace SteamCMDLauncher.UIComponents
                         break;
                 }
             }
+        }
+        
+        private void SetDefaults(Dictionary<string, string> control)
+        {
+            if (control.ContainsKey("text"))
+                Heading = control["text"];
+
+            if (control.ContainsKey("alert"))
+                alert_message = control["alert"];
+
+            if (control.ContainsKey("hint"))
+                Hint = control["hint"];
+
+            if (control.ContainsKey("default"))
+                defaultValue = control["default"];
+
+            if (control.ContainsKey("placeholder"))
+                PlaceHolder = control["placeholder"];
+
+            if (control.ContainsKey("width"))
+            {
+                if (!Double.TryParse(control["width"], out double w))
+                {
+                    Config.Log($"[GSM] Cannot accept width of '{control["width"]}' - Ignoring size...");
+                    Width = -1;
+                    return;
+                }
+                Width = w;
+            }
+            
+            if(control.ContainsKey("command"))
+            {
+                string prefex = control.ContainsKey("command_prefix") ? control["command_prefix"] : string.Empty;
+                Command = $"{prefex}{control["command"]}".Trim();
+                prefex = null;
+            }
+
+            if(control.ContainsKey("can_leave_blank"))
+            {
+                canBeBlank = (control["can_leave_blank"] == "True");
+            }
+
+            if (control.ContainsKey("blank_alert"))
+                blank_error = control["blank_alert"];
+
+            
         }
 
         private void SetGrid(UIElement ctrl, int r, int c)
