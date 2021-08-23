@@ -9,7 +9,6 @@
 
         public bool IsEmpty => string.IsNullOrWhiteSpace(Unique_ID)
         || string.IsNullOrWhiteSpace(GameID)
-        || string.IsNullOrWhiteSpace(Alias)
         || string.IsNullOrWhiteSpace(Folder);
     }
 }

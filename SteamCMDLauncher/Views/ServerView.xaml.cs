@@ -16,6 +16,7 @@ namespace SteamCMDLauncher
         private System.Timers.Timer waitTime;
         private string id, alias, appid, folder;
         private bool prevent_update = false;
+        private string last_save_location;
 
         private string current_alias = string.Empty;
         public string Alias
@@ -118,7 +119,8 @@ namespace SteamCMDLauncher
                 waitTime.Stop();
                 waitTime.Interval = 1000;
                 prevent_update = true;
-            } else
+            } 
+            else
             {
                 if (prevent_update) prevent_update = false;
             }
@@ -186,17 +188,22 @@ namespace SteamCMDLauncher
             bool suitable = true;
             string name = string.Empty;
 
-            dh.InputDialog("Save Configuration File", "The config file will be saved near the .exe location - what shall you call it?", new Action<string>((t) =>
-            {
-                // Validating if the name is suitable
-                suitable = t.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) < 0;
-                name = t;
-            }));
+            bool first_save = string.IsNullOrEmpty(last_save_location);
 
-            if(!suitable)
-            {
-                dh.OKDialog($"Couldn't accept '{name}' as it contains illegal characters for a file name\nTry again with a better one!");
-                return;
+            if (first_save)
+            { 
+                dh.InputDialog("Save Configuration File", "The config file will be saved near the .exe location - what shall you call it?", new Action<string>((t) =>
+                {
+                    // Validating if the name is suitable
+                    suitable = t.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+                    name = t;
+                }));
+
+                if (!suitable)
+                {
+                    dh.OKDialog($"Couldn't accept '{name}' as it contains illegal characters for a file name\nTry again with a better one!");
+                    return;
+                }             
             }
 
             Config.Log("[CFG] Creating config file");
@@ -207,7 +214,10 @@ namespace SteamCMDLauncher
             if (!Directory.Exists(cfg_path))
                 Directory.CreateDirectory(cfg_path);
 
-            string file_location = Path.Combine(cfg_path, $"{name}.cfg");
+            string file_location = first_save ? Path.Combine(cfg_path, $"{name}.cfg") : last_save_location;
+            
+            if(string.IsNullOrEmpty(last_save_location) || !file_location.Same(last_save_location))
+                last_save_location = name;
 
             File.WriteAllLines(file_location, file);
 
@@ -220,6 +230,10 @@ namespace SteamCMDLauncher
             cfg_path = null;
             name = null;
             file = null;
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
 
         private void LoadConfig_Click(object sender, RoutedEventArgs e)
@@ -228,6 +242,8 @@ namespace SteamCMDLauncher
             string file = Config.GetFile(".cfg");
             
             if (string.IsNullOrEmpty(file)) return;
+
+            last_save_location = file;
 
             Config.Log("[CFG] Loading settings from config file");
 
@@ -244,7 +260,7 @@ namespace SteamCMDLauncher
                 this.Dispatcher.Invoke(() =>
                 {
                     dh.IsWaiting(false);
-                    dh.ShowBufferingDialog();                   
+                    dh.ShowBufferingDialog();      
                     gsm.SetConfigFiles(File.ReadAllLines(file), new Action(() => {               
                         dh.CloseDialog();
                         dh.IsWaiting(true);
@@ -338,8 +354,17 @@ namespace SteamCMDLauncher
             alias = null;
             appid = null;
             folder = null;
-
+            last_save_location = null;
+            current_alias = null;
+            
+            waitTime.Elapsed -= TimerElapsed;
+            waitTime.Dispose();
             gsm.Destory();
+            dh.Destory();
+           
+            dh = null;
+            gsm = null;
+            waitTime = null;
 
             GC.Collect();
             GC.WaitForPendingFinalizers();

@@ -93,6 +93,9 @@ namespace SteamCMDLauncher.UIComponents
             }
 
             _dialog.IsOpen = false;
+
+            _dialog.Content = null;
+
         }
 
         public void ShowDialog()
