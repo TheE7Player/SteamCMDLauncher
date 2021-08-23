@@ -22,6 +22,9 @@ namespace SteamCMDLauncher
 
             servers = Config.GetServersNew();
 
+            Component.EventHooks.View_Server += LoadServerView;
+            Component.EventHooks.View_Folder += LoadServerFolder;
+
             InitializeComponent();
 
             AppVersion.Text = App.Version;
@@ -42,11 +45,13 @@ namespace SteamCMDLauncher
         {
             MaterialDesignThemes.Wpf.PackIcon refreshButtonIcon = (MaterialDesignThemes.Wpf.PackIcon)RefreshServers.Content;
 
-            refreshButtonIcon.Kind = (servers.Length > 0) ? 
+            refreshButtonIcon.Kind = (servers.Length > 0) ?
                 MaterialDesignThemes.Wpf.PackIconKind.Restart :
                 MaterialDesignThemes.Wpf.PackIconKind.RestartOff;
 
             RefreshServers.IsEnabled = servers.Length > 0;
+
+            refreshButtonIcon = null;
         }
 
         private void LoadServerFolder(string id, string location)
@@ -97,10 +102,19 @@ namespace SteamCMDLauncher
 
             if (server_window.IsReady)
             { 
-                server_window.Show();               
                 servers = null;
                 App.CancelClose = true;
+
+                ServerStack = null;
+
+                HostDialog.Destory();
+                HostDialog = null;
+                
                 GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                
+                server_window.Show();
                 this.Close();
             } 
             else
@@ -112,10 +126,7 @@ namespace SteamCMDLauncher
         private void PopulateCards()
         {
             // Create a card instance
-            var Card = new UIComponents.ServerCard();
-
-            Card.View_Server += LoadServerView;
-            Card.View_Folder += LoadServerFolder;
+            UIComponents.ServerCard Card = new UIComponents.ServerCard();
 
             // Check if any updates are needed since last update
             if(Config.Require_Get_Server)
@@ -137,8 +148,9 @@ namespace SteamCMDLauncher
 
                 // Dereference the object as we don't need it anymore
                 Card = null; text = null;
-                GC.WaitForFullGCComplete(); GC.Collect();
-
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
                 return;
             }
 
@@ -149,8 +161,11 @@ namespace SteamCMDLauncher
 
             // Dereference the object as we don't need it anymore
             Card = null;
+            text = null;
 
-            GC.WaitForFullGCComplete(); GC.Collect();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
 
         private void RefreshCards()

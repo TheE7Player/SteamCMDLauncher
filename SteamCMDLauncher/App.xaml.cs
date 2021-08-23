@@ -12,7 +12,7 @@ namespace SteamCMDLauncher
     {
         public static bool CancelClose = false;
 
-        public static string Version = "Version 0.3";
+        public static string Version = "Version 0.4";
 
         public static DateTime StartTime;
 
@@ -26,6 +26,8 @@ namespace SteamCMDLauncher
 
                 extra_min.ShowDialog();
             }
+
+            extra_min = null;
         }
 
         private void App_Startup(object sender, StartupEventArgs e)
@@ -34,7 +36,7 @@ namespace SteamCMDLauncher
             StartTime = DateTime.Now;
 
             // Setting up exception handlers
-            Application.Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(AppDispatcherUnhandledException);
+            Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(AppDispatcherUnhandledException);
 
             string file = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "stderr");
 

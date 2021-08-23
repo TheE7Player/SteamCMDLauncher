@@ -79,7 +79,7 @@ namespace SteamCMDLauncher
 
             ServerGroupBox.Content = gsm.GetControls();
             
-            gsm.View_Dialog += OnHint;
+            Component.EventHooks.View_Dialog += OnHint;
 
             this.dh = new UIComponents.DialogHostContent(RootDialog, true, true);
 

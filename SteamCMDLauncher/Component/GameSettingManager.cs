@@ -45,13 +45,6 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         public string GetPreArg => PreArguments;
         
-        private void PassDialog(string hint) => View_Dialog.Invoke(hint);
-        
-        #endregion
-
-        #region Delegates and Events
-        public delegate void view_hint_dialog(string hint);
-        public event view_hint_dialog View_Dialog;
         #endregion
 
         /// <summary>
@@ -338,8 +331,6 @@ namespace SteamCMDLauncher.Component
                     Config.Log($"[GSM] Rendering {ctrl.Key}");
 
                     ctrl_apnd = new UIComponents.GameSettingControl(ctrl.Key, ctrl.Value);
-
-                    ctrl_apnd.View_Dialog += PassDialog;
 
                     ctrl_output = ctrl_apnd.GetComponent();
 

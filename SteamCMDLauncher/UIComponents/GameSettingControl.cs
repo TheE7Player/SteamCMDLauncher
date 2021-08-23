@@ -9,10 +9,6 @@ namespace SteamCMDLauncher.UIComponents
 {
     public class GameSettingControl : ISettingControl
     {
-
-        public delegate void view_hint_dialog(string hint);
-        public event view_hint_dialog View_Dialog;
-
         public string Heading { get ; set ; }
         public string Hint { get; set; }
         public string Command { get; set; }
@@ -43,8 +39,7 @@ namespace SteamCMDLauncher.UIComponents
             alert_message = null;
 
             // Unhooking the event
-            if(View_Dialog != null)
-                View_Dialog -= View_Dialog;
+            Component.EventHooks.UnhookHint();
 
             if(ctrl != null) 
             {
@@ -212,7 +207,6 @@ namespace SteamCMDLauncher.UIComponents
                 defaultValue = this.defaultValue,
                 blank_error = this.blank_error
             };
-            new_ent.View_Dialog = this.View_Dialog;
             new_ent.ctrl = this.ctrl;
             return new_ent;
         }
@@ -283,7 +277,7 @@ namespace SteamCMDLauncher.UIComponents
 
                 btn.Click += (_, e) =>
                 {
-                    View_Dialog.Invoke(Hint);
+                    Component.EventHooks.InvokeHint(Hint);
                 };
 
                 sp.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(20, GridUnitType.Auto) });

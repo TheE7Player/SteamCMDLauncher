@@ -35,18 +35,6 @@ namespace SteamCMDLauncher.UIComponents
         private readonly double ICON_SIZE = 25;
         #endregion
 
-        #region Events/Delegates
-        // Function which describes how the event is triggered with arguments
-        public delegate void view_server_func(string unique_id);
-
-        // Function which describes how the event triggers to open the server folder
-        public delegate void view_folder(string unique_id, string location);
-
-        // Event handler which prompts the invoke
-        public event view_server_func View_Server;
-        public event view_folder View_Folder;
-        #endregion
-
         public ServerCard()
         {
             // Reset the server count if need be
@@ -55,8 +43,7 @@ namespace SteamCMDLauncher.UIComponents
 
         ~ServerCard()
         {
-            View_Folder -= View_Folder;
-            View_Server -= View_Server;
+            Component.EventHooks.UnhookServerCardEvents();
 
             btn_view_text = null;
             btn_folder_text = null;
@@ -120,8 +107,8 @@ namespace SteamCMDLauncher.UIComponents
             viewServer = new Button { Content = btn_view_text, Margin = btn_view_margin };
 
             // Add an event to the buttons
-            viewButton.Click += (_, e) => { View_Folder?.Invoke(_id, folder);};
-            viewServer.Click += (_, e) => { View_Server?.Invoke(_id); };
+            viewButton.Click += (_, e) => { Component.EventHooks.InvokeServerCard(_id, folder);};
+            viewServer.Click += (_, e) => { Component.EventHooks.InvokeServerCard(_id); };
             
             bool folder_exists = System.IO.Directory.Exists(folder);
 
@@ -137,8 +124,8 @@ namespace SteamCMDLauncher.UIComponents
             icon.Padding = ico_margin;
 
             // These events change the cursor type
-            icon.MouseEnter += (_, e) => { icon.Cursor = Cursors.Hand; };
-            icon.MouseLeave += (_, e) => { icon.Cursor = Cursors.Arrow; };
+            icon.MouseEnter += (s, e) => { ((MaterialDesignThemes.Wpf.PackIcon)s).Cursor = Cursors.Hand; };
+            icon.MouseLeave += (s, e) => { ((MaterialDesignThemes.Wpf.PackIcon)s).Cursor = Cursors.Arrow; };
 
             // Now we sequentially add the items into the panel
             panel.Children.Add(gameName);
