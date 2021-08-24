@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Threading.Tasks;
 using System.IO;
+using System.Collections.Generic;
 
 namespace SteamCMDLauncher
 {
@@ -40,6 +41,8 @@ namespace SteamCMDLauncher
 
         public bool IsReady { get; private set; }
         public string NotReadyReason { get; private set; }
+
+        private Dictionary<string, string> config_files;
 
         public ServerView(string id, string alias, string folder, string app_id = "")
         {
@@ -180,7 +183,10 @@ namespace SteamCMDLauncher
 
         private void SaveConfig_Click(object sender, RoutedEventArgs e)
         {
-            //TODO: Make saving easier if pre-loaded
+            // Validate if any required files are needed fist
+
+            //Check if any fields that are required are filled
+            if (!ValidateInputs(true)) return;
 
             // Save config button
             string[] file = gsm.GetSafeConfig();
@@ -191,7 +197,7 @@ namespace SteamCMDLauncher
             bool first_save = string.IsNullOrEmpty(last_save_location);
 
             if (first_save)
-            { 
+            {
                 dh.InputDialog("Save Configuration File", "The config file will be saved near the .exe location - what shall you call it?", new Action<string>((t) =>
                 {
                     // Validating if the name is suitable
@@ -203,7 +209,7 @@ namespace SteamCMDLauncher
                 {
                     dh.OKDialog($"Couldn't accept '{name}' as it contains illegal characters for a file name\nTry again with a better one!");
                     return;
-                }             
+                }
             }
 
             Config.Log("[CFG] Creating config file");
@@ -236,18 +242,22 @@ namespace SteamCMDLauncher
             GC.Collect();
         }
 
-        private void LoadConfig_Click(object sender, RoutedEventArgs e)
+        private async Task<bool> LoadConfigFile(string file)
         {
-            // Load config file
-            string file = Config.GetFile(".cfg");
-            
-            if (string.IsNullOrEmpty(file)) return;
+            if (!File.Exists(file)) return false;
 
-            last_save_location = file;
+            string short_name;
 
-            Config.Log("[CFG] Loading settings from config file");
+            if (config_files is null)
+            { 
+                config_files = new Dictionary<string, string>(5);
+            }
+            else
+            {
+                if (config_files.ContainsValue(file) && ConfigBox_IgnoreInvokeEvent) return false;
+            }
 
-            var LoadTask = Task.Run(async () =>
+            await Task.Run(async () =>
             {
                 this.Dispatcher.Invoke(() =>
                 {
@@ -261,12 +271,46 @@ namespace SteamCMDLauncher
                 {
                     dh.IsWaiting(false);
                     dh.ShowBufferingDialog();      
-                    gsm.SetConfigFiles(File.ReadAllLines(file), new Action(() => {               
+                    gsm.SetConfigFiles(File.ReadAllLines(file), new Action(() => {
                         dh.CloseDialog();
                         dh.IsWaiting(true);
                     }));
                 });
+
+                short_name = Path.GetFileNameWithoutExtension(file);
+                
+                if (!config_files.ContainsKey(short_name))
+                    config_files.Add(short_name, file);
+
+                short_name = null;
             });
+
+            return true;
+        }
+
+        private async void LoadConfig_Click(object sender, RoutedEventArgs e)
+        {
+            // Load config file
+            string file = Config.GetFile(".cfg");
+            
+            if (string.IsNullOrEmpty(file)) return;
+
+            last_save_location = file;
+
+            Config.Log("[CFG] Loading settings from config file");
+
+            bool result = await LoadConfigFile(file);
+
+            if(!result)
+            {
+                Config.Log($"[LoadConfig] async returned false: \"{file}\"");
+                dh.OKDialog("That config file is missing or is already stored!\nIf loaded previously, use the ComboBox in the top right to load it in again.");
+                return;
+            }
+            
+            LoadConfigBox(file);
+            
+            file = null;
         }
 
         private void ToggleRunButton()
@@ -290,6 +334,42 @@ namespace SteamCMDLauncher
                 "Stop Server" : "Start Server";
         }
 
+        private bool ValidateInputs(bool toggleButton = false)
+        {
+            bool result = false;
+
+            //Check if any fields that are required are filled
+            string[] any_required_empty = gsm.RequiredFields();
+
+            // If any fields that are required aren't filled, so an error stating which ones
+            if (any_required_empty.Length > 0)
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.AppendLine("The following faults were caused by fields that require input:\n");
+
+                foreach (var err in any_required_empty)
+                {
+                    sb.AppendLine(err);
+                }
+
+                dh.OKDialog(sb.ToString());
+
+                sb.Clear();
+
+                sb = null;
+                any_required_empty = null;
+                
+                if(toggleButton) ToggleRunButton();
+            } 
+            else
+            {
+                result = true;
+            }
+ 
+            return result;
+        }
+
         private void ToggleServer_Click(object sender, RoutedEventArgs e)
         {
             // Start/Stop Server button
@@ -298,30 +378,7 @@ namespace SteamCMDLauncher
             if (toggleServerState)
             {
                 //Check if any fields that are required are filled
-                string[] any_required_empty = gsm.RequiredFields();
-
-                // If any fields that are required aren't filled, so an error stating which ones
-                if(any_required_empty.Length > 0)
-                {
-                    StringBuilder sb = new StringBuilder();
-
-                    sb.AppendLine("The following faults were caused by fields that require input:\n");
-                    
-                    foreach (var err in any_required_empty)
-                    {
-                        sb.AppendLine(err);
-                    }
-                    
-                    dh.OKDialog(sb.ToString());
-                    
-                    sb.Clear(); 
-                    
-                    sb = null;
-                    
-                    ToggleRunButton();
-
-                    return;
-                }
+                if (!ValidateInputs(true)) return;
 
                 var cmd = new Component.SteamCMD(gsm.GetExePath, false);
 
@@ -348,24 +405,108 @@ namespace SteamCMDLauncher
 
         }
 
+        #region Config Box Related
+
+        bool toggleColour = false;
+        bool ConfigBox_IgnoreInvokeEvent = true;
+
+        // Toggles between Black and White depending if the dropdown menu is option
+        private System.Windows.Media.Brush ChangeForeground_ConfigBox => ((toggleColour = !toggleColour)) ?
+            System.Windows.Media.Brushes.Black:
+            System.Windows.Media.Brushes.White;
+        
+        private void LoadConfigBox(string file_name)
+        {
+            if (!configBox.IsEnabled) configBox.IsEnabled = true;
+
+            string displayName = Path.GetFileNameWithoutExtension(file_name);
+
+            if (!configBox.Items.Contains(file_name))
+                configBox.Items.Add(displayName);
+
+            configStatus.Text = "Loaded";
+
+            // Tell the event we don't want to invoke it, as this will call the method twice!
+            ConfigBox_IgnoreInvokeEvent = true;
+
+            // Assign the combobox index
+
+            if (configBox.Items.Count == 1)
+            { configBox.SelectedIndex = 0; }
+            else
+            {
+                int idx = configBox.Items.IndexOf(displayName);
+                configBox.SelectedIndex = idx;
+            }
+
+            displayName = null;
+            file_name = null;
+        }
+
+        private async void configBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (configBox.Items.Count <= 1 || ConfigBox_IgnoreInvokeEvent) { ConfigBox_IgnoreInvokeEvent = false; return; }
+
+            string target = config_files[configBox.SelectedValue.ToString()];
+
+            bool result = await LoadConfigFile(target);
+
+            if (!result)
+            {
+                Config.Log($"[LoadConfig] async returned false: \"{target}\"");
+                dh.OKDialog("That config file is missing or is already stored!\nIf loaded previously, use the ComboBox in the top right to load it in again.");
+                return;
+            }
+
+            if (!last_save_location.Same(target))
+                last_save_location = target;
+
+            target = null;
+            e = null;
+            sender = null;
+        }
+
+        private void ToggleConfigBoxColour(object sender, EventArgs e)
+        {
+            configBox.Foreground = ChangeForeground_ConfigBox;
+            sender = null; e = null;
+        }
+        #endregion
+
         private void ReturnToHomePage()
         {
+            // Deference all string types
             id = null;
             alias = null;
             appid = null;
             folder = null;
             last_save_location = null;
             current_alias = null;
+            config_files = null;
             
+            // Use any method with its own deconstructors, events or disposable methods
             waitTime.Elapsed -= TimerElapsed;
+
+            configBox.DropDownClosed -= ToggleConfigBoxColour;
+            configBox.DropDownOpened -= ToggleConfigBoxColour;
+
             waitTime.Dispose();
             gsm.Destory();
             dh.Destory();
-           
+
+            // Nullify the objects now
             dh = null;
             gsm = null;
             waitTime = null;
 
+            // Dereferencing UI elements
+            configBox = null;
+            configStatus = null;
+            ServerAlias = null;
+            RootDialog = null;
+            ServerGroupBox = null;
+
+            // Perform forced GC collection to prevent memory leaks
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();

@@ -109,7 +109,7 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         /// <param name="ref_t">The reference string (#) to translate</param>
         /// <returns>Returns its translated self if exists, else it returns its natural unedited form</returns>
-        private string GetLangRef(string ref_t) => (language.ContainsKey(ref_t)) ? language[ref_t] : ref_t;
+        private string GetLangRef(string ref_t) => language.ContainsKey(ref_t) ? language[ref_t] : ref_t;
 
         private string GetLanguageType()
         {
@@ -380,7 +380,9 @@ namespace SteamCMDLauncher.Component
 
             string entity = string.Concat(targetDictionary, validate);
 
-            return (isFolder) ? Directory.Exists(entity) : File.Exists(entity);
+            validate = null;
+
+            return isFolder ? Directory.Exists(entity) : File.Exists(entity);
         }
         
         public string GetRunArgs()
@@ -413,6 +415,7 @@ namespace SteamCMDLauncher.Component
 
         public string[] RequiredFields()
         {
+            //TODO: Use Span? This list may cause a leak.
             List<string> r = new List<string>();
 
             foreach (UIComponents.GameSettingControl comp in componenets)

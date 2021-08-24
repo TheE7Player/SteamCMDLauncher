@@ -6,6 +6,7 @@
     <UseWPF>true</UseWPF>
     <StartupObject>SteamCMDLauncher.App</StartupObject>
     <Configurations>Debug;Release</Configurations>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

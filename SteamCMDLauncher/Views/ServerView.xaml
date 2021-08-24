@@ -28,26 +28,36 @@
             <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">Server View</TextBlock>
             <Button x:Name="ReturnBack" Margin="966,42,64,46" Click="ReturnBack_Click" Content="Return Back"/>
         </Grid>
-        <Grid Grid.Row="1">
-            <TextBox
-                Name="ServerAlias"
-                Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                VerticalAlignment="Top"
-                Height="55"
-                VerticalScrollBarVisibility="Hidden"
-                FontSize="16" Margin="42,10,812,0" Foreground="#FFECE3E3" KeyUp="ServerAlias_KeyUp"
-               >
-                <TextBox.Text>
-                    <Binding Path="Alias">
-                        <Binding.ValidationRules>
-                            <validate:ServerAliasValidation ValidatesOnTargetUpdated="True"/>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
-            <Button Click="DeleteServer_Click" Margin="470,-24,720,0" Width="75" Height="50" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <materialDesign:PackIcon Kind="Delete" Foreground="White" Width="35" Height="35"/>
-            </Button>
+        <Grid Grid.Row="1" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="321*"/>
+                <ColumnDefinition Width="319*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal">
+                <TextBox Grid.Column="0"
+                    Name="ServerAlias"
+                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                    VerticalAlignment="Top"
+                    Height="55"
+                    VerticalScrollBarVisibility="Hidden" Width="475"
+                    FontSize="16" Margin="42,10,20,0" Foreground="#FFECE3E3" KeyUp="ServerAlias_KeyUp"
+                   >
+                    <TextBox.Text>
+                        <Binding Path="Alias">
+                            <Binding.ValidationRules>
+                                <validate:ServerAliasValidation ValidatesOnTargetUpdated="True"/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <Button Grid.Column="0" Click="DeleteServer_Click" Margin="0,12,0,0" Width="74" Height="50" HorizontalAlignment="Center" VerticalAlignment="Top">
+                    <materialDesign:PackIcon Kind="Delete" Foreground="White" Width="35" Height="35"/>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="0,-30,10,0">
+                <TextBlock x:Name="configStatus" Style="{DynamicResource MaterialDesignBody3TextBlock}" Foreground="Wheat" FontSize="20" Text="No Config Loaded" VerticalAlignment="Center" Margin="10,0,20,0"/>
+                <ComboBox x:Name="configBox" Width="400" Foreground="White" IsEnabled="False" FontSize="15" SelectionChanged="configBox_SelectionChanged" DropDownOpened="ToggleConfigBoxColour" DropDownClosed="ToggleConfigBoxColour" />
+            </StackPanel>
         </Grid>
         <Grid Grid.Row="2">
             <StackPanel Orientation="Horizontal" Margin="25,0,25,20">
@@ -94,7 +104,7 @@
                     </StackPanel>
                 </GroupBox>
                 <GroupBox x:Name="ServerGroupBox" Header="Server Settings" Width="944">
-                   
+
                 </GroupBox>
             </StackPanel>
         </Grid>
