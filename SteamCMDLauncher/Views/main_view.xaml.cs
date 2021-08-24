@@ -14,25 +14,30 @@ namespace SteamCMDLauncher
         Component.Struct.ServerCardInfo[] servers;
         UIComponents.DialogHostContent HostDialog;
 
+        bool initEvents = false;
+
         public main_view()
         {
             // App closing after select new server fix
             if (App.CancelClose)
                 App.CancelClose = false;
 
+            Config.Log("Loaded Main Window");
+
+            Config.Log("Getting Servers");
             servers = Config.GetServersNew();
-
-            Component.EventHooks.View_Server += LoadServerView;
-            Component.EventHooks.View_Folder += LoadServerFolder;
-
+       
+            Config.Log("Initializing UI Components");
             InitializeComponent();
 
             AppVersion.Text = App.Version;
 
+            Config.Log("Setting up dialog host");
             HostDialog = new UIComponents.DialogHostContent(RootDialog, true, true);
 
             UpdateRefreshButton();
 
+            Config.Log("Populating Cards");
             PopulateCards();
         }
 
@@ -78,6 +83,7 @@ namespace SteamCMDLauncher
 
         private void LoadServerView(string id)
         {
+
             if (servers is null)
             {
                 HostDialog.OKDialog("Internal Problem - Not cached servers, fault with server dictionary");
@@ -109,14 +115,15 @@ namespace SteamCMDLauncher
 
                 HostDialog.Destory();
                 HostDialog = null;
-                
+                Component.EventHooks.UnhookServerCardEvents();
+
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
                 
                 server_window.Show();
                 this.Close();
-            } 
+            }
             else
             {
                 HostDialog.OKDialog(server_window.NotReadyReason);
@@ -131,6 +138,15 @@ namespace SteamCMDLauncher
             // Check if any updates are needed since last update
             if(Config.Require_Get_Server)
                 servers = Config.GetServersNew();
+
+            Config.Log("Hooking Button Events");
+
+            if(!initEvents)
+            {
+                Component.EventHooks.View_Server += LoadServerView;
+                Component.EventHooks.View_Folder += LoadServerFolder;
+                initEvents = true;
+            }
 
             // Textblock which shows if no servers were found
             TextBlock text = new TextBlock()

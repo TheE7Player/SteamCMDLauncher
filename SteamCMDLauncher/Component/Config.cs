@@ -615,24 +615,27 @@ namespace SteamCMDLauncher
             return string.Empty;
         }
 
-        public static void Log(string text) 
+        public static void Log(string text)
         {
             #if RELEASE
-                if(string.IsNullOrEmpty(SessionFileName))
-                {
-                    string logFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+            if(string.IsNullOrEmpty(SessionFileName))
+            {
+                string logFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
 
-                    if (!Directory.Exists(logFolder))
-                        Directory.CreateDirectory(logFolder);
+                if (!Directory.Exists(logFolder))
+                    Directory.CreateDirectory(logFolder);
 
-                    int currentNumber = Directory.GetFiles(logFolder).Length + 1;
-                    SessionFileName = Path.Combine(logFolder, $"scmdl_session_{currentNumber}.txt");
-                }
+                int currentNumber = Directory.GetFiles(logFolder).Length + 1;
+                SessionFileName = Path.Combine(logFolder, $"scmdl_session_{currentNumber}.txt");
 
-                using (StreamWriter sw = File.AppendText(SessionFileName))
-                {
-                    sw.WriteLine($"[{DateTime.Now.ToShortDateString()} {DateTime.Now.ToLongTimeString()}] : {text}");
-                }
+                logFolder = null;
+            }
+
+            using (StreamWriter sw = File.AppendText(SessionFileName))
+            {
+                DateTime now = DateTime.Now;
+                sw.WriteLine($"[{now.ToShortDateString()} {now.ToLongTimeString()}.{now.Millisecond}] : {text}");
+            }
             #else
                 System.Diagnostics.Debug.WriteLine(text);
             #endif

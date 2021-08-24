@@ -43,8 +43,6 @@ namespace SteamCMDLauncher.UIComponents
 
         ~ServerCard()
         {
-            Component.EventHooks.UnhookServerCardEvents();
-
             btn_view_text = null;
             btn_folder_text = null;
         }
@@ -141,8 +139,8 @@ namespace SteamCMDLauncher.UIComponents
             // Do Any Cleanup
             fixed_string = null;
             icon = null;
-            panel = null;
-            viewButton = null; viewServer = null; 
+            //panel = null;
+            //viewButton = null; viewServer = null; 
             gameName = null; serverName = null;
             seperator = null;
 
