@@ -15,12 +15,15 @@ namespace SteamCMDLauncher
         UIComponents.DialogHostContent HostDialog;
 
         bool initEvents = false;
+        bool out_of_date = false;
 
-        public main_view()
+        public main_view(bool update = false)
         {
             // App closing after select new server fix
             if (App.CancelClose)
                 App.CancelClose = false;
+
+            out_of_date = update;
 
             Config.Log("Loaded Main Window");
 
@@ -32,13 +35,16 @@ namespace SteamCMDLauncher
 
             AppVersion.Text = App.Version;
 
+            UpdateIcon.Visibility = update ? Visibility.Visible : Visibility.Hidden;
+            versionToolTip.Text = update ? "Your not running the latest version possible" : "Your running the latest version";
+
             Config.Log("Setting up dialog host");
             HostDialog = new UIComponents.DialogHostContent(RootDialog, true, true);
-
+            
             UpdateRefreshButton();
 
             Config.Log("Populating Cards");
-            PopulateCards();
+            PopulateCards();   
         }
 
         private Component.Struct.ServerCardInfo GetServerByID(string id)
@@ -78,7 +84,9 @@ namespace SteamCMDLauncher
                 } else { return; }
             }
             else
-            System.Diagnostics.Process.Start("explorer.exe", location); 
+                System.Diagnostics.Process.Start("explorer.exe", location);
+
+            folder_location = null;
         }
 
         private void LoadServerView(string id)
@@ -107,7 +115,7 @@ namespace SteamCMDLauncher
             ServerView server_window = new ServerView(id, current_server.Alias, current_server.Folder, current_server.GameID);
 
             if (server_window.IsReady)
-            { 
+            {
                 servers = null;
                 App.CancelClose = true;
 
@@ -115,6 +123,7 @@ namespace SteamCMDLauncher
 
                 HostDialog.Destory();
                 HostDialog = null;
+                UpdateIcon = null;
                 Component.EventHooks.UnhookServerCardEvents();
 
                 GC.Collect();
@@ -204,16 +213,32 @@ namespace SteamCMDLauncher
         private void Window_StateChanged(object sender, EventArgs e)
         {
             shown = !shown;
-            if (shown) 
-            { 
-                RefreshCards(); 
-                UpdateRefreshButton(); 
+            if (shown)
+            {
+                RefreshCards();
+                UpdateRefreshButton();
             }
         }
 
         private void RefreshServers_Click(object sender, RoutedEventArgs e)
         {
             RefreshCards();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Config.Log("Window has been fully loaded");
+
+            if (out_of_date)
+            {
+                HostDialog.YesNoDialog("Update is due",
+                "The program identified your not running the latest version possible.\nWould you like to view the page to get the latest version?",
+                new Action(() =>
+                {
+                    // On "Yes" Button press
+                    System.Diagnostics.Process.Start("explorer.exe", "https://github.com/TheE7Player/SteamCMDLauncher/releases");
+                }));
+            }
         }
     }
 }

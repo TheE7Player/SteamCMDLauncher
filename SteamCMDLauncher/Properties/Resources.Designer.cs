@@ -22,7 +22,7 @@ namespace SteamCMDLauncher.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace SteamCMDLauncher.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SteamCMDLauncher.Properties.Resources", typeof(Resources).Assembly);
@@ -51,7 +51,7 @@ namespace SteamCMDLauncher.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,7 +63,7 @@ namespace SteamCMDLauncher.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] dedicated_server_list {
+        public static byte[] dedicated_server_list {
             get {
                 object obj = ResourceManager.GetObject("dedicated_server_list", resourceCulture);
                 return ((byte[])(obj));
@@ -75,31 +75,39 @@ namespace SteamCMDLauncher.Properties {
         ///{
         ///  // Key: Tab, Value: Children/Options
         ///  // Hashtag: For translations (Hint to find the correct string for the current language)
-        ///
+        ///  &quot;setup&quot;: {
+        ///    &quot;target&quot;: &quot;srcds.exe&quot;,
+        ///    &quot;precommands&quot;: &quot;-game csgo -console +mapgroup mg_active&quot;
+        ///  },
         ///  &quot;#General&quot;: {
-        ///    &quot;#Server_Name&quot;: {
+        ///    &quot;Server_Name&quot;: {
         ///      &quot;text&quot;: &quot;#Server_Name&quot;,
         ///      &quot;type&quot;: &quot;input&quot;,
         ///      &quot;can_leave_blank&quot;: true,
-        ///      &quot;default&quot;: &quot;Counter-Strike: Global Offsensive&quot;
-        ///    },
-        ///    &quot;#Server_Tick&quot;: {
-        ///      &quot;text&quot;: &quot;#Is_128_Tick&quot;,
-        ///      &quot;type&quot;: &quot;check&quot;,
-        ///      &quot;default&quot;: false,
-        ///      &quot;hint&quot;:  &quot;#Is_128_Tick_Hint&quot;
-        ///   [rest of string was truncated]&quot;;.
+        ///      &quot;placeholder&quot;: &quot;Counter-Strike: Global Offensive&quot;,
+        ///      &quot;width&quot;: 300,
+        ///      &quot;command&quot;:  [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string game_setting_740 {
+        public static string game_setting_740 {
             get {
                 return ResourceManager.GetString("game_setting_740", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to // Language Game Settings for CSGO (740 - Parent 730)
+        ///{
+        ///	&quot;#General&quot;: &quot;General&quot;,
+        ///	&quot;#Misc&quot;: &quot;Misc&quot;,
+        ///	&quot;#Server_Name&quot;: &quot;Server Name&quot;,
+        ///	&quot;#Is_128_Tick&quot;: &quot;Is 128 Tick&quot;,
+        ///	&quot;#Is_128_Tick_Hint&quot;: &quot;If true, it will run the server on 128 tick - 64 tick if unchecked.&quot;,
+        ///	&quot;#Is_Lan&quot;: &quot;LAN only&quot;,
+        ///	&quot;#Is_Lan_Hint&quot;: &quot;Prevent the server from hosting publicly, only people with router access can join&quot;,
+        ///	&quot;#Server_Pass&quot;: &quot;Server Password&quot;,
+        ///	&quot;#Server_Pass_Hint&quot;: &quot;Sets the password for anyone connecting to the server (Recomme [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string game_setting_740_en {
+        public static string game_setting_740_en {
             get {
                 return ResourceManager.GetString("game_setting_740_en", resourceCulture);
             }
@@ -130,7 +138,7 @@ namespace SteamCMDLauncher.Properties {
         ///	// Age of Chivalry
         ///	&quot;17515&quot;: [ &quot;/ageofchivalry [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string server_file_search {
+        public static string server_file_search {
             get {
                 return ResourceManager.GetString("server_file_search", resourceCulture);
             }

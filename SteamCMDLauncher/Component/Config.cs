@@ -316,7 +316,6 @@ namespace SteamCMDLauncher
         public static string GetCMDDirectory()
         {
 
-
             ILiteCollection<BsonDocument> col;
 
             try
@@ -536,9 +535,11 @@ namespace SteamCMDLauncher
         #region Utilities
         public static string GetFolder(string required_file, string rule_break)
         {
-            var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
-            dialog.InitialDirectory = "C:\\Users";
-            dialog.IsFolderPicker = true;
+            Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog
+            {
+                InitialDirectory = "C:\\Users",
+                IsFolderPicker = true
+            };
 
             while (true)
             {
@@ -560,9 +561,10 @@ namespace SteamCMDLauncher
 
         public static string GetFolder(string required_file, Action custom_action)
         {
-            var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
-            dialog.InitialDirectory = "C:\\Users";
-            dialog.IsFolderPicker = true;
+            Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog {
+                InitialDirectory = "C:\\Users",
+                IsFolderPicker = true
+            };
 
             while (true)
             {
@@ -589,7 +591,7 @@ namespace SteamCMDLauncher
         /// <returns>Absolute Path to the file, null if cancelled</returns>
         public static string GetFile(string target_type)
         {
-            var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
+            Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
 
             string target_dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "configs");
 

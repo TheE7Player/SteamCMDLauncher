@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -14,6 +16,8 @@ namespace SteamCMDLauncher
 
         public static string _version = "0.5";
         public static string Version = $"Version {_version}";
+
+        private bool needsUpdate = false;
 
         public static DateTime StartTime;
 
@@ -33,12 +37,58 @@ namespace SteamCMDLauncher
 
         private bool DoUpdate()
         {
-            // TODO: Make GHU-C have a action to callback faults on error
+            // TODO: [?] Make GHU-C have a action to callback faults on error
 
+            string utc_format = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'";
+            string update_path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                "runtimes",
+                ".update_check");
             string repo_link = "repos/TheE7Player/SteamCMDLauncher";
+            
+            bool needs_update = false;
+            bool requires_check = true;
+
+            // Validate path
+            if (File.Exists(update_path))
+            {
+                DateTime? fileDate = null;
+                
+                // File already exists, lets evaluate it
+                using (FileStream fs = File.OpenRead(update_path))
+                {
+
+                    if (fs.Length > 24) throw new Exception("Updater reading file is corrupted, Length was more than 24 bytes!");
+
+                    byte[] b = new byte[24];
+                    
+                    UTF8Encoding temp = new UTF8Encoding(true);
+                    
+                    while (fs.Read(b, 0, b.Length) > 0)
+                    {
+                        fileDate = DateTime.ParseExact(temp.GetString(b), utc_format, System.Globalization.CultureInfo.InvariantCulture);                      
+                    }
+
+                    temp = null;
+                    b = null;
+                }
+
+                if (fileDate is null) throw new Exception("Updater DateTime parse failed, the assigned result was still left blank.");
+
+                requires_check = ((TimeSpan)(DateTime.Now - fileDate)).TotalHours > 1.5;
+            }
+
+            if (!requires_check) return false;
+
+            // If an updater file exists, update it
+            if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", ".due_update"))) return true;
+
+            // Write the new date as the updater will now check if update is available
+            File.SetAttributes(update_path, FileAttributes.Normal);
+            File.WriteAllText(update_path, DateTime.Now.ToUniversalTime().ToString(utc_format));
+            File.SetAttributes(update_path, FileAttributes.Hidden);
+
             GitHubUpdaterCore.GitHubFunctions udp;
             GitHubUpdaterCore.Repo repo;
-            bool needs_update = false;
 
             try
             {
@@ -74,6 +124,8 @@ namespace SteamCMDLauncher
                 repo_link = null;
                 udp = null;
                 repo = null;
+                update_path = null;
+                utc_format = null;
             }        
         }
 
@@ -98,23 +150,42 @@ namespace SteamCMDLauncher
             file = null;
 
 #if RELEASE
-            // Messagebox only shows IF the compiling is set to "RELEASE" / Production mode 
-            MessageBox.Show("This program is in alpha stage and doesn't contain an updater - Keep up to date from GitHub or Discord Channel.");
-#endif
+            string update_file_loc = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", ".due_update");
+            bool updateFileExists = File.Exists(update_file_loc);
 
+            // Perform any updates        
+            if (DoUpdate())
+            {
+                needsUpdate = true;
+                
+                // Create the file if not already
+                if (!updateFileExists)
+                {
+                    File.WriteAllText(update_file_loc, "1");
+                    File.SetAttributes(update_file_loc, FileAttributes.Hidden);
+                }
+                MessageBox.Show("Update is required"); 
+            } 
+            else
+            {
+                // Remove the file as an update is done or is none
+                if (updateFileExists) 
+                {
+                    File.SetAttributes(update_file_loc, FileAttributes.Normal);
+                    File.Delete(update_file_loc);
+                }
+            }
+            update_file_loc = null;
+#endif
             // Code for before window opens (optional);
             Cleanup();
-
-            // Perform any updates
-            if (DoUpdate())
-                MessageBox.Show("Update is required");
 
             Window mainWindow;
 
             if (!Config.DatabaseExists || !Config.HasServers())
                 mainWindow = new Setup();
-            else 
-                mainWindow = new main_view();
+            else
+                mainWindow = new main_view(needsUpdate);
 
             mainWindow.Show();
             mainWindow.Focus();
