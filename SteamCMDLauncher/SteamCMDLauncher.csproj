@@ -55,4 +55,10 @@
     <Page Include="App.xaml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="GitHubUpdater">
+      <HintPath>..\GitHubUpdater.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
