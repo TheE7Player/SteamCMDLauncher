@@ -40,7 +40,7 @@ namespace SteamCMDLauncher
             // TODO: [?] Make GHU-C have a action to callback faults on error
 
             string utc_format = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'";
-            string update_path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+            string update_path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                 "runtimes",
                 ".update_check");
             string repo_link = "repos/TheE7Player/SteamCMDLauncher";
@@ -74,7 +74,10 @@ namespace SteamCMDLauncher
 
                 if (fileDate is null) throw new Exception("Updater DateTime parse failed, the assigned result was still left blank.");
 
-                requires_check = ((TimeSpan)(DateTime.Now - fileDate)).TotalHours > 1.5;
+                // Fix the time - correct date but hours are wrong
+                fileDate = TimeZoneInfo.ConvertTimeFromUtc((DateTime)fileDate, TimeZoneInfo.Local);
+
+                requires_check = ((TimeSpan)(DateTime.Now - fileDate)).TotalMinutes > 30;
             }
 
             if (!requires_check) return false;
@@ -83,7 +86,9 @@ namespace SteamCMDLauncher
             if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", ".due_update"))) return true;
 
             // Write the new date as the updater will now check if update is available
-            File.SetAttributes(update_path, FileAttributes.Normal);
+            if(File.Exists(update_path))
+                File.SetAttributes(update_path, FileAttributes.Normal);
+            
             File.WriteAllText(update_path, DateTime.Now.ToUniversalTime().ToString(utc_format));
             File.SetAttributes(update_path, FileAttributes.Hidden);
 
@@ -134,18 +139,20 @@ namespace SteamCMDLauncher
 
             StartTime = DateTime.Now;
 
+            Config.Log("Application is launched");
+
             // Setting up exception handlers
             Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(AppDispatcherUnhandledException);
 
-            string file = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "stderr");
+            string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "stderr");
 
-            if (!System.IO.Directory.Exists(file))
-                System.IO.Directory.CreateDirectory(file);
+            if (!Directory.Exists(file))
+                Directory.CreateDirectory(file);
 
-            file = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+            file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
 
-            if (!System.IO.Directory.Exists(file))
-                System.IO.Directory.CreateDirectory(file);
+            if (!Directory.Exists(file))
+                Directory.CreateDirectory(file);
 
             file = null;
 
@@ -164,7 +171,6 @@ namespace SteamCMDLauncher
                     File.WriteAllText(update_file_loc, "1");
                     File.SetAttributes(update_file_loc, FileAttributes.Hidden);
                 }
-                MessageBox.Show("Update is required"); 
             } 
             else
             {
