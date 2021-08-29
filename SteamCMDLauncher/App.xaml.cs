@@ -12,7 +12,8 @@ namespace SteamCMDLauncher
     {
         public static bool CancelClose = false;
 
-        public static string Version = "Version 0.4";
+        public static string _version = "0.5";
+        public static string Version = $"Version {_version}";
 
         public static DateTime StartTime;
 
@@ -28,6 +29,52 @@ namespace SteamCMDLauncher
             }
 
             extra_min = null;
+        }
+
+        private bool DoUpdate()
+        {
+            // TODO: Make GHU-C have a action to callback faults on error
+
+            string repo_link = "repos/TheE7Player/SteamCMDLauncher";
+            GitHubUpdaterCore.GitHubFunctions udp;
+            GitHubUpdaterCore.Repo repo;
+            bool needs_update = false;
+
+            try
+            {
+                Config.Log($"Attempting to fetch Repo from GitHub link: {repo_link}");
+                udp = new GitHubUpdaterCore.GitHubFunctions(repo_link, GitHubUpdaterCore.GitHubUpdater.LogTypeSettings.LogWithError, true);
+
+                //Since DirectSearch targets one project, use .GetRepostiory(0);
+                repo = udp.GetRepository(0);
+
+                if (repo != null) //Ensure it isn't null before fetching information
+                {
+                    Config.Log("Now, comparing version from online to running version...");
+                    needs_update = GitHubUpdaterCore.ProductComparer.CompareVersionLess("thee7player", _version, repo);
+
+                    if (needs_update)
+                        Config.Log($"[!] Your running on version {_version}, which is out of date! [!]");
+                }
+                else
+                {
+                    throw new Exception($"Couldn't find github page based on link: {repo_link}! Check if link is working or if connected to internet!");
+                }
+
+                Config.Log($"Fetch complete with {udp.getAPIFetchCount()} calls remaining");
+
+                return needs_update;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                repo_link = null;
+                udp = null;
+                repo = null;
+            }        
         }
 
         private void App_Startup(object sender, StartupEventArgs e)
@@ -57,6 +104,10 @@ namespace SteamCMDLauncher
 
             // Code for before window opens (optional);
             Cleanup();
+
+            // Perform any updates
+            if (DoUpdate())
+                MessageBox.Show("Update is required");
 
             Window mainWindow;
 

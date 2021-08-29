@@ -56,8 +56,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="GitHubUpdater">
-      <HintPath>..\GitHubUpdater.dll</HintPath>
+    <Reference Include="GitHubUpdaterCore">
+      <HintPath>..\GitHubUpdaterCore.dll</HintPath>
     </Reference>
   </ItemGroup>
 
