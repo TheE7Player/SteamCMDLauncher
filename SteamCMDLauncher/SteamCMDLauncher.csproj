@@ -7,6 +7,8 @@
     <StartupObject>SteamCMDLauncher.App</StartupObject>
     <Configurations>Debug;Release</Configurations>
     <SignAssembly>false</SignAssembly>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Win32Resource />
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
