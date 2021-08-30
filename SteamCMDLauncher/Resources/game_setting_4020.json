@@ -1,0 +1,7 @@
+// Game Settings for Garrys Mod (4020 - Parent 4000)
+{
+	"setup": {
+		"target": "srcds.exe",
+		"precommands": "-console -game garrysmod +clientport 27006"
+	}
+}

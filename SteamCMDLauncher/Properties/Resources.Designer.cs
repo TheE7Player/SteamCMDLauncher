@@ -71,6 +71,24 @@ namespace SteamCMDLauncher.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string game_setting_4020 {
+            get {
+                return ResourceManager.GetString("game_setting_4020", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string game_setting_4020_en {
+            get {
+                return ResourceManager.GetString("game_setting_4020_en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to // Game Settings for CSGO (740 - Parent 730)
         ///{
         ///  // Key: Tab, Value: Children/Options
