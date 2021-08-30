@@ -636,7 +636,7 @@ namespace SteamCMDLauncher
             using (StreamWriter sw = File.AppendText(SessionFileName))
             {
                 DateTime now = DateTime.Now;
-                sw.WriteLine($"[{now.ToShortDateString()} {now.ToLongTimeString()}.{now.Millisecond}] : {text}");
+                sw.WriteLine($"[{now.ToString("dd/MM/yyyy HH:mm:ss.fff")}] : {text}");
             }
             #else
                 System.Diagnostics.Debug.WriteLine(text);

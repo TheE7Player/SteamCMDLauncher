@@ -274,6 +274,14 @@ namespace SteamCMDLauncher
             mainWindow.Closed += Window_Closed;
         }
 
+        public static void Window_Closed(object sender, EventArgs e)
+        {
+            // Exit the program entirely if it should do (no depending tasks to be done)
+            if (!CancelClose) Environment.Exit(0);
+        }
+        #endregion
+
+        #region Exception Handling
         void AppDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             // Show dialog if RELEASE only
@@ -300,12 +308,6 @@ namespace SteamCMDLauncher
 
             // Exit the program entirely
             Environment.Exit(0);
-        }
-
-        public static void Window_Closed(object sender, EventArgs e)
-        {
-            // Exit the program entirely if it should do (no depending tasks to be done)
-            if (!CancelClose) Environment.Exit(0);
         }
         #endregion
     }
