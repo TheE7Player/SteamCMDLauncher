@@ -25,12 +25,12 @@ namespace SteamCMDLauncher
 
             out_of_date = update;
 
-            Config.Log("Loaded Main Window");
+            Config.Log("[MV] Loaded Main Window");
 
-            Config.Log("Getting Servers");
+            Config.Log("[MV] Getting Servers");
             servers = Config.GetServersNew();
        
-            Config.Log("Initializing UI Components");
+            Config.Log("[MV] Initializing UI Components");
             InitializeComponent();
 
             AppVersion.Text = App.Version;
@@ -38,12 +38,12 @@ namespace SteamCMDLauncher
             UpdateIcon.Visibility = update ? Visibility.Visible : Visibility.Hidden;
             versionToolTip.Text = update ? "Your not running the latest version possible" : "Your running the latest version";
 
-            Config.Log("Setting up dialog host");
+            Config.Log("[MV] Setting up dialog host");
             HostDialog = new UIComponents.DialogHostContent(RootDialog, true, true);
             
             UpdateRefreshButton();
 
-            Config.Log("Populating Cards");
+            Config.Log("[MV] Populating Cards");
             PopulateCards();
         }
 
@@ -67,6 +67,7 @@ namespace SteamCMDLauncher
 
         private void LoadServerFolder(string id, string location)
         {
+            Config.Log("LoadServerFolder was invoked");
             string folder_location = string.Empty;
 
             if (!System.IO.Directory.Exists(location))
@@ -78,63 +79,79 @@ namespace SteamCMDLauncher
                 {
                     Config.ChangeServerFolder(id, location, folder_location);
 
-                    Config.Log(folder_location);
+                    Config.Log($"Changed folder from: '{location}' to '{folder_location}'");
 
                     HostDialog.OKDialog("A restart is required to make full effect - Refreshing will not solve this.");
-                } else { return; }
+                }
+                else { return; }
             }
             else
-                System.Diagnostics.Process.Start("explorer.exe", location);
+            {
+                Config.Log($"Loading folder for server: {id}");
+                System.Diagnostics.Process.Start("explorer.exe", location); 
+            }
 
             folder_location = null;
         }
 
         private void LoadServerView(string id)
         {
-
+            Config.Log("LoadServerView was invoked");
+            
             if (servers is null)
             {
+                Config.Log("[LSV] 'server' array was empty, this shouldn't be the case!");
                 HostDialog.OKDialog("Internal Problem - Not cached servers, fault with server dictionary");
                 return;
             }
 
+            Config.Log("[LSV] Getting server information based from id chosen");
             Component.Struct.ServerCardInfo current_server = GetServerByID(id);
-            
-            if(current_server.IsEmpty)
+            Config.Log("[LSV] Getting server information based was given");
+
+            if (current_server.IsEmpty)
             {
+                Config.Log("[LSV] Getting server information returned nothing, something went wrong there.");
                 HostDialog.OKDialog($"Problems attempting to find server id: {id}.\nThis is either a code fault or a database fault.");
                 return;
             }
 
             if (!System.IO.Directory.Exists(current_server.Folder))
             {
+                Config.Log($"[LSV] '{id}' folder has been changed since last stored, please assign the new location before running again.");
                 HostDialog.OKDialog($"That server location ({current_server.Folder}) doesn't exist anymore!\nCorrect it but stating the new location from 'View Folder' button");
                 return;
             }
 
+            Config.Log("[LSV] Generating the server window");
             ServerView server_window = new ServerView(id, current_server.Alias, current_server.Folder, current_server.GameID);
 
             if (server_window.IsReady)
             {
+                Config.Log("[LSV] Clearing up main window objects");
                 servers = null;
                 App.CancelClose = true;
 
                 ServerStack = null;
 
+                Config.Log("[LSV] Clearing up main window events/hooks");
                 HostDialog.Destory();
                 HostDialog = null;
                 UpdateIcon = null;
                 Component.EventHooks.UnhookServerCardEvents();
 
+                Config.Log("[LSV] Force running the GCC");
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
-                
+
+                Config.Log("[LSV] Showing the window to client");
                 server_window.Show();
                 this.Close();
             }
             else
             {
+                Config.Log($"[LSV] Window was not ready: {server_window.NotReadyReason}");
                 HostDialog.OKDialog(server_window.NotReadyReason);
             }
         }
@@ -145,30 +162,34 @@ namespace SteamCMDLauncher
             UIComponents.ServerCard Card = new UIComponents.ServerCard();
 
             // Check if any updates are needed since last update
-            if(Config.Require_Get_Server)
-                servers = Config.GetServersNew();
-
-            Config.Log("Hooking Button Events");
+            if (Config.Require_Get_Server)
+            {
+                Config.Log("[PC] Program has been prompt to re-cache the server details...");
+                servers = Config.GetServersNew(); 
+            } 
 
             if(!initEvents)
             {
+                Config.Log("[PC] Hooking Button Events");
                 Component.EventHooks.View_Server += LoadServerView;
                 Component.EventHooks.View_Folder += LoadServerFolder;
                 initEvents = true;
             }
-
-            // Textblock which shows if no servers were found
-            TextBlock text = new TextBlock()
-            {
-                Text = "No Servers Were Found - Add Some!",
-                FontWeight = FontWeights.DemiBold, FontSize = 20, Foreground = new SolidColorBrush(Colors.White)
-            };
 
             ServerStack.VerticalAlignment = (servers.Length == 0) ? VerticalAlignment.Top : VerticalAlignment.Center;
 
             // Loop over each record stored
             if (servers.Length == 0)
             {
+                Config.Log("[PC] 'server' was empty, showing no servers were found to client");
+
+                // Textblock which shows if no servers were found
+                TextBlock text = new TextBlock()
+                {
+                    Text = "No Servers Were Found - Add Some!",
+                    FontWeight = FontWeights.DemiBold, FontSize = 20, Foreground = new SolidColorBrush(Colors.White)
+                };
+
                 ServerStack.Children.Add(text);
 
                 // Dereference the object as we don't need it anymore
@@ -181,12 +202,12 @@ namespace SteamCMDLauncher
 
             foreach (Component.Struct.ServerCardInfo svr in servers)
             {
+                Config.Log($"[PC] Loading Server Card for {svr.Unique_ID}");
                 ServerStack.Children.Add(Card.CreateCard(Config.GetGameByAppId(svr.GameID), svr.Alias, svr.Folder, svr.Unique_ID));
             }
 
             // Dereference the object as we don't need it anymore
             Card = null;
-            text = null;
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -227,17 +248,20 @@ namespace SteamCMDLauncher
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Config.Log("Window has been fully loaded");
+            Config.Log("[MV] Window has been fully loaded");
 
             if (out_of_date)
             {
+                Config.Log("[MV] Showing update dialog to the client");
                 HostDialog.YesNoDialog("Update is due",
                 "The program identified your not running the latest version possible.\nWould you like to view the page to get the latest version?",
                 new Action(() =>
                 {
                     // On "Yes" Button press
+                    Config.Log("[MV] Client has approved to visit GitHub page from 'explorer.exe' - executing...");
                     System.Diagnostics.Process.Start("explorer.exe", "https://github.com/TheE7Player/SteamCMDLauncher/releases");
                 }));
+                Config.Log("[MV] Update dialog is now closed");
             }
         }
     }
