@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SteamCMDLauncher.Component
+﻿namespace SteamCMDLauncher.Component
 {
     public static class EventHooks
     {
