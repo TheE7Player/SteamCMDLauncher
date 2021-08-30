@@ -4,7 +4,8 @@
   // Hashtag: For translations (Hint to find the correct string for the current language)
   "setup": {
     "target": "srcds.exe",
-    "precommands": "-game csgo -console +mapgroup mg_active"
+    "precommands": "-game csgo -console +mapgroup mg_active -ip $IP4",
+    "server_join_command": "connect $IP;password $P;"
   },
   "#General": {
     "Server_Name": {
@@ -19,6 +20,7 @@
     "Password_SVR": {
       "text": "#Server_Pass",
       "type": "pass",
+      "tag": "PASS",
       "can_leave_blank": true,
       "hint": "#Server_Pass_Hint",
       "width": 200,
@@ -36,8 +38,17 @@
       "command": "sv_setsteamaccount $",
       "command_prefix": "+",
       "alert": "#Server_Auth_Alert",
-      "blank_alert":  "#Server_Auth_Empty"
-    },  
+      "blank_alert": "#Server_Auth_Empty"
+    },
+    "Server-Port": {
+      "text": "#ServerPort",
+      "type": "combo",
+      "tag": "PORT",
+      "default": "27015",
+      "combo-range": "27010-27030",
+      "command": "port $",
+      "command_prefix": "-"
+    },
     "Server_Vac": {
       "text": "#Is_Vac",
       "type": "check",

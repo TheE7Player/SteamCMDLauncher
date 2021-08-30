@@ -27,7 +27,7 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         public bool LanguageSupported { get; private set; }
 
-        private string targetExecutable, targetDictionary, PreArguments;
+        private string targetExecutable, targetDictionary, PreArguments, JoinConnectString;
 
         private Dictionary<string, string> language;
         
@@ -213,6 +213,16 @@ namespace SteamCMDLauncher.Component
                 }
                 ipCondition = null;
                 target_kv = null;
+                
+                try
+                {
+                    JoinConnectString = cont["setup"]["server_join_command"].ToString();
+                } 
+                catch(Exception ex)
+                {
+                    Config.Log("[GSM] JoinConnectString threw error, bellow states why. This may make it hard to tell user the ip or password!");
+                    Config.Log($"[GSM] Couldn't assign property due to: {ex.Message}");
+                }
             }
 
             Config.Log("[GSM] Parsing Data...");
@@ -499,6 +509,43 @@ namespace SteamCMDLauncher.Component
             Config.Log("[CFG] Loading has finished");
             
             if (OnComplete != null) OnComplete();
+        }
+
+        public string GetConnectCommand()
+        {
+            if (string.IsNullOrEmpty(JoinConnectString)) return string.Empty;
+
+            string ip_local = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName())
+                        .AddressList
+                        .FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        .ToString();
+
+            UIComponents.GameSettingControl port_t = componenets.FirstOrDefault(x => x.tag == "PORT");
+            UIComponents.GameSettingControl pass_t = componenets.FirstOrDefault(x => x.tag == "PASS");
+
+            // Then replace the command to get the output string
+            string port = null, pass = null;
+            
+            // We can just get the value but performing a substring based on the 'command' attribute
+            if(port_t != null)
+                port = port_t.GetArg()[(port_t.Command.Length - 1)..];
+
+            if(pass_t != null)
+                pass = pass_t.GetArg()[(pass_t.Command.Length - 1)..];
+
+            string ip_str = string.Concat(ip_local, port != null ? $":{port}" : string.Empty);
+
+            string output = JoinConnectString.Replace("$IP", ip_str);
+
+            output = output.Replace("$P", pass);
+            
+            ip_str = null;
+            pass = null;
+            port = null;
+            ip_local = null;
+            pass_t = null; port_t = null;
+
+            return output;
         }
         #endregion
 

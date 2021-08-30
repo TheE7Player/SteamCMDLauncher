@@ -3,6 +3,7 @@
 	"#General": "General",
 	"#Misc": "Misc",
 	"#Server_Name": "Server Name",
+	"#ServerPort": "Port",
 	"#Is_128_Tick": "Is 128 Tick",
 	"#Is_128_Tick_Hint": "If true, it will run the server on 128 tick - 64 tick if unchecked.",
 	"#Is_Lan": "LAN only",
@@ -23,5 +24,5 @@
 	"#SVR_GameMode": "Game Mode",
 	"#SourceMod": "SourceMod",
 	"#SM-Admins": "Admins",
-	"#SM-Admins-Hint":  "Sets the steam accounts of who is Admin in the server\nUse ';' if more than 1 Admin for this server."
+	"#SM-Admins-Hint": "Sets the steam accounts of who is Admin in the server\nUse ';' if more than 1 Admin for this server."
 }

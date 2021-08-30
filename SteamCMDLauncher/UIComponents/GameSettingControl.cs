@@ -18,8 +18,8 @@ namespace SteamCMDLauncher.UIComponents
         public bool canBeBlank { get; set; }
         public double Width { get; set; }
 
-        public string name;
-        public string blank_error;
+        // Extra properties that don't go along side ISettingControl Properties
+        public string name, blank_error, tag;
 
         private string alert_message;
 
@@ -73,8 +73,10 @@ namespace SteamCMDLauncher.UIComponents
         {
             this.name = name;
             
-            //TODO: Does 'ref' have any form of good?
             SetDefaults(control);
+
+            if (control.ContainsKey("tag"))
+                this.tag = control["tag"];
 
             if (control.ContainsKey("type"))
             {
@@ -194,7 +196,7 @@ namespace SteamCMDLauncher.UIComponents
 
         public GameSettingControl DeepClone()
         {
-            var new_ent = new GameSettingControl()
+            GameSettingControl new_ent = new GameSettingControl()
             {
                 name = this.name,
                 Heading = this.Heading,
@@ -205,7 +207,8 @@ namespace SteamCMDLauncher.UIComponents
                 alert_message = this.alert_message,
                 Width = this.Width,
                 defaultValue = this.defaultValue,
-                blank_error = this.blank_error
+                blank_error = this.blank_error,
+                tag = this.tag
             };
             new_ent.ctrl = this.ctrl;
             return new_ent;

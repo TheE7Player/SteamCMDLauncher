@@ -381,13 +381,28 @@ namespace SteamCMDLauncher
                 //Check if any fields that are required are filled
                 if (!ValidateInputs(true)) return;
 
-                var cmd = new Component.SteamCMD(gsm.GetExePath, false);
+                Component.SteamCMD cmd = new Component.SteamCMD(gsm.GetExePath, false);
 
                 cmd.AddArgument(gsm.GetRunArgs(), gsm.GetPreArg);
 
+                string c_str = gsm.GetConnectCommand();
+
+                if(!string.IsNullOrEmpty(c_str))
+                {
+                    dh.YesNoDialog("Save join command to clipboard", "Success, Everything is good to go!\nWould you like to copy the connect command to your clipboard? (Recommended)", new Action(() =>
+                    {
+                        TextCopy.ClipboardService.SetText(c_str);
+                        dh.CloseDialog();
+                    }));
+                }
+                else
+                {
+                    Config.Log("[SV] JSON didn't state if there is a connection command, assuming user knows these!");
+                }
+
                 timeStart = DateTime.Now;
 
-                Config.Log($"Running Server with set Args");
+                Config.Log("Running Server with set Args");
 
                 tb_Status.Text = "Server Running";
 
@@ -395,13 +410,22 @@ namespace SteamCMDLauncher
 
                 // Pre-invoke the button, to update the UI state
                 ToggleServer.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+                c_str = null;
             } 
             else
             {
                 // Get the total duration of the server being alive
                 TimeSpan TotalTime = DateTime.Now - timeStart;
 
-                tb_Status.Text = $"Server Halted\n{Math.Round(TotalTime.TotalMinutes, 2)} minutes";
+                string duration_str = string.Empty;
+
+                if (TotalTime.Seconds < 60)
+                    duration_str = $"{TotalTime.Seconds} sec";
+                else
+                    duration_str = $"{TotalTime.Minutes} min";
+
+                tb_Status.Text = $"Server Halted: {duration_str}";
             }
 
         }
