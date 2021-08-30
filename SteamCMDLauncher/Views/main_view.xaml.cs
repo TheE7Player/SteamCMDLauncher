@@ -44,7 +44,7 @@ namespace SteamCMDLauncher
             UpdateRefreshButton();
 
             Config.Log("Populating Cards");
-            PopulateCards();   
+            PopulateCards();
         }
 
         private Component.Struct.ServerCardInfo GetServerByID(string id)

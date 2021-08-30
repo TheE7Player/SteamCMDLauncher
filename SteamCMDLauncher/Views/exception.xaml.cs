@@ -60,8 +60,9 @@ namespace SteamCMDLauncher.Views
             File.WriteAllText(file_dump_loc, sb.ToString());
 
             file_dump_loc = null;
-            sb.Clear();
             sb = null;
+            st = null;
+            fault_file = null;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)

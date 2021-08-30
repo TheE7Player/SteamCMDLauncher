@@ -79,11 +79,13 @@ namespace SteamCMDLauncher
 
                 requires_check = ((TimeSpan)(DateTime.Now - fileDate)).TotalMinutes > 30;
             }
-
-            if (!requires_check) return false;
-
+            
+            // [!] Check if the '.due_update' file exists, this takes priority over if a check is even needed [!]
+            
             // If an updater file exists, update it
             if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", ".due_update"))) return true;
+
+            if (!requires_check) return false;
 
             // Write the new date as the updater will now check if update is available
             if(File.Exists(update_path))
@@ -159,9 +161,10 @@ namespace SteamCMDLauncher
 #if RELEASE
             string update_file_loc = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", ".due_update");
             bool updateFileExists = File.Exists(update_file_loc);
-
+            bool requiresUpdate = DoUpdate();
+            
             // Perform any updates        
-            if (DoUpdate())
+            if (requiresUpdate)
             {
                 needsUpdate = true;
                 
@@ -175,7 +178,7 @@ namespace SteamCMDLauncher
             else
             {
                 // Remove the file as an update is done or is none
-                if (updateFileExists) 
+                if (updateFileExists && !requiresUpdate) 
                 {
                     File.SetAttributes(update_file_loc, FileAttributes.Normal);
                     File.Delete(update_file_loc);
