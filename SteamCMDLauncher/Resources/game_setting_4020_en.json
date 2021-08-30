@@ -1,16 +1,22 @@
 // Lanuage Settings for Garrys Mod (4020 - Parent 4000)
 {
   "#General": "General",
+  "#GameSettings": "Game Settings",
+  "#Server_Name": "Server Name",
   "#ServerPort": "Server Port",
   "#MaxP": "Max Players",
   "#Svr-Map": "Map",
   "#Svr-Map-Hint": "Select what map to run in this server",
   "#Svr-Gm": "Game Mode",
-  "#Svr-Gm-Hint": "Select what game modes Garrys Mod will run (based on folders available)",
+  "#Svr-Gm-Hint": "Select what game modes Garry's Mod will run (based on folders available)",
   "#Server_Auth": "GSLT Token",
   "#Server_Auth_Hint": "GSLT - Game Server Login Token\nNeeded to make server public",
+  "#Server_Auth_Alert": "A token is required to allow others to connect to your server, Visit: www.steamcommunity.com/dev/managegameservers",
+  "#Server_Auth_Empty": "GLST wasn't added or is empty - Please insert token to start the server.",
   "#Is_Vac": "VAC Enabled",
   "#Is_Vac_Hint": "Enables to server to use VAC for security",
-  "#Server_Auth_Alert": "A token is required to allow others to connect to your server, Visit: www.steamcommunity.com/dev/managegameservers",
-  "#Server_Auth_Empty": "GLST wasn't added or is empty - Please insert token to start the server."
+  "#Server_Pass": "Server Password",
+  "#Server_Pass_Hint": "Sets the password for anyone connecting to the server (Recommended)",
+  "#Server_Pass_Alert": "If blank, the program will generate a secure password for you",
+  "#Server_Pass_PlaceHolder": "Auto-Generated Password"
 }

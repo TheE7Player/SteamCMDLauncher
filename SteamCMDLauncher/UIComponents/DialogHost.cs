@@ -114,7 +114,7 @@ namespace SteamCMDLauncher.UIComponents
         public void Destory()
         {
             df = null;
-            _dialog = null;
+            //_dialog = null;
             result = null;
         }
 
