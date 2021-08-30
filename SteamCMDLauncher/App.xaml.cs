@@ -12,71 +12,117 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class App : Application
     {
+        #region Attributes
+        /// <summary>
+        /// If the program should exit if an close event is triggered
+        /// </summary>
         public static bool CancelClose = false;
 
+        /// <summary>
+        /// Holds the current version of the program
+        /// </summary>
         public static string _version = "0.5";
+
+        /// <summary>
+        /// Holds the string to display the version of the program
+        /// </summary>
         public static string Version = $"Version {_version}";
 
+        /// <summary>
+        /// A flag which is enabled if the program running isn't the latest available
+        /// </summary>
         private bool needsUpdate = false;
 
+        /// <summary>
+        /// Holds the time the program first starts (Used for exceptions)
+        /// </summary>
         public static DateTime StartTime;
+        #endregion
 
+        #region Methods
+        /// <summary>
+        /// Handles cleaning window logic (Holding RSHIFT when booting)
+        /// </summary>
         private void Cleanup()
         {
+            // Create the window object
             Window extra_min = new Views.extra();
 
+            // If the RSHIFT is held down while booting...
             if(Keyboard.IsKeyDown(Key.RightShift))
             {
+                // Make a console beep (to let user know its acknowledged)
                 Console.Beep();
 
+                // Then show the window as a dialog (halts until close event is fired)
                 extra_min.ShowDialog();
             }
 
+            // Deference the object so the GC can collect it
             extra_min = null;
         }
 
+        /// <summary>
+        /// Updater logic to check if running latest version
+        /// </summary>
+        /// <returns>True if the program needs to be updated</returns>
         private bool DoUpdate()
         {
             // TODO: [?] Make GHU-C have a action to callback faults on error
 
+            // The UTC format to convert to: "2021-08-30T17:00:49Z" <- Example of what it looks like
             string utc_format = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'";
+
+            // The path where the file will be placed, near the exe folder (/runtimes/.update_check)
             string update_path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                 "runtimes",
                 ".update_check");
+
+            // The GitHub repo link of where the project is held
             string repo_link = "repos/TheE7Player/SteamCMDLauncher";
             
-            bool needs_update = false;
-            bool requires_check = true;
-
-            // Validate path
+            // 2 booleans which handles the update logic
+            bool needs_update = false, requires_check = true;
+ 
+            // Validate path first
             if (File.Exists(update_path))
             {
+                // An existing '.update_check' exists, let's parse it and see when it was last checked
+
+                // Create a nullable DateTime object, where we store the file date from
                 DateTime? fileDate = null;
                 
                 // File already exists, lets evaluate it
                 using (FileStream fs = File.OpenRead(update_path))
                 {
+                    // Validate if its an valid UTC length, which is 24 characters long
+                    if (fs.Length != 24) throw new Exception("Updater reading file is corrupted, Length not equal to 24 bytes!");
 
-                    if (fs.Length > 24) throw new Exception("Updater reading file is corrupted, Length was more than 24 bytes!");
-
-                    byte[] b = new byte[24];
+                    // Create a byte array to hold the buffer of the date from the file
+                    byte[] date_buffer = new byte[24];
                     
-                    UTF8Encoding temp = new UTF8Encoding(true);
+                    // Create a UTF8Encoding object, to turn the bytes into a string
+                    UTF8Encoding utf_c = new UTF8Encoding(true);
                     
-                    while (fs.Read(b, 0, b.Length) > 0)
+                    // Read the file stream, write it to the buffer with its selected length ( "> 0" to validate if its successful to read )
+                    while (fs.Read(date_buffer, 0, date_buffer.Length) > 0)
                     {
-                        fileDate = DateTime.ParseExact(temp.GetString(b), utc_format, System.Globalization.CultureInfo.InvariantCulture);                      
+                        // Put the read data into the 'fileDate' object
+                        fileDate = DateTime.ParseExact(utf_c.GetString(date_buffer), utc_format, System.Globalization.CultureInfo.InvariantCulture);                      
                     }
 
-                    temp = null;
-                    b = null;
+                    // Then deference the objects as we don't require them any longer
+                    utf_c = null;
+                    date_buffer = null;
                 }
 
+                // If the 'fileDate' object is still not assigned, throw an error stating it failed.
                 if (fileDate is null) throw new Exception("Updater DateTime parse failed, the assigned result was still left blank.");
 
                 // Fix the time - correct date but hours are wrong
                 fileDate = TimeZoneInfo.ConvertTimeFromUtc((DateTime)fileDate, TimeZoneInfo.Local);
 
+                // Now, we cast the object into a 'TimeSpan' to get the total minutes from the last time of the check
                 requires_check = ((TimeSpan)(DateTime.Now - fileDate)).TotalMinutes > 30;
             }
             
@@ -85,21 +131,27 @@ namespace SteamCMDLauncher
             // If an updater file exists, update it
             if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", ".due_update"))) return true;
 
+            // If the result is still false, we can just ignore the check as it has been done.
             if (!requires_check) return false;
 
             // Write the new date as the updater will now check if update is available
             if(File.Exists(update_path))
                 File.SetAttributes(update_path, FileAttributes.Normal);
             
+            // Write the file and then hide it (visible if you enable "show hidden files")
             File.WriteAllText(update_path, DateTime.Now.ToUniversalTime().ToString(utc_format));
             File.SetAttributes(update_path, FileAttributes.Hidden);
 
+            // Create the objects from "GitHubUpdater" repo
+            // [NOTE]: This is the .Net Core 3.1 edition of the project, not available for public (yet).
             GitHubUpdaterCore.GitHubFunctions udp;
             GitHubUpdaterCore.Repo repo;
 
             try
             {
                 Config.Log($"Attempting to fetch Repo from GitHub link: {repo_link}");
+                
+                // Setup the object to get the latest details from the project online
                 udp = new GitHubUpdaterCore.GitHubFunctions(repo_link, GitHubUpdaterCore.GitHubUpdater.LogTypeSettings.LogWithError, true);
 
                 //Since DirectSearch targets one project, use .GetRepostiory(0);
@@ -108,6 +160,8 @@ namespace SteamCMDLauncher
                 if (repo != null) //Ensure it isn't null before fetching information
                 {
                     Config.Log("Now, comparing version from online to running version...");
+                    
+                    // Use the 'ProductComparer' to see if the version is less than the latest version possible
                     needs_update = GitHubUpdaterCore.ProductComparer.CompareVersionLess("thee7player", _version, repo);
 
                     if (needs_update)
@@ -115,6 +169,7 @@ namespace SteamCMDLauncher
                 }
                 else
                 {
+                    // Throw an error, as this should have worked
                     throw new Exception($"Couldn't find github page based on link: {repo_link}! Check if link is working or if connected to internet!");
                 }
 
@@ -124,10 +179,12 @@ namespace SteamCMDLauncher
             }
             catch (Exception ex)
             {
+                // Throw an error, likely from GitHubUpdater library
                 throw ex;
             }
             finally
             {
+                // Deference the reference objects, as we don't need them in memory any more
                 repo_link = null;
                 udp = null;
                 repo = null;
@@ -135,16 +192,23 @@ namespace SteamCMDLauncher
                 utc_format = null;
             }        
         }
+        #endregion
 
+        #region Window Logic
+        /// <summary>
+        /// The EntryPoint to the program
+        /// </summary>
         private void App_Startup(object sender, StartupEventArgs e)
         {
-
+            // Set the 'StartTime' to the current date
             StartTime = DateTime.Now;
 
             Config.Log("Application is launched");
 
             // Setting up exception handlers
             Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(AppDispatcherUnhandledException);
+
+            // Create the folders if they aren't created yet
 
             string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "stderr");
 
@@ -159,8 +223,15 @@ namespace SteamCMDLauncher
             file = null;
 
 #if RELEASE
+            // [NOTE]: Updater only runs when program is built on "RELEASE" mode
+
+            // Store the path location of where the '.due_update' file should be created
             string update_file_loc = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtimes", ".due_update");
+            
+            // Check if the file exists from the last update check
             bool updateFileExists = File.Exists(update_file_loc);
+            
+            // Start the logic to see the last check
             bool requiresUpdate = DoUpdate();
             
             // Perform any updates        
@@ -184,6 +255,8 @@ namespace SteamCMDLauncher
                     File.Delete(update_file_loc);
                 }
             }
+
+            // Finally, dereference the string for GCC
             update_file_loc = null;
 #endif
             // Code for before window opens (optional);
@@ -213,22 +286,27 @@ namespace SteamCMDLauncher
 
         void ShowUnhandledException(DispatcherUnhandledExceptionEventArgs e)
         {
+            // Till the compiler we are dealing with this exception ourself
             e.Handled = true;
 
+            // Create the exception window, and pass in the exception that got raised
             Views.exception win = new Views.exception(e.Exception);
 
+            // Close down the current window (if set, not always works)
             App.Current.MainWindow.Close();
 
+            // Show the exception dialog and halt for an close event
             win.ShowDialog();
 
+            // Exit the program entirely
             Environment.Exit(0);
-
         }
 
         public static void Window_Closed(object sender, EventArgs e)
         {
-            if (!CancelClose)
-            { Environment.Exit(0); }
+            // Exit the program entirely if it should do (no depending tasks to be done)
+            if (!CancelClose) Environment.Exit(0);
         }
+        #endregion
     }
 }
