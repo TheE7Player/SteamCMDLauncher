@@ -250,6 +250,8 @@ namespace SteamCMDLauncher
         {
             Config.Log("[MV] Window has been fully loaded");
 
+            throw new Exception("This is a forced error");
+
             if (out_of_date)
             {
                 Config.Log("[MV] Showing update dialog to the client");

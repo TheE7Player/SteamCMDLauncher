@@ -3,6 +3,8 @@ using System.Text;
 using System.Windows;
 using System.IO;
 using System.Diagnostics;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace SteamCMDLauncher.Views
 {
@@ -56,9 +58,24 @@ namespace SteamCMDLauncher.Views
                 sb.Append($"    [{i}] {fault_file}");
             }
 
-
             File.WriteAllText(file_dump_loc, sb.ToString());
 
+            // Now we append the current log file with it
+            DirectoryInfo logFolder = new DirectoryInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"));
+            FileInfo myFile = logFolder.GetFiles().OrderByDescending(f => f.LastWriteTime).First();
+
+            if(!ReferenceEquals(myFile, null))
+            {
+                List<string> log_file = File.ReadAllLines(myFile.FullName).ToList();
+
+                log_file.Insert(0, "\nCorresponding log file:");
+                File.AppendAllLines(file_dump_loc, log_file);
+
+                log_file = null;
+            }
+
+            logFolder = null;
+            myFile = null;
             file_dump_loc = null;
             sb = null;
             st = null;
