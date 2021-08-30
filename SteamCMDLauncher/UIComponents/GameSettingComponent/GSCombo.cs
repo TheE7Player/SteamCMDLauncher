@@ -91,23 +91,45 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
                     // For some reason Path.Combine doesn't concat the path safely somehow, using concat for now.
                     string folder = string.Concat(dir_path, s_split[0]);
 
-                    var files = System.IO.Directory.GetFiles(folder, s_split[1]);
+                    string[] files = null;
 
-                    string filtered_name;
-
-                    foreach (var map in files)
+                    if (s_split[1].Length > 0)
                     {
-                        // Get the map name only
-                        filtered_name = Path.GetFileNameWithoutExtension(map);
+                        files = System.IO.Directory.GetFiles(folder, s_split[1]);
 
-                        if (filtered_name.Length > max_length)
-                            max_length = filtered_name.Length;
+                        string filtered_name;
 
-                        cb.Items.Add(filtered_name);
+                        foreach (string map in files)
+                        {
+                            // Get the map name only
+                            filtered_name = Path.GetFileNameWithoutExtension(map);
+
+                            if (filtered_name.Length > max_length)
+                                max_length = filtered_name.Length;
+
+                            cb.Items.Add(filtered_name);
+                        }
+                        filtered_name = null;
+                        content_set = true;
+                    } 
+                    else
+                    {
+                        Config.Log($"[GSCombo] Assuming that '{self.name}' wants to read folder names, doing so...");
+                        
+                        int trimLength = folder.Length + 1;
+
+                        files = Directory.GetDirectories(folder).Select(x => x[trimLength..]).ToArray();
+
+                        // Then add them all in
+                        Array.ForEach(files, new Action<string>((x) =>
+                        {
+                            cb.Items.Add(x);
+                        }));
                     }
 
-                    filtered_name = null;
-                    content_set = true;
+                    s_split = null;
+                    files = null;
+                    folder = null;
                 }
 
                 if(!string.IsNullOrEmpty(number_range) && !content_set)
@@ -144,7 +166,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
                 obj = null;
             }
-                    
+
             return cb;
         }
 

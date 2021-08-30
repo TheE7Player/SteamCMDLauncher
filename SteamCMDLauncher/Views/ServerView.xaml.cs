@@ -369,10 +369,11 @@ namespace SteamCMDLauncher
  
             return result;
         }
-
+        
+        // Start/Stop Server button
         private void ToggleServer_Click(object sender, RoutedEventArgs e)
         {
-            // Start/Stop Server button
+
             ToggleRunButton();
 
             if (toggleServerState)

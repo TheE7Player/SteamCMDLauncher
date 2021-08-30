@@ -229,18 +229,17 @@ namespace SteamCMDLauncher.UIComponents
 
             Control r_ctrl = ctrl.GetComponent();
 
-            var tb = new TextBlock();
+            TextBlock tb = new TextBlock();
             tb.Text = Heading;
             tb.Padding = new Thickness(5,0,15,0);
             tb.FontWeight = FontWeights.DemiBold;
             tb.FontSize = 16;
             tb.VerticalAlignment = VerticalAlignment.Center;
 
-            var sp = new Grid();
+            Grid sp = new Grid();
             
             sp.VerticalAlignment = VerticalAlignment.Center;
             sp.Margin = new Thickness(5, 0, 5, 10);
-            //sp.ShowGridLines = true;
 
             sp.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(20, GridUnitType.Auto) });
             sp.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(200, GridUnitType.Auto) });
@@ -267,10 +266,10 @@ namespace SteamCMDLauncher.UIComponents
             // Add Hint button (if any hints)
             if(!string.IsNullOrEmpty(Hint))
             {
-                var btn = new Button();
+                Button btn = new Button();
                 btn.Margin = new Thickness(5, 0, 5, 0);
 
-                var ipack = new MaterialDesignThemes.Wpf.PackIcon();
+                MaterialDesignThemes.Wpf.PackIcon ipack = new MaterialDesignThemes.Wpf.PackIcon();
                 ipack.Kind = MaterialDesignThemes.Wpf.PackIconKind.InformationOutline;
 
                 btn.Content = ipack;
@@ -288,7 +287,7 @@ namespace SteamCMDLauncher.UIComponents
             // If the object needs to display a message
             if (!string.IsNullOrEmpty(alert_message))
             {
-                var alertCard = new MaterialDesignThemes.Wpf.Card();
+                MaterialDesignThemes.Wpf.Card alertCard = new MaterialDesignThemes.Wpf.Card();
                 
                 alertCard.SetResourceReference(Control.BackgroundProperty, "PrimaryHueDarkBrush");
                 alertCard.SetResourceReference(Control.BackgroundProperty, "PrimaryHueDarkForegroundBrush");

@@ -190,6 +190,28 @@ namespace SteamCMDLauncher.Component
 
                 PreArguments = target_kv.ToString();
 
+                // Check if the 'PreArguments' contains an IPv4 tag ($IP4)
+                string ipCondition = "$IP4";
+                if(PreArguments.Contains(ipCondition))
+                {
+                    string ip_local = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName())
+                        .AddressList
+                        .FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        .ToString();
+
+                    if(string.IsNullOrEmpty(ip_local))
+                    {
+                        Config.Log($"[GSM] IPv4 address was invalid or is wrong, result was: '{ip_local}'");
+                    } 
+                    else
+                    {
+                        Config.Log("[GSM] IPv4 address was found and is being used as the server ip root");
+                        PreArguments = PreArguments.Replace(ipCondition, ip_local);
+                    }
+
+                    ip_local = null;
+                }
+                ipCondition = null;
                 target_kv = null;
             }
 
