@@ -270,9 +270,6 @@ namespace SteamCMDLauncher
                         Config.Log("[MV] Update dialog is now closed");
                     });
                 });
-                /*
-                {
-                */
             }
         }
     }

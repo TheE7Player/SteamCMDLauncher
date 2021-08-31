@@ -27,12 +27,8 @@ namespace SteamCMDLauncher.UIComponents
         public DialogHostContent(DialogHost dialog, bool waitForAction = true, bool openOnCall = false)
         {
             this._dialog = dialog;
-
             this.isWaiting = waitForAction;
             this.forceOpenWhenCall = openOnCall;
-
-            if (this.isWaiting)
-                df = new DispatcherFrame(true);
         }
 
         #region States/Modifiers
@@ -88,25 +84,25 @@ namespace SteamCMDLauncher.UIComponents
             if (this.isWaiting)
             {
                 df.Continue = false;
-
-                df = new DispatcherFrame(true);
+                df = null;
             }
 
             _dialog.IsOpen = false;
 
-            _dialog.Content = null;
-
+            _dialog.DialogContent = null;
         }
 
         public void ShowDialog()
         {
-            if (this._dialog.IsOpen)
-                this._dialog.IsOpen = false;
+            if (this._dialog.IsOpen) this._dialog.IsOpen = false;
 
             this._dialog.IsOpen = true;
-
+            
             if (isWaiting)
+            {
+                df = new DispatcherFrame(true);
                 System.Windows.Threading.Dispatcher.PushFrame(df);
+            }
         }
 
         public void CloseDialog() => ExitState();
@@ -189,9 +185,9 @@ namespace SteamCMDLauncher.UIComponents
         {
             Button Yes, No;
 
-            var MainPanel = new StackPanel();
+            StackPanel MainPanel = new StackPanel();
 
-            var ButtonPanel = new StackPanel();
+            StackPanel ButtonPanel = new StackPanel();
 
             ButtonPanel.Orientation = Orientation.Horizontal;
 
@@ -224,7 +220,9 @@ namespace SteamCMDLauncher.UIComponents
 
             No.Click += (s, e) =>
             {
-                result = false;
+                if (callback is null)
+                    result = false;
+
                 ExitState();
             };
 
@@ -267,7 +265,7 @@ namespace SteamCMDLauncher.UIComponents
         /// <param name="pre_callback">The action/method to take before showing the dialog</param>
         public void ForceDialog(string message, Task pre_callback = null)
         {
-            var MainPanel = new StackPanel();
+            StackPanel MainPanel = new StackPanel();
 
             MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
 

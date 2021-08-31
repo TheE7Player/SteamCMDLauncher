@@ -18,6 +18,7 @@ namespace SteamCMDLauncher
         private string id, alias, appid, folder;
         private bool prevent_update = false;
         private string last_save_location;
+        private int server_run_id;
 
         private string current_alias = string.Empty;
         public string Alias
@@ -36,6 +37,7 @@ namespace SteamCMDLauncher
         private UIComponents.DialogHostContent dh;
         private Component.GameSettingManager gsm;
         private bool toggleServerState = false;
+        private bool closeStateMade = false;
 
         private DateTime timeStart;
 
@@ -254,21 +256,24 @@ namespace SteamCMDLauncher
             }
             else
             {
-                if (config_files.ContainsValue(file) && ConfigBox_IgnoreInvokeEvent) return false;
+                bool file_loaded = config_files.ContainsValue(file);
+                bool same_loc = last_save_location.Same(file);
+
+                if (file_loaded && same_loc)
+                {
+                    return false;
+                }
             }
 
             await Task.Run(async () =>
             {
-                this.Dispatcher.Invoke(() =>
+                await this.Dispatcher.Invoke(async() =>
                 {
                     dh.IsWaiting(false);
                     dh.ShowBufferingDialog();
-                });
                 
-                await Task.Delay(1000);
+                    await Task.Delay(1000);
 
-                this.Dispatcher.Invoke(() =>
-                {
                     dh.IsWaiting(false);
                     dh.ShowBufferingDialog();      
                     gsm.SetConfigFiles(File.ReadAllLines(file), new Action(() => {
@@ -295,11 +300,12 @@ namespace SteamCMDLauncher
             
             if (string.IsNullOrEmpty(file)) return;
 
-            last_save_location = file;
 
             Config.Log("[CFG] Loading settings from config file");
 
             bool result = await LoadConfigFile(file);
+
+            last_save_location = file;
 
             if(!result)
             {
@@ -315,6 +321,8 @@ namespace SteamCMDLauncher
 
         private void ToggleRunButton()
         {
+            Config.Log("[SV] ToggleRunButton() was acknowledged");
+
             // Perform the toggle
             toggleServerState = !toggleServerState;
 
@@ -370,70 +378,117 @@ namespace SteamCMDLauncher
             return result;
         }
         
-        // Start/Stop Server button
-        private void ToggleServer_Click(object sender, RoutedEventArgs e)
+        private async Task ServerStart()
         {
+            Config.Log("[SV] ServerStart() logic started");
 
             ToggleRunButton();
 
-            if (toggleServerState)
+            //Check if any fields that are required are filled
+            if (!ValidateInputs(true)) return;
+
+            Component.SteamCMD cmd = new Component.SteamCMD(gsm.GetExePath, false);
+
+            cmd.AddArgument(gsm.GetRunArgs(), gsm.GetPreArg);
+
+            string c_str = gsm.GetConnectCommand();
+
+            if(!string.IsNullOrEmpty(c_str))
             {
-                //Check if any fields that are required are filled
-                if (!ValidateInputs(true)) return;
-
-                Component.SteamCMD cmd = new Component.SteamCMD(gsm.GetExePath, false);
-
-                cmd.AddArgument(gsm.GetRunArgs(), gsm.GetPreArg);
-
-                string c_str = gsm.GetConnectCommand();
-
-                if(!string.IsNullOrEmpty(c_str))
-                {
-                    dh.YesNoDialog("Save join command to clipboard", "Success, Everything is good to go!\nWould you like to copy the connect command to your clipboard? (Recommended)", new Action(() =>
+                await Task.Run(() => {
+                    this.Dispatcher.Invoke(() =>
                     {
-                        TextCopy.ClipboardService.SetText(c_str);
-                        dh.CloseDialog();
-                    }));
-                }
-                else
-                {
-                    Config.Log("[SV] JSON didn't state if there is a connection command, assuming user knows these!");
-                }
-
-                timeStart = DateTime.Now;
-
-                Config.Log("Running Server with set Args");
-
-                tb_Status.Text = "Server Running";
-
-                cmd.Run();
-
-                // Pre-invoke the button, to update the UI state
-                ToggleServer.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
-                c_str = null;
-            } 
+                        dh.YesNoDialog("Save join command to clipboard", "Success, Everything is good to go!\nWould you like to copy the connect command to your clipboard? (Recommended)", new Action(() =>
+                        {
+                            TextCopy.ClipboardService.SetText(c_str);
+                        }));
+                    });
+                });
+            }
             else
             {
-                // Get the total duration of the server being alive
-                TimeSpan TotalTime = DateTime.Now - timeStart;
-
-                string duration_str = string.Empty;
-
-                if (TotalTime.Seconds < 60)
-                    duration_str = $"{TotalTime.Seconds} sec";
-                else
-                    duration_str = $"{TotalTime.Minutes} min";
-
-                tb_Status.Text = $"Server Halted: {duration_str}";
+                Config.Log("[SV] JSON didn't state if there is a connection command, assuming user knows these!");
             }
 
+            timeStart = DateTime.Now;
+
+            Config.Log("[SV] Running Server");
+
+            tb_Status.Text = "Server Running";
+               
+            server_run_id = cmd.Run(new Action(() => {
+                // Pre-invoke the button, to update the UI state
+                this.Dispatcher.Invoke(() =>
+                {
+                    ServerStop();
+                });
+            }));
+
+            if (server_run_id == -1)
+                throw new Exception("ServerView for running the server program has returned -1, something went wrong. The process may have been executed but cannot be controlled by program.");
+
+            c_str = null;
+        }
+
+        private void ServerStop()
+        {
+            // Prevent double run of the program (if the user forced closes, the event calls it again - this makes this run twice instead of once!)
+            if (closeStateMade) return;
+            closeStateMade = true;
+
+            Config.Log("[SV] ServerStop() logic started");
+
+            ToggleRunButton();
+
+            // Get the total duration of the server being alive
+
+            if (server_run_id <= 0)
+            {
+                Config.Log($"[SV] server_run_id has returned {server_run_id}, that was not requested or expected!");
+                dh.OKDialog($"An error has occurred, as the process id is '{server_run_id}'.\nThis was unexpected and should be reported to issues in the GitHub Page.");
+                ToggleRunButton();
+                return; 
+            }
+
+            System.Diagnostics.Process.GetProcessById(server_run_id).Kill();
+
+            TimeSpan TotalTime = DateTime.Now - timeStart;
+
+            StringBuilder sb = new StringBuilder(8);
+
+            // Deal with hours first
+            sb.Append(TotalTime.Hours > 9 ? $"{TotalTime.Hours}:" : $"0{TotalTime.Hours}:");
+
+            // Then the minutes
+            sb.Append(TotalTime.Minutes > 9 ? $"{TotalTime.Minutes}:" : $"0{TotalTime.Minutes}:");
+
+            // Finally the seconds
+            sb.Append(TotalTime.Seconds > 9 ? $"{TotalTime.Seconds}" : $"0{TotalTime.Seconds}");
+
+            tb_Status.Text = $"Server Halted: {sb.ToString()}";
+            sb = null;
+        }
+
+        // Start/Stop Server button
+        private async void ToggleServer_Click(object sender, RoutedEventArgs e)
+        {
+            if (!toggleServerState)
+            {
+                Config.Log("[SV] ServerStart() was acknowledged");
+                closeStateMade = false;
+                await ServerStart();
+            }
+            else
+            {
+                Config.Log("[SV] ServerStop() was acknowledged");
+                ServerStop();
+            }
         }
 
         #region Config Box Related
 
         bool toggleColour = false;
-        bool ConfigBox_IgnoreInvokeEvent = true;
+        //bool ConfigBox_IgnoreInvokeEvent = true;
 
         // Toggles between Black and White depending if the dropdown menu is option
         private System.Windows.Media.Brush ChangeForeground_ConfigBox => ((toggleColour = !toggleColour)) ?
@@ -446,18 +501,22 @@ namespace SteamCMDLauncher
 
             string displayName = Path.GetFileNameWithoutExtension(file_name);
 
-            if (!configBox.Items.Contains(file_name))
+            if (!configBox.Items.Contains(displayName))
+            { 
                 configBox.Items.Add(displayName);
+            }
 
             configStatus.Text = "Loaded";
 
             // Tell the event we don't want to invoke it, as this will call the method twice!
-            ConfigBox_IgnoreInvokeEvent = true;
+            // ConfigBox_IgnoreInvokeEvent = true;
 
             // Assign the combobox index
 
             if (configBox.Items.Count == 1)
-            { configBox.SelectedIndex = 0; }
+            { 
+                configBox.SelectedIndex = 0; 
+            }
             else
             {
                 int idx = configBox.Items.IndexOf(displayName);
@@ -470,7 +529,8 @@ namespace SteamCMDLauncher
 
         private async void configBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (configBox.Items.Count <= 1 || ConfigBox_IgnoreInvokeEvent) { ConfigBox_IgnoreInvokeEvent = false; return; }
+            // if (configBox.Items.Count <= 1 || ConfigBox_IgnoreInvokeEvent) { ConfigBox_IgnoreInvokeEvent = false; return; }
+            if (configBox.Items.Count <= 1 ) { return; }
 
             string target = config_files[configBox.SelectedValue.ToString()];
 

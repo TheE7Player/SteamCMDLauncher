@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Diagnostics;
+using System.Threading;
 
 namespace SteamCMDLauncher.Component
 {
@@ -8,7 +9,7 @@ namespace SteamCMDLauncher.Component
     {
 
         private string launch_location;
-
+        private Process process;
         private string additional_arg = string.Empty;
         private string pre_arg = string.Empty;
 
@@ -34,16 +35,30 @@ namespace SteamCMDLauncher.Component
             this.pre_arg = pre_arg;
         }
 
-        public void Run()
+        public int Run(Action OnExit = null)
         {
-            Process process = new Process();
-            process.StartInfo.FileName = this.launch_location;
-            process.StartInfo.CreateNoWindow = false;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.Arguments = $"{pre_arg} {additional_arg}";
-            process.Start();
+            process = new Process();
 
-            process.WaitForExit();
+            try
+            {
+                process.StartInfo.FileName = this.launch_location;
+                process.StartInfo.CreateNoWindow = false;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.Arguments = $"{pre_arg} {additional_arg}";
+                process.EnableRaisingEvents = true;
+
+                if(OnExit != null)
+                    process.Exited += (_, e) => { OnExit(); };
+                
+                process.Start();
+
+                return process.Id;
+            }
+            catch (Exception ex)
+            {
+                Config.Log($"[SV-RUN] Exception raised with Run(): {ex.Message}");
+                return -1;
+            }                
         }
 
         /// <summary>
