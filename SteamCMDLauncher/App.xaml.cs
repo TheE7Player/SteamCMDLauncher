@@ -4,6 +4,8 @@ using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Diagnostics;
+using System.Linq;
 
 namespace SteamCMDLauncher
 {
@@ -204,6 +206,39 @@ namespace SteamCMDLauncher
             StartTime = DateTime.Now;
 
             Config.Log("Application is launched");
+
+            Config.Log("Checking for any same running applications");
+
+            // Get the current running process of itself - Kill the others
+            Process self = Process.GetCurrentProcess();
+
+            Process[] other_app = Process.GetProcessesByName(self.ProcessName).Where(x => x.Id != self.Id).ToArray();
+
+            if(other_app?.Length == 0)
+            {
+                Config.Log("No other running instances, good to go!");
+            } 
+            else
+            {
+                Array.ForEach(other_app, new Action<Process>((x) =>
+                {
+                    Config.Log($"Found redundant process of itself at ID {x.Id}... prompting a kill...");
+                    x.Kill();
+
+                    if(x.WaitForExit(2000))
+                    {
+                        if (!x.HasExited) 
+                        { 
+                            Config.Log($"Redundant process of {x.Id} didn't close down by itself!");
+                            MessageBox.Show($"Another instance of ID {x.Id} is running - Please close it down before running again! Exiting...");
+                            return;
+                        }
+                    }
+                }));
+            }
+
+            other_app = null;
+            self = null;
 
             // Setting up exception handlers
             Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(AppDispatcherUnhandledException);

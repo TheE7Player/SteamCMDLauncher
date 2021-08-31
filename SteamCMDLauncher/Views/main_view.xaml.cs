@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SteamCMDLauncher
 {
@@ -246,22 +247,32 @@ namespace SteamCMDLauncher
             RefreshCards();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Config.Log("[MV] Window has been fully loaded");
 
             if (out_of_date)
             {
                 Config.Log("[MV] Showing update dialog to the client");
-                HostDialog.YesNoDialog("Update is due",
-                "The program identified your not running the latest version possible.\nWould you like to view the page to get the latest version?",
-                new Action(() =>
+
+                await Task.Run(() =>
                 {
-                    // On "Yes" Button press
-                    Config.Log("[MV] Client has approved to visit GitHub page from 'explorer.exe' - executing...");
-                    System.Diagnostics.Process.Start("explorer.exe", "https://github.com/TheE7Player/SteamCMDLauncher/releases");
-                }));
-                Config.Log("[MV] Update dialog is now closed");
+                    this.Dispatcher.Invoke(() => 
+                    { 
+                        HostDialog.YesNoDialog("Update is due",
+                        "The program identified your not running the latest version possible.\nWould you like to view the page to get the latest version?",
+                        new Action(() =>
+                        {
+                            // On "Yes" Button press
+                            Config.Log("[MV] Client has approved to visit GitHub page from 'explorer.exe' - executing...");
+                            System.Diagnostics.Process.Start("explorer.exe", "https://github.com/TheE7Player/SteamCMDLauncher/releases");
+                        }));
+                        Config.Log("[MV] Update dialog is now closed");
+                    });
+                });
+                /*
+                {
+                */
             }
         }
     }
