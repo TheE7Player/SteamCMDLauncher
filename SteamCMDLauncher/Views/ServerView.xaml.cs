@@ -14,11 +14,13 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class ServerView : Window
     {
+        #region Attributes
         private System.Timers.Timer waitTime;
+        private UIComponents.DialogHostContent dh;
+        private Component.GameSettingManager gsm;
+
         private string id, alias, appid, folder;
-        private bool prevent_update = false;
         private string last_save_location;
-        private int server_run_id;
 
         private string current_alias = string.Empty;
         public string Alias
@@ -33,18 +35,19 @@ namespace SteamCMDLauncher
                 current_alias = value;
             }
         }
+        public string NotReadyReason { get; private set; }
 
-        private UIComponents.DialogHostContent dh;
-        private Component.GameSettingManager gsm;
+        private bool prevent_update = false;
         private bool toggleServerState = false;
         private bool closeStateMade = false;
+        public bool IsReady { get; private set; }
 
         private DateTime timeStart;
 
-        public bool IsReady { get; private set; }
-        public string NotReadyReason { get; private set; }
+        private int server_run_id;
 
         private Dictionary<string, string> config_files;
+        #endregion
 
         public ServerView(string id, string alias, string folder, string app_id = "")
         {
@@ -63,19 +66,19 @@ namespace SteamCMDLauncher
             if (!gsm.ResourceFolderFound)
             {
                 NotReadyReason = "Failed to find the resource folder - please ensure your not running outside the application folder!"; 
-                return; 
+                return;
             }
 
             if (!gsm.Supported)
             {
-                NotReadyReason = "Game not supported yet"; 
-                return; 
+                NotReadyReason = "Game not supported yet\nPlease create the json files or wait till the game gets supported!"; 
+                return;
             }
 
             if (!gsm.LanguageSupported)
             {
                 NotReadyReason = "The current config file for this game is in ENGLISH for now: Please contribute to translating it!"; 
-                return; 
+                return;
             }
 
             InitializeComponent();
@@ -93,7 +96,8 @@ namespace SteamCMDLauncher
         }
 
         private void OnHint(string hint) => dh.OKDialog(hint);
-        
+
+        #region Server Name/ Delete Server
         private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             // Work around for: 'The calling thread must be STA' error
@@ -151,7 +155,9 @@ namespace SteamCMDLauncher
                 ReturnBack.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }));
         }
+        #endregion
 
+        #region Server Operations
         private void DoVerification(bool update = false)
         {
             Config.AddLog(id, update ? Config.LogType.ServerUpdate : Config.LogType.ServerValidate, "Operation Started");
@@ -159,7 +165,7 @@ namespace SteamCMDLauncher
             "Server is now updating.\nThis may take a long while..."
             : "Server is now validating and updating.\nThis may take a long while...", new Task(() =>
             {
-                var cmdLoc = Config.GetEntryByKey("cmd", Config.INFO_COLLECTION);
+                LiteDB.BsonValue cmdLoc = Config.GetEntryByKey("cmd", Config.INFO_COLLECTION);
 
                 Component.SteamCMD cmd = new Component.SteamCMD(cmdLoc);
 
@@ -265,6 +271,7 @@ namespace SteamCMDLauncher
                 }
             }
 
+            bool force_out = false;
             await Task.Run(async () =>
             {
                 await this.Dispatcher.Invoke(async() =>
@@ -275,12 +282,20 @@ namespace SteamCMDLauncher
                     await Task.Delay(1000);
 
                     dh.IsWaiting(false);
-                    dh.ShowBufferingDialog();      
-                    gsm.SetConfigFiles(File.ReadAllLines(file), new Action(() => {
+                    dh.ShowBufferingDialog();
+                    gsm.SetConfigFiles(File.ReadAllLines(file),
+                    new Action(() => {
                         dh.CloseDialog();
                         dh.IsWaiting(true);
+                    }), 
+                    new Action(() => { 
+                        dh.CloseDialog();
+                        dh.IsWaiting(true);
+                        force_out = true;
                     }));
                 });
+
+                if (force_out) return;
 
                 short_name = Path.GetFileNameWithoutExtension(file);
                 
@@ -290,7 +305,7 @@ namespace SteamCMDLauncher
                 short_name = null;
             });
 
-            return true;
+            return !force_out;
         }
 
         private async void LoadConfig_Click(object sender, RoutedEventArgs e)
@@ -310,7 +325,7 @@ namespace SteamCMDLauncher
             if(!result)
             {
                 Config.Log($"[LoadConfig] async returned false: \"{file}\"");
-                dh.OKDialog("That config file is missing or is already stored!\nIf loaded previously, use the ComboBox in the top right to load it in again.");
+                dh.OKDialog("A problem occurred. Either:\nA) The config you loaded is already been stored (Use the ComboBox top right)\nB) The config you selected isn't for the controls available or is corrupted.");
                 return;
             }
             
@@ -468,7 +483,7 @@ namespace SteamCMDLauncher
             tb_Status.Text = $"Server Halted: {sb.ToString()}";
             sb = null;
         }
-
+        
         // Start/Stop Server button
         private async void ToggleServer_Click(object sender, RoutedEventArgs e)
         {
@@ -484,14 +499,14 @@ namespace SteamCMDLauncher
                 ServerStop();
             }
         }
+        #endregion
 
         #region Config Box Related
 
         bool toggleColour = false;
-        //bool ConfigBox_IgnoreInvokeEvent = true;
 
         // Toggles between Black and White depending if the dropdown menu is option
-        private System.Windows.Media.Brush ChangeForeground_ConfigBox => ((toggleColour = !toggleColour)) ?
+        private System.Windows.Media.Brush ChangeForeground_ConfigBox => (toggleColour = !toggleColour) ?
             System.Windows.Media.Brushes.Black:
             System.Windows.Media.Brushes.White;
         
@@ -507,9 +522,6 @@ namespace SteamCMDLauncher
             }
 
             configStatus.Text = "Loaded";
-
-            // Tell the event we don't want to invoke it, as this will call the method twice!
-            // ConfigBox_IgnoreInvokeEvent = true;
 
             // Assign the combobox index
 
@@ -529,7 +541,6 @@ namespace SteamCMDLauncher
 
         private async void configBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // if (configBox.Items.Count <= 1 || ConfigBox_IgnoreInvokeEvent) { ConfigBox_IgnoreInvokeEvent = false; return; }
             if (configBox.Items.Count <= 1 ) { return; }
 
             string target = config_files[configBox.SelectedValue.ToString()];

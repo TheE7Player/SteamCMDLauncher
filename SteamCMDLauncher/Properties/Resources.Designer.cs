@@ -60,6 +60,9 @@ namespace SteamCMDLauncher.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         public static byte[] dedicated_server_list {
             get {
                 object obj = ResourceManager.GetObject("dedicated_server_list", resourceCulture);
@@ -67,30 +70,134 @@ namespace SteamCMDLauncher.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to // Game Settings for Garrys Mod (4020 - Parent 4000)
+        ///{
+        ///	&quot;setup&quot;: {
+        ///		&quot;target&quot;: &quot;srcds.exe&quot;,
+        ///		&quot;precommands&quot;: &quot;-console -game garrysmod +clientport 27006 +r_hunkalloclightmaps 0 -ip $IP4&quot;,
+        ///		&quot;server_join_command&quot;: &quot;connect $IP;password $P;&quot;
+        ///	},
+        ///	&quot;#General&quot;: {
+        ///		&quot;Server_Name&quot;: {
+        ///			&quot;text&quot;: &quot;#Server_Name&quot;,
+        ///			&quot;type&quot;: &quot;input&quot;,
+        ///			&quot;can_leave_blank&quot;: true,
+        ///			&quot;placeholder&quot;: &quot;Garry&apos;s Mod Server&quot;,
+        ///			&quot;width&quot;: 300,
+        ///			&quot;command&quot;: &quot;hostname $&quot;,
+        ///			&quot;command_prefix&quot;: &quot;+&quot;
+        ///		},
+        ///		&quot;Password_SVR&quot;: {
+        ///			&quot;te [rest of string was truncated]&quot;;.
+        /// </summary>
         public static string game_setting_4020 {
             get {
                 return ResourceManager.GetString("game_setting_4020", resourceCulture);
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to // Lanuage Settings for Garrys Mod (4020 - Parent 4000)
+        ///{
+        ///  &quot;#General&quot;: &quot;General&quot;,
+        ///  &quot;#GameSettings&quot;: &quot;Game Settings&quot;,
+        ///  &quot;#Server_Name&quot;: &quot;Server Name&quot;,
+        ///  &quot;#ServerPort&quot;: &quot;Server Port&quot;,
+        ///  &quot;#MaxP&quot;: &quot;Max Players&quot;,
+        ///  &quot;#Svr-Map&quot;: &quot;Map&quot;,
+        ///  &quot;#Svr-Map-Hint&quot;: &quot;Select what map to run in this server&quot;,
+        ///  &quot;#Svr-Gm&quot;: &quot;Game Mode&quot;,
+        ///  &quot;#Svr-Gm-Hint&quot;: &quot;Select what game modes Garry&apos;s Mod will run (based on folders available)&quot;,
+        ///  &quot;#Server_Auth&quot;: &quot;GSLT Token&quot;,
+        ///  &quot;#Server_Auth_Hint&quot;: &quot;GSLT - Game Server Login Token\nN [rest of string was truncated]&quot;;.
+        /// </summary>
         public static string game_setting_4020_en {
             get {
                 return ResourceManager.GetString("game_setting_4020_en", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to // Game Settings for CSGO (740 - Parent 730)
+        ///{
+        ///  // Key: Tab, Value: Children/Options
+        ///  // Hashtag: For translations (Hint to find the correct string for the current language)
+        ///  &quot;setup&quot;: {
+        ///    &quot;target&quot;: &quot;srcds.exe&quot;,
+        ///    &quot;precommands&quot;: &quot;-game csgo -console +mapgroup mg_active -ip $IP4&quot;,
+        ///    &quot;server_join_command&quot;: &quot;connect $IP;password $P;&quot;
+        ///  },
+        ///  &quot;#General&quot;: {
+        ///    &quot;Server_Name&quot;: {
+        ///      &quot;text&quot;: &quot;#Server_Name&quot;,
+        ///      &quot;type&quot;: &quot;input&quot;,
+        ///      &quot;can_leave_blank&quot;: true,
+        ///      &quot;placeholder&quot;: &quot;Counter-S [rest of string was truncated]&quot;;.
+        /// </summary>
         public static string game_setting_740 {
             get {
                 return ResourceManager.GetString("game_setting_740", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to // Language Game Settings for CSGO (740 - Parent 730)
+        ///{
+        ///	&quot;#General&quot;: &quot;General&quot;,
+        ///	&quot;#Misc&quot;: &quot;Misc&quot;,
+        ///	&quot;#Server_Name&quot;: &quot;Server Name&quot;,
+        ///	&quot;#ServerPort&quot;: &quot;Port&quot;,
+        ///	&quot;#Is_128_Tick&quot;: &quot;Is 128 Tick&quot;,
+        ///	&quot;#Is_128_Tick_Hint&quot;: &quot;If true, it will run the server on 128 tick - 64 tick if unchecked.&quot;,
+        ///	&quot;#Is_Lan&quot;: &quot;LAN only&quot;,
+        ///	&quot;#Is_Lan_Hint&quot;: &quot;Prevent the server from hosting publicly, only people with router access can join&quot;,
+        ///	&quot;#Server_Pass&quot;: &quot;Server Password&quot;,
+        ///	&quot;#Server_Pass_Hint&quot;: &quot;Sets the password for anyone connecti [rest of string was truncated]&quot;;.
+        /// </summary>
         public static string game_setting_740_en {
             get {
                 return ResourceManager.GetString("game_setting_740_en", resourceCulture);
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to # Holds hash keys to validate if the json loaded is official
+        ///# Please update per release to avoid false negatives!
+        ///
+        ///.
+        /// </summary>
+        public static string res_hash {
+            get {
+                return ResourceManager.GetString("res_hash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///	// Look at: https://steamdb.info/depot/X/
+        ///	// Replace &apos;X&apos; with depot id (usually offset by 1 on wards -&gt; 4021 (4020 + 1)
+        ///
+        ///	// [NOTE] Currently all Windows depots - None for Linux or Mac OS yet
+        ///
+        ///	// Garrys Mod
+        ///	&quot;4020&quot;: [ &quot;/garrysmod&quot; ],
+        ///
+        ///	// CSGO
+        ///	&quot;740&quot;: [ &quot;/csgo&quot; ],
+        ///
+        ///	// CS 1.6 / Half Life
+        ///	&quot;90&quot;: [ &quot;/cstrike&quot; ],
+        ///
+        ///	// 7 Days to Die
+        ///	&quot;294420&quot;: [ &quot;.7DaysToDieServer.exe&quot;, &quot;/7DaysToDieServer_Data&quot; ],
+        ///
+        ///	// ASTRONEER
+        ///	&quot;728470&quot;: [ &quot;/Astro&quot; ],
+        ///
+        ///	// Age of Chivalry
+        ///	&quot;17515&quot;: [ &quot;/ageofchivalry [rest of string was truncated]&quot;;.
+        /// </summary>
         public static string server_file_search {
             get {
                 return ResourceManager.GetString("server_file_search", resourceCulture);

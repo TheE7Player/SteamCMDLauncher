@@ -485,30 +485,41 @@ namespace SteamCMDLauncher.Component
             return output.ToArray();
         }
     
-        public void SetConfigFiles(string[] contents, Action OnComplete = null)
+        public void SetConfigFiles(string[] contents, Action OnComplete = null, Action OnFail = null)
         {
             IEnumerable<string[]> iteration = contents
                 .Where(x => !x.StartsWith('#')) // Remove any lines with comments
                 .Select(x => x.Split(new[] { '=' }, 2));
 
-            foreach (string[] ctrl in iteration)
+            // Do a check-run if any controls here aren't available to the current game selected/viewed
+            if(iteration.Any(x => !componenets.Any(y => y.name == x[0]) ))
             {
-                UIComponents.GameSettingControl elem = componenets.FirstOrDefault(x => x.name == ctrl[0]);
-
-                if(elem is null)
+                Config.Log("[CFG] Loaded config wasn't suited for current game settings");
+                if (OnFail != null) OnFail();
+            }
+            else
+            { 
+                foreach (string[] ctrl in iteration)
                 {
-                    Config.Log($"[CFG] Couldn't find control called '{ctrl[0]}' with value '{ctrl[1]}' - Double check this exists or wrong/old file!");
-                    continue;
+                    UIComponents.GameSettingControl elem = componenets.FirstOrDefault(x => x.name == ctrl[0]);
+
+                    if (elem is null)
+                    {
+                        Config.Log($"[CFG] Couldn't find control called '{ctrl[0]}' with value '{ctrl[1]}' - Double check this exists or wrong/old file!");
+                        continue;
+                    }
+
+                    Config.Log($"[CFG] Loading value for {elem.name}");
+
+                    elem.LoadValue(ctrl[1]);
                 }
 
-                Config.Log($"[CFG] Loading value for {elem.name}");
-                
-                elem.LoadValue(ctrl[1]);
+                Config.Log("[CFG] Loading has finished");
+
+                if (OnComplete != null) OnComplete(); 
             }
 
-            Config.Log("[CFG] Loading has finished");
-            
-            if (OnComplete != null) OnComplete();
+            iteration = null;
         }
 
         public string GetConnectCommand()

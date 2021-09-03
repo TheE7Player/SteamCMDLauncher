@@ -23,7 +23,7 @@ namespace SteamCMDLauncher
         /// <summary>
         /// Holds the current version of the program
         /// </summary>
-        public static string _version = "0.5";
+        public static string _version = "0.6";
 
         /// <summary>
         /// Holds the string to display the version of the program

@@ -1,0 +1,1 @@
+Get-FileHash -Algorithm SHA256 -Path (Get-ChildItem "C:\Users\james\source\repos\SteamCMDLauncher\SteamCMDLauncher\Resources\*.*" -Recurse) | Out-File -FilePath .\result.txt

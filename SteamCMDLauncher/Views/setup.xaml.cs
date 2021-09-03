@@ -170,13 +170,13 @@ namespace SteamCMDLauncher
         private void InstallServer_Click(object sender, RoutedEventArgs e)
         {
 
-            var installDialog = new UIComponents.DialogHostContent(RootDialog, false);
+            UIComponents.DialogHostContent installDialog = new UIComponents.DialogHostContent(RootDialog, false);
 
             installDialog.GameInstallDialog(selectedGame);
 
-            installDialog.ChangePropertyText("GameInstallStatus", $"Pre-running 'steamexe.exe' - waiting for result");
+            installDialog.ChangePropertyText("GameInstallStatus", "Pre-running 'steamexe.exe' - waiting for result");
 
-            var cmd = new Component.SteamCMD(steamcmd_location);
+            Component.SteamCMD cmd = new Component.SteamCMD(steamcmd_location);
 
             // Force all the buttons to be inactive
             SteamCMDButton.IsHitTestVisible = false;
@@ -200,7 +200,7 @@ namespace SteamCMDLauncher
                 }
             }
 
-            var main_win = new main_view();
+            main_view main_win = new main_view();
 
             installDialog.ShowDialog();
 
@@ -208,17 +208,14 @@ namespace SteamCMDLauncher
             {
                 cmd.PreRun();
 
-                this.Dispatcher.Invoke(() =>
-                {
-                    installDialog.ChangePropertyText("GameInstallStatus", "Installing... Don't close this window");
-                });
-
-                await Task.Delay(3000);
-
-                cmd.InstallGame(selectedGame_ID, folder_location);
-
                 await this.Dispatcher.Invoke(async () =>
                 {
+                    installDialog.ChangePropertyText("GameInstallStatus", "Installing... Don't close this window");
+
+                    await Task.Delay(3000);
+
+                    cmd.InstallGame(selectedGame_ID, folder_location);
+
                     installDialog.ChangePropertyText("GameInstallStatus", "Installed! Return back to main page.");
 
                     await Task.Delay(100);

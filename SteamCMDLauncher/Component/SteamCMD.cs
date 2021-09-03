@@ -23,6 +23,8 @@ namespace SteamCMDLauncher.Component
             {
                 throw new Exception($"SteamCMD location of '{location}' is invalid to find 'steamcmd.exe'");
             }
+
+            location = null;
         }
 
         /// <summary>
@@ -125,7 +127,7 @@ namespace SteamCMDLauncher.Component
         {
             Process process = new Process();
             process.StartInfo.FileName = this.launch_location;
-            process.StartInfo.CreateNoWindow = true;
+            process.StartInfo.CreateNoWindow = false;
             process.StartInfo.UseShellExecute = false;
 
             // ID correction for multiple games with same ID
@@ -138,7 +140,7 @@ namespace SteamCMDLauncher.Component
 
             process.Start();
 
-            process.WaitForExit();        
+            process.WaitForExit();
         }
     }
 }
