@@ -121,6 +121,18 @@
   <data name="dedicated_server_list" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\dedicated_server_list.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="game_setting_222860" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\game_setting_222860.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="game_setting_222860_en" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\game_setting_222860_en.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="game_setting_232250" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\game_setting_232250.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="game_setting_232250_en" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\game_setting_232250_en.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="game_setting_4020" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\game_setting_4020.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>

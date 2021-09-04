@@ -52,10 +52,22 @@
     <None Update="Resources\dedicated_server_list.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Resources\game_setting_222860.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\game_setting_222860_en.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\game_setting_4020.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\game_setting_4020_en.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\game_setting_232250.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\game_setting_232250_en.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\game_setting_740.json">
@@ -71,7 +83,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\sha256_writer.v">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
@@ -85,8 +97,8 @@
     </Reference>
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="v run $(ProjectDir)\Resources\sha256_writer.v&#xD;&#xA;v run $(TargetDir)\Resources\sha256_writer.v&#xD;&#xA;" />
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="v run $(ProjectDir)\Resources\sha256_writer.v" />
   </Target>
 
 </Project>

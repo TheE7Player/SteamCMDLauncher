@@ -1,0 +1,26 @@
+// Language Settings for L4D2 (222860 - Parent 550)
+{
+  "#General": "General",
+  "#GameSettings": "Game Settings",
+  "#Server_Name": "Server Name",
+  "#ServerPort": "Server Port",
+  "#Is_Vac": "VAC Enabled",
+  "#Is_Vac_Hint": "Enables to server to use VAC for security",
+  "#Server_Pass": "Server Password",
+  "#Server_Pass_Hint": "Sets the password for anyone connecting to the server (Recommended)",
+  "#Server_Pass_Alert": "If blank, the program will generate a secure password for you",
+  "#Server_Pass_PlaceHolder": "Auto-Generated Password",
+  "#Is_Lan": "LAN only",
+  "#Is_Lan_Hint": "Prevent the server from hosting publicly, only people with router access can join",
+  "#MaxP": "Players",
+  "#Svr-Map": "Map",
+  "#Svr-Map-Hint": "Select what map to run in this server",
+  "#ECheats": "Enable Cheats",
+  "#ECheats_Hint": "Turns on sv_cheats to allow to use commands you cant use normally",
+  "#EVoice": "Enable Voice Comm",
+  "#EVoice_Hint": "Turns on voice chat, so you can use your mic with the people in the server",
+  "#EPause": "Enable Pause",
+  "#EPause_Hint": "Allows the server to halt the game if the pause command is used",
+  "#LOnly": "Lobby Connect Only",
+  "#LOnly_Hint": "Makes it only people in the matchmaking lobby can connect to the server"
+}

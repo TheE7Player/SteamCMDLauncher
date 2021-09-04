@@ -95,12 +95,12 @@ namespace SteamCMDLauncher.Component
 
             if (LanguageSupported)
             {
-                SetLanguage(langFile);
+                if(!SetLanguage(langFile)) { Supported = false; return; }
             }
 
             if (Supported)
             {
-                SetControls(gameFile);
+                if (!SetControls(gameFile)) { Supported = false; return; }
             }
 
             Config.Log("[GSM] Validating if the config file is unaltered");
@@ -163,7 +163,7 @@ namespace SteamCMDLauncher.Component
         }
 
         #region Control Related
-        private void SetLanguage(string path)
+        private bool SetLanguage(string path)
         {
             string lFile;
 
@@ -175,9 +175,11 @@ namespace SteamCMDLauncher.Component
             language = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(lFile);
 
             lFile = null;
+
+            return !ReferenceEquals(language, null);
         }
 
-        private void SetControls(string path)
+        private bool SetControls(string path)
         {
             Config.Log("[GSM] Got JSON to read properties from...");
             
@@ -187,6 +189,12 @@ namespace SteamCMDLauncher.Component
             .ToArray());
 
             JObject cont = (JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(lFile);
+
+            if (cont is null)
+            {
+                Config.Log("[GSM] Loaded Control Config is empty (null) - Ensure it has data in it!");
+                return false;
+            }
 
             controls = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
             
@@ -203,7 +211,7 @@ namespace SteamCMDLauncher.Component
                 if (target_kv == null)
                 {
                     Config.Log("[GSM] No existing \"target\" key found in json - this is needed to run the server application!");
-                    Supported = false; return;
+                    Supported = false; return false;
                 }
 
                 targetExecutable = target_kv.ToString();
@@ -214,7 +222,7 @@ namespace SteamCMDLauncher.Component
             else
             {
                 Config.Log("[GSM] No existing \"setup\" key found in json - this is needed to run the server application!");
-                Supported = false; return;
+                Supported = false; return false;
             }
 
             //PreArguments
@@ -227,7 +235,7 @@ namespace SteamCMDLauncher.Component
                 if (target_kv == null)
                 {
                     Config.Log("[GSM] No existing \"precommands\" key found in json - Ignoring, this may cause launch issues!");
-                    Supported = false; return;
+                    Supported = false; return false;
                 }
 
                 PreArguments = target_kv.ToString();
@@ -344,7 +352,8 @@ namespace SteamCMDLauncher.Component
             tab_control_children = null;
             to_fix = null;
 
-            cont = null; lFile = null; carry_dir = null; iterable_fields = null; 
+            cont = null; lFile = null; carry_dir = null; iterable_fields = null;
+            return true;
         }
 
         public TabControl GetControls()

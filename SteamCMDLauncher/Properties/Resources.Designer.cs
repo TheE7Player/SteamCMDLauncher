@@ -71,6 +71,46 @@ namespace SteamCMDLauncher.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] game_setting_222860 {
+            get {
+                object obj = ResourceManager.GetObject("game_setting_222860", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] game_setting_222860_en {
+            get {
+                object obj = ResourceManager.GetObject("game_setting_222860_en", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] game_setting_232250 {
+            get {
+                object obj = ResourceManager.GetObject("game_setting_232250", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] game_setting_232250_en {
+            get {
+                object obj = ResourceManager.GetObject("game_setting_232250_en", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to // Game Settings for Garrys Mod (4020 - Parent 4000)
         ///{
         ///	&quot;setup&quot;: {
@@ -98,7 +138,7 @@ namespace SteamCMDLauncher.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to // Lanuage Settings for Garrys Mod (4020 - Parent 4000)
+        ///   Looks up a localized string similar to // Language Settings for Garry&apos;s Mod (4020 - Parent 4000)
         ///{
         ///  &quot;#General&quot;: &quot;General&quot;,
         ///  &quot;#GameSettings&quot;: &quot;Game Settings&quot;,
@@ -110,7 +150,7 @@ namespace SteamCMDLauncher.Properties {
         ///  &quot;#Svr-Gm&quot;: &quot;Game Mode&quot;,
         ///  &quot;#Svr-Gm-Hint&quot;: &quot;Select what game modes Garry&apos;s Mod will run (based on folders available)&quot;,
         ///  &quot;#Server_Auth&quot;: &quot;GSLT Token&quot;,
-        ///  &quot;#Server_Auth_Hint&quot;: &quot;GSLT - Game Server Login Token\nN [rest of string was truncated]&quot;;.
+        ///  &quot;#Server_Auth_Hint&quot;: &quot;GSLT - Game Server Login Token\ [rest of string was truncated]&quot;;.
         /// </summary>
         public static string game_setting_4020_en {
             get {
@@ -163,9 +203,12 @@ namespace SteamCMDLauncher.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to # Holds hash keys to validate if the json loaded is official
-        ///# Please update per release to avoid false negatives!
-        ///
-        ///.
+        ///# Validation was runned after build at (YYYY-MM-DD): 2021-09-04 23:46:29
+        ///# This process is automated using vlang ~ https://github.com/vlang/v
+        ///dedicated_server_list=7a7652a2754cc230162981173f5e229e111c9d53f59c3699e188baffcdf8314f
+        ///game_setting_222860=26cf936540223cdd56c532f77067582861a6129b7685eabd9de46bfda9433e4d
+        ///game_setting_222860_en=16d892e25c26d18f0d733d364c02cf7b627e9d8ccf504ff9c556d579267c458f
+        ///game_setting_4020=c170043acbbf6288cbe6cbb00e8db4b [rest of string was truncated]&quot;;.
         /// </summary>
         public static string res_hash {
             get {

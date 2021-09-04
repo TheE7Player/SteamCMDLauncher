@@ -1,0 +1,114 @@
+// Game Settings for L4D2 (222860 - Parent 550)
+{
+  "setup": {
+    "target": "srcds.exe",
+    "precommands": "-console -game left4dead2 +clientport 27006 -ip $IP4",
+    "server_join_command": "connect $IP;password $P;"
+  },
+  "#General": {
+    "Server_Name": {
+      "text": "#Server_Name",
+      "type": "input",
+      "can_leave_blank": true,
+      "placeholder": "L4D2 Server",
+      "width": 300,
+      "command": "hostname $",
+      "command_prefix": "+"
+    },
+    "Password_SVR": {
+      "text": "#Server_Pass",
+      "type": "pass",
+      "tag": "PASS",
+      "can_leave_blank": true,
+      "hint": "#Server_Pass_Hint",
+      "width": 200,
+      "command": "sv_password $",
+      "command_prefix": "+",
+      "alert": "#Server_Pass_Alert",
+      "placeholder": "#Server_Pass_PlaceHolder"
+    },
+    "Server-Port": {
+      "text": "#ServerPort",
+      "type": "combo",
+      "tag": "PORT",
+      "default": "27015",
+      "combo-range": "27010-27030",
+      "command": "port $",
+      "command_prefix": "-"
+    },
+    "Server_Vac": {
+      "text": "#Is_Vac",
+      "type": "check",
+      "default": true,
+      "hint": "#Is_Vac_Hint",
+      "returns": "insecure, _",
+      "command": "$",
+      "command_prefix": "-"
+    },
+    "Server_Lan": {
+      "text": "#Is_Lan",
+      "type": "check",
+      "default": false,
+      "hint": "#Is_Lan_Hint",
+      "returns": "0, 1",
+      "command": "sv_lan $",
+      "command_prefix": "-"
+    }
+  },
+  "#GameSettings": {
+    "Max-Players": {
+      "text": "#MaxP",
+      "type": "combo",
+      "default": "4",
+      "combo-range": "1-10",
+      "command": "maxplayers $",
+      "command_prefix": "+"
+    },
+    "Server_Map": {
+      "text": "#Svr-Map",
+      "type": "combo",
+      "can_leave_blank": false,
+      "carry-dir": true,
+      "combo-target": "\\left4dead2\\maps;*.bsp",
+      "hint": "#Svr-Map-Hint",
+      "command": "map $",
+      "command_prefix": "+"
+    },
+    "Enable_Cheats": {
+      "text": "#ECheats",
+      "type": "check",
+      "default": false,
+      "hint": "#ECheats_Hint",
+      "returns": "0, 1",
+      "command": "sv_cheats $",
+      "command_prefix": "+"
+    },
+    "Enable_Voice": {
+      "text": "#EVoice",
+      "type": "check",
+      "default": false,
+      "hint": "#EVoice_Hint",
+      "returns": "0, 1",
+      "command": "sv_alltalk $",
+      "command_prefix": "+"
+    },
+    "Enable_Pause": {
+      "text": "#EPause",
+      "type": "check",
+      "default": false,
+      "hint": "#EPause_Hint",
+      "returns": "0, 1",
+      "command": "sv_pausable $",
+      "command_prefix": "+"
+    },
+    "Lobby_Connect_Only": {
+      "text": "#LOnly",
+      "type": "check",
+      "default": false,
+      "hint": "#LOnly_Hint",
+      "returns": "0, 1",
+      "command": "sv_allow_lobby_connect_only $",
+      "command_prefix": "+"
+    }
+  }
+}

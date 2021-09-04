@@ -212,15 +212,13 @@ namespace SteamCMDLauncher
             if(old_log_files?.Length > 0)
             {
                 DateTime expired_date = DateTime.Now.AddDays(-1);
-                Array.ForEach(old_log_files, new Action<FileInfo>((x) => {
-                    
+                Array.ForEach(old_log_files, new Action<FileInfo>((x) => {                   
                     if(x.LastWriteTime < expired_date)
                         x.Delete();
                 }));
             }
 
             old_log_files = null;
-
             #endif
 
             // Set the 'StartTime' to the current date
