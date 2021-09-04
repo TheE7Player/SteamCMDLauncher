@@ -63,6 +63,9 @@ namespace SteamCMDLauncher
 
             // https://stackoverflow.com/questions/38474362/get-a-file-sha256-hash-code-and-checksum/51966515#51966515
             // Same idea but different logic (this comment means to only output the B64 string, not the hex we need!)
+
+            // Good resource: https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hashalgorithm.computehash?view=net-5.0
+
             string output = null;
 
             using (System.Security.Cryptography.SHA256 hash = System.Security.Cryptography.SHA256Managed.Create())

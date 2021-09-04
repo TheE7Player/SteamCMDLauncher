@@ -202,6 +202,27 @@ namespace SteamCMDLauncher
         /// </summary>
         private void App_Startup(object sender, StartupEventArgs e)
         {
+            #if RELEASE
+            // Clear any old logs (if any)
+            FileInfo[] old_log_files = Directory.GetFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"))
+                .Select(x => new FileInfo(x))
+                .ToArray();
+
+            // Clear any logs that were found to be more than a day old
+            if(old_log_files?.Length > 0)
+            {
+                DateTime expired_date = DateTime.Now.AddDays(-1);
+                Array.ForEach(old_log_files, new Action<FileInfo>((x) => {
+                    
+                    if(x.LastWriteTime < expired_date)
+                        x.Delete();
+                }));
+            }
+
+            old_log_files = null;
+
+            #endif
+
             // Set the 'StartTime' to the current date
             StartTime = DateTime.Now;
 
@@ -314,17 +335,17 @@ namespace SteamCMDLauncher
             // Exit the program entirely if it should do (no depending tasks to be done)
             if (!CancelClose) Environment.Exit(0);
         }
-        #endregion
+#endregion
 
-        #region Exception Handling
+#region Exception Handling
         void AppDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             // Show dialog if RELEASE only
-            #if RELEASE
+#if RELEASE
 
             ShowUnhandledException(e);    
 
-            #endif
+#endif
         }
 
         void ShowUnhandledException(DispatcherUnhandledExceptionEventArgs e)
@@ -344,6 +365,6 @@ namespace SteamCMDLauncher
             // Exit the program entirely
             Environment.Exit(0);
         }
-        #endregion
+#endregion
     }
 }
