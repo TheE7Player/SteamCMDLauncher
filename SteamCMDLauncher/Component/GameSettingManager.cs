@@ -27,6 +27,11 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         public bool LanguageSupported { get; private set; }
 
+        /// <summary>
+        /// If the current loaded config (either language or file) is unedited from release build
+        /// </summary>
+        public bool ConfigOffical { get; private set; }
+
         private string targetExecutable, targetDictionary, PreArguments, JoinConnectString;
 
         private Dictionary<string, string> language;
@@ -61,7 +66,7 @@ namespace SteamCMDLauncher.Component
             if (!Directory.Exists(resource))
             {
                 Config.Log($"[GSM] Resource folder was not found - Got '{resource}'");
-                Supported = false; ResourceFolderFound = false; return;
+                Supported = false; ResourceFolderFound = false; lang = null; resource = null; return;
             }
 
             ResourceFolderFound = true;
@@ -70,7 +75,7 @@ namespace SteamCMDLauncher.Component
             if(!Directory.Exists(folderLocation))
             {
                 Config.Log($"[GSM] Server Root Folder is invalid or missing - Got '{folderLocation}'");
-                Supported = false; return;
+                Supported = false; lang = null; resource = null; return;
             }
 
             targetDictionary = folderLocation;
@@ -97,6 +102,43 @@ namespace SteamCMDLauncher.Component
             {
                 SetControls(gameFile);
             }
+
+            Config.Log("[GSM] Validating if the config file is unaltered");
+            
+            string config_f = files.FirstOrDefault(x => x.EndsWith("res_hash.txt"));
+            
+            ConfigOffical = true;
+
+            if (string.IsNullOrWhiteSpace(config_f))
+            {
+                Config.Log("[GSM] Couldn't find 'res_hash.txt' - thats an issue!");
+                ConfigOffical = false;
+                return;
+            }
+
+            string[] contents = File.ReadAllLines(config_f)
+                .Where(x => !x.StartsWith("#")).ToArray();
+
+            string cfgHash = gameFile.GetSHA256Sum();
+            string lngHash = langFile.GetSHA256Sum();
+
+            // Now we compare
+            StringComparer comparer = StringComparer.OrdinalIgnoreCase;
+
+            if(!contents.Any(x => x.Contains(cfgHash)))
+            {
+                Config.Log("[GSM-SHA] The config loaded isn't offical, showing UI warning to user.");
+                ConfigOffical = false;
+            }
+
+            if (!contents.Any(x => x.Contains(lngHash)))
+            {
+                Config.Log("[GSM-SHA] The language config loaded isn't offical, showing UI warning to user.");
+                ConfigOffical = false;
+            }
+
+            comparer = null; lngHash = null; cfgHash = null;
+            contents = null; config_f = null;
 
             langFile = null; gameFile = null;
             files = null; resource = null;

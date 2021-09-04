@@ -81,7 +81,7 @@ fn main()
 		}
 	}
 
-	println("Process is complete, it should be located in the folder of ./$write_file_path")
+	println("Process is complete, it should be located in the folder of: $write_file_path")
 	
 	println("[!] ENDED sha256_writer.v [!] ")
 }

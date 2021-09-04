@@ -81,6 +81,8 @@ namespace SteamCMDLauncher
                 return;
             }
 
+            this.Loaded += Window_Loaded;
+
             InitializeComponent();
 
             // Data context is used for binding, do not remove!
@@ -624,6 +626,24 @@ namespace SteamCMDLauncher
         private void ReturnBack_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Config.Log("[SV] Window has been fully loaded");
+
+            if (!gsm.ConfigOffical)
+            {
+                Config.Log("[SV] Showing unofficial config file has been loaded");
+
+                await Task.Run(() =>
+                {
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        dh.OKDialog("SteamCMDLauncher has identified an unofficial config has been loaded.\nThis could be either the game config json or the language config.\nSteamCMDLauncher is not responable for any damages with untrusted configurations. Please be careful!");
+                    });
+                });
+            }
         }
     }
 }

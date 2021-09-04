@@ -64,8 +64,14 @@
     <None Update="Resources\game_setting_740_en.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Resources\res_hash.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\server_file_search.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\sha256_writer.v">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
@@ -80,7 +86,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="v run $(ProjectDir)\Resources\sha256_writer.v" />
+    <Exec Command="v run $(ProjectDir)\Resources\sha256_writer.v&#xD;&#xA;v run $(TargetDir)\Resources\sha256_writer.v&#xD;&#xA;" />
   </Target>
 
 </Project>
