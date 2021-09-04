@@ -25,6 +25,9 @@ Specs:
 
 Dependencies: 
 
+> As of `dev build +0.5.1`, a [vlang](https://github.com/vlang/v) script has been added to verify the `.json` files. This script will run each time after a successful build takes place - `V` has to be assigned to a `symlink`, or you'll face issues when compiling.
+> The script is located in [\Resources\sha256_writer.v](https://github.com/TheE7Player/SteamCMDLauncher/blob/master/SteamCMDLauncher/Resources/sha256_writer.v)
+
 - Material Design In XAML ([Link here](http://materialdesigninxaml.net))
 - LiteDB for caching/storing data ([Link here](https://www.litedb.org))
 - GitHubUpdater ([Link here](https://github.com/TheE7Player/GitHubUpdater)) (`.Net Framework` port to `.Net Core 3.1`)
