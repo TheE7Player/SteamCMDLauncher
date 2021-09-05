@@ -80,7 +80,7 @@ namespace SteamCMDLauncher
             string repo_link = "repos/TheE7Player/SteamCMDLauncher";
             
             // 2 booleans which handles the update logic
-            bool needs_update = false, requires_check = true;
+            bool latest_version = false, requires_check = true;
  
             // Validate path first
             if (File.Exists(update_path))
@@ -158,11 +158,11 @@ namespace SteamCMDLauncher
                 if (repo != null) //Ensure it isn't null before fetching information
                 {
                     Config.Log("Now, comparing version from online to running version...");
-                    
-                    // Use the 'ProductComparer' to see if the version is less than the latest version possible
-                    needs_update = GitHubUpdaterCore.ProductComparer.CompareVersionLess("thee7player", _version, repo);
 
-                    if (needs_update)
+                    // Use the 'ProductComparer' to see if the version is less than the latest version possible
+                    latest_version = GitHubUpdaterCore.ProductComparer.CompareVersionLess("thee7player", _version, repo);
+
+                    if (!latest_version)
                         Config.Log($"[!] Your running on version {_version}, which is out of date! [!]");
                 }
                 else
@@ -173,7 +173,8 @@ namespace SteamCMDLauncher
 
                 Config.Log($"Fetch complete with {udp.getAPIFetchCount()} calls remaining");
 
-                return needs_update;
+                // We perform the opposite as 'true' means it needs an update
+                return !latest_version;
             }
             catch (Exception ex)
             {
