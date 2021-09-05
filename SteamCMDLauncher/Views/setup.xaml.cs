@@ -16,15 +16,16 @@ namespace SteamCMDLauncher
     {
         private bool first_time_run = true;
 
-        private string selectedGame = String.Empty;
-        private string steamcmd_location = String.Empty;
-        private string folder_location = String.Empty;
+        private string selectedGame = string.Empty;
+        private string steamcmd_location = string.Empty;
+        private string folder_location = string.Empty;
         
         private int selectedGame_ID;
         private int[] available_IDS;
 
         public Setup(bool firstrun = true)
         {
+          
             first_time_run = firstrun;
 
             App.CancelClose = true;
@@ -37,7 +38,7 @@ namespace SteamCMDLauncher
 
             if (Config.DatabaseExists)
             {
-                var cmdLoc = Config.GetEntryByKey("cmd", Config.INFO_COLLECTION);
+                LiteDB.BsonValue cmdLoc = Config.GetEntryByKey("cmd", Config.INFO_COLLECTION);
 
                 steamcmd_location = (!(cmdLoc is null)) ? cmdLoc.AsString : string.Empty;
 
@@ -89,7 +90,7 @@ namespace SteamCMDLauncher
             int max = games.Length;
 
             // Loop through each game that was found
-            foreach (var game in games)
+            foreach (string game in games)
             {
                 // Get the game name based on the 'appid' given
                 current_game = Config.GetGameByAppId(game);
@@ -124,7 +125,7 @@ namespace SteamCMDLauncher
             selectedGame = GameDropDown.SelectedValue.ToString();
             selectedGame_ID = available_IDS[GameDropDown.SelectedIndex];
 
-            Config.Log($"ID: {selectedGame_ID} | Game: {selectedGame}");
+            Config.Log($"[SETUP] User selected Game: {selectedGame} ({selectedGame_ID})");
         }
 
         #region Button Events
@@ -133,7 +134,7 @@ namespace SteamCMDLauncher
         {        
             steamcmd_location = Config.GetFolder("steamcmd.exe", new Action(() =>
             {
-                var ui = new UIComponents.DialogHostContent(RootDialog);
+                UIComponents.DialogHostContent ui = new UIComponents.DialogHostContent(RootDialog);
                 ui.OKDialog("The given path doesn't contain the 'steamcmd.exe' to install the game files! Try again.");
                 ui.ShowDialog();
                 this.Hide();
@@ -143,9 +144,10 @@ namespace SteamCMDLauncher
 
             if (steamcmd_location.Length > 0)
             {
+                Config.Log($"[SETUP] CMD setup is allocated in \"{steamcmd_location}\"");
                 Config.AddEntry_BJSON("cmd", steamcmd_location, Config.INFO_COLLECTION);
 
-                Config.Log(steamcmd_location);
+                //Config.Log(steamcmd_location);
 
                 ServerFolderButton.IsEnabled = true;
 
@@ -232,7 +234,7 @@ namespace SteamCMDLauncher
 
                     main_win.Show();
 
-                    this.Close();
+                    App.WindowClosed(this);
                 });
             });
         }
@@ -245,7 +247,7 @@ namespace SteamCMDLauncher
             if (folder_location.Length > 0)
             {
                 // Validate if the id is correct
-                var found_games = Config.FindGameID(folder_location);
+                string[] found_games = Config.FindGameID(folder_location);
                 string appid_loc = string.Empty;
 
                 // Creating the programmatic version of a dialog host (using MatieralDesigns)
@@ -257,7 +259,7 @@ namespace SteamCMDLauncher
                         appid_loc = found_game;
                 }
 
-                var dialog = new UIComponents.DialogHostContent(RootDialog);
+                UIComponents.DialogHostContent dialog = new UIComponents.DialogHostContent(RootDialog);
 
                 if(string.IsNullOrEmpty(appid_loc))
                 {
@@ -281,25 +283,23 @@ namespace SteamCMDLauncher
                     return;
                 }
 
+                Config.Log($"[SETUP] Adding server with ID {appid_loc} to folder: {folder_location}");
                 Config.AddServer(result, folder_location);
-
-                Config.Log(folder_location);
 
                 dialog.OKDialog("Server has been added - Returning to home screen");
                 dialog.ShowDialog();
 
-                var mw = new main_view();
+                main_view mw = new main_view();
+                App.WindowClosed(this);
                 mw.Show();
-                this.Close();
             }
         }
         
         // Return back to home screen (if not first time/setup)
         private void ReturnBack_Click(object sender, RoutedEventArgs e)
         {
-            var main = new main_view();
-            this.Close();
-            main.Show();
+            App.WindowClosed(this);
+            App.WindowOpen(new main_view());
         }
         #endregion
 

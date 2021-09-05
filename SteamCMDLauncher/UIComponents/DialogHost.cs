@@ -81,7 +81,7 @@ namespace SteamCMDLauncher.UIComponents
 
         private void ExitState()
         {
-            if (this.isWaiting)
+            if (this.isWaiting && df != null)
             {
                 df.Continue = false;
                 df = null;
@@ -110,7 +110,7 @@ namespace SteamCMDLauncher.UIComponents
         public void Destory()
         {
             df = null;
-            //_dialog = null;
+            _dialog = null;
             result = null;
         }
 
@@ -241,7 +241,7 @@ namespace SteamCMDLauncher.UIComponents
         {
             Button Ok;
 
-            var MainPanel = new StackPanel();
+            StackPanel MainPanel = new StackPanel();
 
             MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
 

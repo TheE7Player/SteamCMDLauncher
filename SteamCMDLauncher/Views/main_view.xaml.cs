@@ -12,23 +12,20 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class main_view : Window
     {
-        Component.Struct.ServerCardInfo[] servers;
-        UIComponents.DialogHostContent HostDialog;
+        private Component.Struct.ServerCardInfo[] servers;
+        private UIComponents.DialogHostContent HostDialog;
 
-        bool initEvents = false;
+        static bool initEvents = false;
         bool out_of_date = false;
 
         public main_view(bool update = false)
         {
-            // App closing after select new server fix
-            if (App.CancelClose)
-                App.CancelClose = false;
-
             out_of_date = update;
 
             Config.Log("[MV] Loaded Main Window");
 
             Config.Log("[MV] Getting Servers");
+            
             servers = Config.GetServersNew();
        
             Config.Log("[MV] Initializing UI Components");
@@ -48,11 +45,8 @@ namespace SteamCMDLauncher
             PopulateCards();
         }
 
-        private Component.Struct.ServerCardInfo GetServerByID(string id)
-        {
-            return servers.FirstOrDefault(x => x.Unique_ID == id);
-        }
-
+        private Component.Struct.ServerCardInfo GetServerByID(string id) => servers.FirstOrDefault(x => x.Unique_ID == id);
+        
         private void UpdateRefreshButton()
         {
             MaterialDesignThemes.Wpf.PackIcon refreshButtonIcon = (MaterialDesignThemes.Wpf.PackIcon)RefreshServers.Content;
@@ -113,7 +107,9 @@ namespace SteamCMDLauncher
             if (current_server.IsEmpty)
             {
                 Config.Log("[LSV] Getting server information returned nothing, something went wrong there.");
+                
                 HostDialog.OKDialog($"Problems attempting to find server id: {id}.\nThis is either a code fault or a database fault.");
+                
                 return;
             }
 
@@ -140,6 +136,7 @@ namespace SteamCMDLauncher
                 HostDialog = null;
                 UpdateIcon = null;
                 Component.EventHooks.UnhookServerCardEvents();
+                initEvents = false;
 
                 Config.Log("[LSV] Force running the GCC");
                 GC.Collect();
@@ -147,8 +144,8 @@ namespace SteamCMDLauncher
                 GC.Collect();
 
                 Config.Log("[LSV] Showing the window to client");
-                server_window.Show();
-                this.Close();
+                App.WindowClosed(this);
+                App.WindowOpen(server_window);
             }
             else
             {
@@ -226,9 +223,11 @@ namespace SteamCMDLauncher
 
         private void NewServer_Click(object sender, RoutedEventArgs e)
         {
-            var setup = new Setup(false);
-            this.Close();
-            setup.Show();
+            // Tell the program we're not closing fully, we just want to show another window.
+            App.CancelClose = true;
+
+            App.WindowClosed(this);
+            App.WindowOpen(new Setup(false));
         }
 
         bool shown = true;
@@ -249,6 +248,10 @@ namespace SteamCMDLauncher
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // App closing after select new server fix
+            if (App.CancelClose)
+                App.CancelClose = false;
+
             Config.Log("[MV] Window has been fully loaded");
 
             if (out_of_date)
@@ -257,8 +260,8 @@ namespace SteamCMDLauncher
 
                 await Task.Run(() =>
                 {
-                    this.Dispatcher.Invoke(() => 
-                    { 
+                    this.Dispatcher.Invoke(() =>
+                    {
                         HostDialog.YesNoDialog("Update is due",
                         "The program identified your not running the latest version possible.\nWould you like to view the page to get the latest version?",
                         new Action(() =>
@@ -271,6 +274,11 @@ namespace SteamCMDLauncher
                     });
                 });
             }
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            App.WindowClosed(this);
         }
     }
 }

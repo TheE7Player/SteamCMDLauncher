@@ -20,7 +20,15 @@
         public static void InvokeHint(string hint)
         {
             Config.Log("Invoking \"UnhookHint\"");
-            View_Dialog.Invoke(hint);
+
+            try
+            {
+                View_Dialog.Invoke(hint);
+            }
+            catch (System.NullReferenceException)
+            {
+                throw new System.Exception("InvokeHint Event was unsubscribed, this could be a GCC fault or timing issue!");
+            }         
         }
 
         #endregion
@@ -46,12 +54,18 @@
         {
             Config.Log("Invoking \"InvokeServerCard\"");
 
-            if (string.IsNullOrEmpty(location))
-                View_Server.Invoke(id);
-            else
-                View_Folder.Invoke(id, location);
+            try
+            {
+                if (string.IsNullOrEmpty(location))
+                    View_Server.Invoke(id);
+                else
+                    View_Folder.Invoke(id, location);
+            }
+            catch (System.NullReferenceException)
+            {
+                throw new System.Exception("InvokeServerCard Event was unsubscribed, this could be a GCC fault or timing issue!");
+            }
         }
         #endregion
-
     }
 }

@@ -609,13 +609,10 @@ namespace SteamCMDLauncher
             GC.WaitForPendingFinalizers();
             GC.Collect();
 
-            // Load the main window again
-            main_view mv = new main_view();
-            mv.Closed += App.Window_Closed;
-            mv.Show();
-
-            App.CancelClose = false;
-            //this.Close();
+            // Load the main window again           
+            App.CancelClose = true;
+            App.WindowClosed(this);
+            App.WindowOpen(new main_view());
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -625,7 +622,7 @@ namespace SteamCMDLauncher
 
         private void ReturnBack_Click(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            ReturnToHomePage();
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)

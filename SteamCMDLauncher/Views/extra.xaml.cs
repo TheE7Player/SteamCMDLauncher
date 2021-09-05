@@ -14,7 +14,10 @@ namespace SteamCMDLauncher.Views
 
         public extra()
         {
+            App.CancelClose = true;
             InitializeComponent();
+
+            DialogTitle.Text = $"SteamCMDLauncher V{App._version} Advanced Menu";
             dh = new UIComponents.DialogHostContent(RootDialog, true, true);
             this.DataContext = this;
         }
@@ -51,7 +54,7 @@ namespace SteamCMDLauncher.Views
         {
             dh.Destory();
             dh = null;
-            this.Close();
+            App.WindowClosed(this);
         }
 
         private void ReturnButton_Click(object sender, RoutedEventArgs e)

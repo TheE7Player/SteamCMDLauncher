@@ -105,9 +105,9 @@ namespace SteamCMDLauncher.UIComponents
             viewServer = new Button { Content = btn_view_text, Margin = btn_view_margin };
 
             // Add an event to the buttons
-            viewButton.Click += (_, e) => { Component.EventHooks.InvokeServerCard(_id, folder);};
+            viewButton.Click += (_, e) => { Component.EventHooks.InvokeServerCard(_id, folder); };
             viewServer.Click += (_, e) => { Component.EventHooks.InvokeServerCard(_id); };
-            
+           
             bool folder_exists = System.IO.Directory.Exists(folder);
 
             // Set the icon depending if the folder exists

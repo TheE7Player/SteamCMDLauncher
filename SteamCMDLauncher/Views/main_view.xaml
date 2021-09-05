@@ -10,7 +10,7 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignDarkBackground}"
         FontFamily="{DynamicResource MaterialDesignFont}"
-        Title="Steam CMD Launcher" Height="720" Width="1280" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen" StateChanged="Window_StateChanged" Loaded="Window_Loaded">
+        Title="Steam CMD Launcher" Height="720" Width="1280" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen" StateChanged="Window_StateChanged" Loaded="Window_Loaded" Closed="Window_Closed">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="120"></RowDefinition>

@@ -210,14 +210,16 @@ namespace SteamCMDLauncher
 
         public static Component.Struct.ServerCardInfo[] GetServersNew()
         {
-            Span<Component.Struct.ServerCardInfo> server_info = new Span<Component.Struct.ServerCardInfo>(new Component.Struct.ServerCardInfo[10]);
+            //Span<Component.Struct.ServerCardInfo> server_info = new Span<Component.Struct.ServerCardInfo>(new Component.Struct.ServerCardInfo[10]);
+
+            Component.Struct.ServerCardInfo[] server_info = new Component.Struct.ServerCardInfo[20];
 
             ILiteCollection<BsonDocument> col;
             ILiteCollection<BsonDocument> aliases;
             IEnumerable<BsonDocument> servers;
             BsonDocument alias;
 
-            int spanIndex = 0;
+            int arrSize = 0;
 
             try
             {
@@ -234,17 +236,17 @@ namespace SteamCMDLauncher
                             {
                                 alias = aliases.FindOne(Query.EQ("_id", item["_id"]));
 
-                                server_info[spanIndex] = new Component.Struct.ServerCardInfo()
+                                server_info[arrSize] = new Component.Struct.ServerCardInfo()
                                 {
                                     Unique_ID = item["_id"],
                                     GameID = item["app_id"].RawValue.ToString(),
                                     Folder = item["folder"],
                                     Alias = alias is null ? string.Empty : alias["alias"].AsString
                                 };
-                                spanIndex++;                               
+                                arrSize++;
                             }
 
-                        if (Require_Get_Server) Require_Get_Server = false;                      
+                        if (Require_Get_Server) Require_Get_Server = false;
                     }
                 }
             }
@@ -253,10 +255,10 @@ namespace SteamCMDLauncher
                 throw new Exception(_.Message);
             }
 
-            // Time to resize the span
-            server_info = server_info.Slice(0, spanIndex);
+            // Time to resize the array
+            Array.Resize(ref server_info, arrSize);
 
-            return server_info.ToArray();
+            return server_info;
         }
 
         public static Dictionary<string, string[]> GetServers()
@@ -458,7 +460,7 @@ namespace SteamCMDLauncher
                             col.Insert(elem[0]);
                         }
 
-                        col.EnsureIndex("svr_id");
+                        col.EnsureIndex("Id");
                     } 
                 }
             }
@@ -478,6 +480,7 @@ namespace SteamCMDLauncher
 
             LogQueue.Add(new BsonDocument
             {
+                ["Id"] = GetID(),
                 ["svr_id"] = id,
                 ["time"] = DateTime.Now.UTC_String(),
                 ["type"] = ((int)lType),

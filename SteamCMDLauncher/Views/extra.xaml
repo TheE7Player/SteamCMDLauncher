@@ -18,11 +18,12 @@
         </materialDesign:DialogHost>
         <materialDesign:Card Margin="200,55,200,100" materialDesign:ShadowAssist.ShadowDepth="Depth4" UniformCornerRadius="12" Height="auto">
             <StackPanel>
-                <TextBlock FontSize="17" 
+                <TextBlock x:Name="DialogTitle"
+                           FontSize="17" 
                            FontWeight="DemiBold" 
                            Padding="7" Margin="0,4,0,10" 
                            VerticalAlignment="Center" HorizontalAlignment="Center" 
-                           TextWrapping="Wrap">SteamCMDLauncher V0.1 Advanced Menu</TextBlock>
+                           TextWrapping="Wrap"></TextBlock>
                 <GroupBox Header="Database Related"
                   Style="{DynamicResource MaterialDesignGroupBox}"
                   Margin="12" materialDesign:ShadowAssist.ShadowDepth="Depth2"

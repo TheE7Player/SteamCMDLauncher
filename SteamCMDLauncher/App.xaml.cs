@@ -39,6 +39,8 @@ namespace SteamCMDLauncher
         /// Holds the time the program first starts (Used for exceptions)
         /// </summary>
         public static DateTime StartTime;
+
+        private static Window ActiveWindow;
         #endregion
 
         #region Methods
@@ -47,9 +49,6 @@ namespace SteamCMDLauncher
         /// </summary>
         private void Cleanup()
         {
-            // Create the window object
-            Window extra_min = new Views.extra();
-
             // If the RSHIFT is held down while booting...
             if(Keyboard.IsKeyDown(Key.RightShift))
             {
@@ -57,11 +56,8 @@ namespace SteamCMDLauncher
                 Console.Beep();
 
                 // Then show the window as a dialog (halts until close event is fired)
-                extra_min.ShowDialog();
+                WindowOpen(new Views.extra(), true);               
             }
-
-            // Deference the object so the GC can collect it
-            extra_min = null;
         }
 
         /// <summary>
@@ -246,8 +242,8 @@ namespace SteamCMDLauncher
 
                     if(x.WaitForExit(2000))
                     {
-                        if (!x.HasExited) 
-                        { 
+                        if (!x.HasExited)
+                        {
                             Config.Log($"Redundant process of {x.Id} didn't close down by itself!");
                             MessageBox.Show($"Another instance of ID {x.Id} is running - Please close it down before running again! Exiting...");
                             return;
@@ -323,26 +319,61 @@ namespace SteamCMDLauncher
             else
                 mainWindow = new main_view(needsUpdate);
 
-            mainWindow.Show();
-            mainWindow.Focus();
-            mainWindow.Closed += Window_Closed;
+            WindowOpen(mainWindow);
         }
 
-        public static void Window_Closed(object sender, EventArgs e)
+        [Conditional("DEBUG")]
+        private static void DebugBeep(int freq, float seconds)
+        {          
+            Console.Beep(freq, (int)(seconds * 1000));
+        }
+
+        public static void WindowOpen(Window instance, bool AsDialog = false)
         {
+            string current_instance = instance.DependencyObjectType.Name;
+            
+            Config.Log($"[WO] Current main window instance is: {current_instance}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {current_instance})");
+
+            if (ActiveWindow != null) ActiveWindow = null;
+
+            ActiveWindow = instance;
+
+            current_instance = null;
+            
+            DebugBeep(800, 0.15f);
+
+            if (!AsDialog) instance.Show(); else instance.ShowDialog();
+        }
+
+        public static void WindowClosed(Window sender)
+        {
+            string window = sender.DependencyObjectType.Name;
+
+            DebugBeep(400, 0.15f);
+
+            Config.Log($"[EXIT EVENT] Cancel request was requested from window: {window}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {window})");
             // Exit the program entirely if it should do (no depending tasks to be done)
-            if (!CancelClose) Environment.Exit(0);
+            if (!CancelClose)
+            {
+                Config.Log($"[EXIT EVENT] Cancel request was granted from window: {window}.xaml");            
+                Environment.Exit(0);
+            } 
+            else
+            {
+                Config.Log($"[EXIT EVENT] Cancel request was rejected from window: {window}.xaml");
+                ActiveWindow?.Hide();
+            }
+            window = null;
+            sender = null;
         }
 #endregion
 
-#region Exception Handling
+        #region Exception Handling
         void AppDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             // Show dialog if RELEASE only
 #if RELEASE
-
-            ShowUnhandledException(e);    
-
+            ShowUnhandledException(e);
 #endif
         }
 
@@ -363,6 +394,6 @@ namespace SteamCMDLauncher
             // Exit the program entirely
             Environment.Exit(0);
         }
-#endregion
+        #endregion
     }
 }
