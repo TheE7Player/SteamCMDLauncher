@@ -69,8 +69,6 @@ namespace SteamCMDLauncher
                     {
                         col = db.GetCollection(collection);
 
-                        var current_table = col.FindAll().ToArray();
-
                         col.Insert(new BsonDocument { ["_id"] = GetID(), [key] = new BsonValue(value) });
                     }
 
@@ -384,7 +382,6 @@ namespace SteamCMDLauncher
         public static bool ChangeServerFolder(string id, string old_location, string new_location)
         {
 
-
             ILiteCollection<BsonDocument> col;
 
             try
@@ -443,7 +440,7 @@ namespace SteamCMDLauncher
         {
             if (elem is null) return;
 
-            ILiteCollection<BsonDocument> col;
+            /*ILiteCollection<BsonDocument> col;
 
             try
             {
@@ -458,24 +455,40 @@ namespace SteamCMDLauncher
                         for (int i = 0; i < elem.Length; i++)
                         {
                             col.Insert(elem[0]);
+                            elem[0] = null;
                         }
 
                         col.EnsureIndex("Id");
+                        col = null;
                     } 
                 }
             }
             catch (Exception _)
             {
                 throw new Exception(_.Message);
-            }
+            }*/
+
+            SteamCMDLauncher.Component.DBManager db = new SteamCMDLauncher.Component.DBManager(DatabaseLocation);
+            
+            int len = elem.Length;
+            
+            for (int i = 0; i < len; i++) { db.Insert(LOG_COLLECTION, elem[i]); }
+            
+            // TODO: ADD ENSUREINDEX FUNCTION
+
+            db.Destory();
+
+            db = null;
         }
     
         public static void AddLog(string id, LogType lType, string details)
         {         
             if (LogQueue is null)
-            { 
-                LogQueue = new Component.AutoFlushQueue<BsonDocument>(4, QueueRunner_Wait);
-                LogQueue.OnFlushElapsed = RunLogQueue;
+            {
+                LogQueue = new Component.AutoFlushQueue<BsonDocument>(4, QueueRunner_Wait)
+                {
+                    OnFlushElapsed = RunLogQueue
+                };
             }
 
             LogQueue.Add(new BsonDocument

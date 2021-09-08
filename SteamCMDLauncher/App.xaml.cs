@@ -23,7 +23,7 @@ namespace SteamCMDLauncher
         /// <summary>
         /// Holds the current version of the program
         /// </summary>
-        public static string _version = "0.5.1";
+        public static string _version = "0.5.2";
 
         /// <summary>
         /// Holds the string to display the version of the program
@@ -199,6 +199,18 @@ namespace SteamCMDLauncher
         /// </summary>
         private void App_Startup(object sender, StartupEventArgs e)
         {
+            // Disable Hardware Acceleration
+
+            if((System.Windows.Media.RenderCapability.Tier >> 16) == 0) 
+            {
+                Config.Log("[RENDERER] GPU Tier 0 - Forcing Software Renderer as Hardware Render isn't possible");
+                System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
+            } 
+            else
+            {
+                Config.Log("[RENDERER] GPU Tier 1/2 - Hardware Render is supported by default, Ignore");
+            }
+            
             #if RELEASE
             // Clear any old logs (if any)
             FileInfo[] old_log_files = Directory.GetFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"))
@@ -313,14 +325,12 @@ namespace SteamCMDLauncher
             // Code for before window opens (optional);
             Cleanup();
 
-            Window mainWindow;
+            //Window mainWindow;
 
             if (!Config.DatabaseExists || !Config.HasServers())
-                mainWindow = new Setup();
+                WindowOpen(new Setup());
             else
-                mainWindow = new main_view(needsUpdate);
-
-            WindowOpen(mainWindow);
+                WindowOpen(new main_view(needsUpdate));
         }
 
         [Conditional("DEBUG")]
@@ -335,13 +345,13 @@ namespace SteamCMDLauncher
             
             Config.Log($"[WO] Current main window instance is: {current_instance}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {current_instance})");
 
-            if (ActiveWindow != null) ActiveWindow = null;
+            if (ActiveWindow != null) { ActiveWindow = null; GC.Collect(); }
 
             ActiveWindow = instance;
 
             current_instance = null;
             
-            DebugBeep(800, 0.15f);
+            DebugBeep(800, 0.35f);
 
             if (!AsDialog) instance.Show(); else instance.ShowDialog();
         }
@@ -350,7 +360,7 @@ namespace SteamCMDLauncher
         {
             string window = sender.DependencyObjectType.Name;
 
-            DebugBeep(400, 0.15f);
+            DebugBeep(400, 0.35f);
 
             Config.Log($"[EXIT EVENT] Cancel request was requested from window: {window}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {window})");
             // Exit the program entirely if it should do (no depending tasks to be done)
