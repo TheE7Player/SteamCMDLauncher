@@ -33,7 +33,6 @@ namespace SteamCMDLauncher
         private const int QueueRunner_Wait = 2000;
 
         private static string SessionFileName = string.Empty;
-        private static readonly object db_lock = new object();
 
         #endregion
 
@@ -57,424 +56,223 @@ namespace SteamCMDLauncher
         /// <returns></returns>
         public static bool AddEntry_BJSON(string key, object value, string collection)
         {
+            var db = new SteamCMDLauncher.Component.DBManager(db_location);
 
+            BsonDocument insert_value = new BsonDocument { ["_id"] = GetID(), [key] = new BsonValue(value) };
 
-            ILiteCollection<BsonDocument> col;
+            bool result = db.Insert(collection, insert_value);
 
-            try
-            {
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(collection);
+            db.Destory();
+            
+            insert_value = null;
+            
+            db = null;
 
-                        col.Insert(new BsonDocument { ["_id"] = GetID(), [key] = new BsonValue(value) });
-                    }
-
-                    return true;
-                }
-            }
-            catch (Exception _)
-            {
-               throw new Exception(_.Message);
-            }
+            return result;
         }
 
         public static BsonValue GetEntryByKey(string key, string collection)
         {
-            ILiteCollection<BsonDocument> col;
+            var db = new SteamCMDLauncher.Component.DBManager(db_location);
 
-            try
-            {
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(collection);
+            BsonValue item = ((BsonValue)db.FilterKey(collection, key).Target);
 
-                        var current_table = col.FindAll().ToArray();
+            db.Destory();
 
-                        var entries = current_table.FirstOrDefault(x => x.Keys.Contains(key));
+            key = null;
+            collection = null;
+            db = null;
 
-                        if (entries is null) return null;
-
-                        return entries[key];
-                    } 
-                }
-            }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }
+            return (item == null) ? null : item[key];
         }
 
         public static bool AddServer(int id, string folder_loc)
         {
+            var db = new SteamCMDLauncher.Component.DBManager(db_location);
 
-            ILiteCollection<BsonDocument> col;
+            string u_id = GetID();
+            
+            BsonDocument eee = new BsonDocument { ["_id"] = u_id, ["app_id"] = id, ["folder"] = folder_loc };
 
-            try
-            {
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(SERVER_INFO_COLLECTION);
+            if(!db.Insert(SERVER_INFO_COLLECTION, eee)) throw new Exception(db.Reason);
+            
+            if (!Require_Get_Server)
+               Require_Get_Server = true;
 
-                        string u_id = GetID();
+            AddLog(u_id, LogType.ServerAdd, $"New server added with ID: {u_id}");
+           
+            db.Destory();
+            
+            u_id = null;
+            eee = null;
+            db = null;
+            folder_loc = null;
 
-                        col.Insert(new BsonDocument { ["_id"] = u_id, ["app_id"] = id, ["folder"] = folder_loc });
-
-                        if (!Require_Get_Server)
-                            Require_Get_Server = true;
-
-                        AddLog(u_id, LogType.ServerAdd, $"New server added with ID: {u_id}");
-
-                        return true;
-                    } 
-                }
-            }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }
+            return true;
         }
 
         public static bool RemoveServer(string id)
         {
-
-            ILiteCollection<BsonDocument> col;
-
-            try
+            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            
+            if(!db.RemoveMany(id, SERVER_INFO_COLLECTION) || !db.RemoveMany(id, SERVER_ALIAS_COLLECTION))
             {
-
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(SERVER_INFO_COLLECTION);
-
-                        int eee = col.DeleteMany(x => x["_id"] == id);
-
-                        if (eee == 0)
-                        {
-                            Log($"[Remove Server] Couldn't find any server with given ID: '{id}'");
-                            return false;
-                        }
-
-                        col = db.GetCollection(SERVER_ALIAS_COLLECTION);
-
-                        // We don't care much if this one fails - but should it be considered?
-                        col.DeleteMany(x => x["_id"] == id);
-
-                        db.Rebuild();
-
-                        AddLog(id, LogType.ServerRemove, $"Deleted server with ID: {id}");
-
-                        return true;
-                    } 
-                }
+                Log($"[Remove Server] {db.Reason}");
+                return false;
             }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }
+
+            db.Destory();
+            
+            AddLog(id, LogType.ServerRemove, $"Deleted server with ID: {id}");
+           
+            id = null;
+            db = null;
+
+            return true;
         }
 
         public static bool HasServers()
         {
+            var db = new SteamCMDLauncher.Component.DBManager(db_location);
 
+            bool ContainsServers = db.GetDocumentCount(SERVER_INFO_COLLECTION) > 0;
+            
+            db.Destory();
+            
+            db = null;
 
-            ILiteCollection<BsonDocument> col;
-
-            try
-            {
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(SERVER_INFO_COLLECTION);
-
-                        return col.FindAll().Count() > 0;
-                    }
-                }
-            }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }
+            return ContainsServers;
         }
-
-        public static Component.Struct.ServerCardInfo[] GetServersNew()
+        
+        //TODO: Work this memory problem here
+        public static Component.Struct.ServerCardInfo[] GetServers()
         {
-            //Span<Component.Struct.ServerCardInfo> server_info = new Span<Component.Struct.ServerCardInfo>(new Component.Struct.ServerCardInfo[10]);
+            var db = new SteamCMDLauncher.Component.DBManager(db_location);
 
-            Component.Struct.ServerCardInfo[] server_info = new Component.Struct.ServerCardInfo[20];
+            Component.Struct.ServerCardInfo[] server_info = db.GetCurrentServers(SERVER_INFO_COLLECTION, SERVER_ALIAS_COLLECTION, 20);
 
-            ILiteCollection<BsonDocument> col;
-            ILiteCollection<BsonDocument> aliases;
-            IEnumerable<BsonDocument> servers;
-            BsonDocument alias;
+            db.Destory();
 
-            int arrSize = 0;
+            db = null;
 
-            try
-            {
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(SERVER_INFO_COLLECTION);
-                        aliases = db.GetCollection(SERVER_ALIAS_COLLECTION);
-                        servers = col.FindAll();
-                      
-                        if (!(servers is null))
-                            foreach (BsonDocument item in servers)
-                            {
-                                alias = aliases.FindOne(Query.EQ("_id", item["_id"]));
-
-                                server_info[arrSize] = new Component.Struct.ServerCardInfo()
-                                {
-                                    Unique_ID = item["_id"],
-                                    GameID = item["app_id"].RawValue.ToString(),
-                                    Folder = item["folder"],
-                                    Alias = alias is null ? string.Empty : alias["alias"].AsString
-                                };
-                                arrSize++;
-                            }
-
-                        if (Require_Get_Server) Require_Get_Server = false;
-                    }
-                }
-            }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }
-
-            // Time to resize the array
-            Array.Resize(ref server_info, arrSize);
+            if (Require_Get_Server) Require_Get_Server = false;
 
             return server_info;
         }
-
-        public static Dictionary<string, string[]> GetServers()
+       
+        public static string GetGameByAppId(string id)
         {
-            ILiteCollection<BsonDocument> col;
-            Dictionary<string, string[]> _dict = new Dictionary<string, string[]>();
+            string file = string.Empty, output = string.Empty;
+            JObject jsonObject;
+            JToken GameEntity;
 
             try
             {
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(SERVER_INFO_COLLECTION);
-                        ILiteCollection<BsonDocument> aliases = db.GetCollection(SERVER_ALIAS_COLLECTION);
-
-                        IEnumerable<BsonDocument> servers = col.FindAll();
-
-                        BsonDocument alias;
-
-                        if (!(servers is null))
-                            foreach (BsonDocument item in servers)
-                            {
-                                alias = aliases.FindOne(Query.EQ("_id", item["_id"]));
-                                _dict.Add(item["_id"], new string[] { item["app_id"].RawValue.ToString(), item["folder"], (alias is null) ? string.Empty : alias["alias"].AsString, item["installed"] });
-                            }
-
-                        if (Require_Get_Server) Require_Get_Server = false;
-
-                        return _dict;
-                    } 
-                }
-            }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }
-        }
-
-        public static string GetGameByAppId(string id)
-        {
-            string file = System.Text.Encoding.Default.GetString(SteamCMDLauncher.Properties.Resources.dedicated_server_list);
-
-            Newtonsoft.Json.Linq.JObject jsonObject = Newtonsoft.Json.Linq.JObject.Parse(file);
-
-            file = null;
-
-            JToken GameEntity = jsonObject["server"]
+                file = System.Text.Encoding.Default.GetString(SteamCMDLauncher.Properties.Resources.dedicated_server_list);
+                jsonObject = Newtonsoft.Json.Linq.JObject.Parse(file);
+                
+                GameEntity = jsonObject["server"]
                  .Children()
                  .FirstOrDefault(x => x["id"].ToString() == id);
 
-            jsonObject = null;
-
-            return GameEntity is null ? string.Empty : GameEntity["game"].ToString();
-        }
-
-        public static string GetCMDDirectory()
-        {
-
-            ILiteCollection<BsonDocument> col;
-
-            try
-            {
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(INFO_COLLECTION);
-
-                        BsonDocument exe = col.FindOne(Query.Contains("cmd", ":"));
-
-                        return (exe is null) ? string.Empty : exe["cmd"].AsString;
-                    } 
-                }
+                output = GameEntity is null ? string.Empty : GameEntity["game"].ToString();
             }
-            catch (Exception _)
+            catch (Exception ex)
             {
-                throw new Exception(_.Message);
+                throw new Exception(ex.Message);
             }
+            finally
+            {
+                file = null;
+                jsonObject = null;
+                GameEntity = null;
+                id = null;
+            }
+
+            return output;
         }
 
         public static bool ChangeServerAlias(string id, string new_alias)
         {
+            var db = new SteamCMDLauncher.Component.DBManager(db_location);
 
+            BsonDocument document = new BsonDocument { ["_id"] = id, ["alias"] = new_alias };
+            BsonDocument document_old = null;
 
-            ILiteCollection<BsonDocument> col;
+            int operation = db.UpdateOrInsert(SERVER_ALIAS_COLLECTION, id, document, null, out document_old);
 
-            try
+            bool result = operation > 0;
+
+            // If the operation was to update to document instead of inserting it...
+            if(operation == 2)
             {
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(SERVER_ALIAS_COLLECTION);
-
-                        BsonDocument r = col.FindById(id);
-
-                        string old_alias = (r is null) ? string.Empty : r["alias"].AsString;
-
-                        // Perform "INSERT" query if doesn't exist, else perform "UPDATE" query
-                        if (r is null)
-                        {
-                            col.Insert(new BsonDocument { ["_id"] = id, ["alias"] = new_alias });
-                        }
-                        else
-                        {
-                            r["alias"] = new_alias;
-                            col.Update(r);
-                        }
-
-                        AddLog(id, LogType.AliasChange, $"From: '{old_alias}', To: '{new_alias}'");
-
-                        return !(r is null);
-                    } 
-                }
+                AddLog(id, LogType.AliasChange, $"From: '{document_old?["alias"]}', To: '{new_alias}'");
             }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }
+
+            db.Destory();
+            
+            db = null;
+            id = null;
+            new_alias = null;
+            document = null;
+            document_old = null;
+
+            return result;
         }
 
         public static bool ChangeServerFolder(string id, string old_location, string new_location)
         {
+            var db = new SteamCMDLauncher.Component.DBManager(db_location);
 
-            ILiteCollection<BsonDocument> col;
+            BsonDocument document = new BsonDocument { ["_id"] = id, ["folder"] = new_location };
+            BsonDocument document_old = null;
 
-            try
+            int operation = db.UpdateOrInsert(SERVER_INFO_COLLECTION, id, document, Query.EQ("folder", old_location), out document_old);
+
+            bool result = operation > 0;
+
+            // If the operation was to update to document instead of inserting it...
+            if (operation == 2)
             {
-                lock (db_lock)
-                {
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(SERVER_INFO_COLLECTION);
-
-                        BsonDocument r = col.FindOne(Query.EQ("folder", old_location));
-
-                        // Perform "INSERT" query if doesn't exist, else perform "UPDATE" query
-                        if (r is null)
-                            col.Insert(new BsonDocument { ["_id"] = id, ["folder"] = new_location });
-                        else
-                        {
-                            r["folder"] = new_location;
-                            col.Update(r);
-                        }
-
-                        AddLog(id, LogType.FolderChange, $"Changed to: '{new_location}'");
-
-                        return !(r is null);
-                    } 
-                }
+                AddLog(id, LogType.FolderChange, $"Changed to: '{new_location}'");
             }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }
+
+            db.Destory();
+            
+            db = null;
+            id = null;
+            old_location = null;
+            new_location = null;
+            document = null;
+            document_old = null;
+
+            return result;
         }
 
         public static bool CleanLog()
         {
-            try
-            {
-                lock (db_lock)
-                {
-                    Log("Clearing log table");
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        var col = db.GetCollection(LOG_COLLECTION);
+            Log("Clearing log table");
 
-                        return col.DeleteAll() > 0;
-                    } 
-                }
-            }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }
+            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+
+            bool result = db.ClearTable(LOG_COLLECTION);
+
+            if (!result) { Log($"Had problems trying to clear '{LOG_COLLECTION}' or its already empty!"); }
+
+            db.Destory();
+
+            db = null;
+
+            return result;
         }
 
         public static void RunLogQueue(BsonDocument[] elem)
         {
             if (elem is null) return;
 
-            /*ILiteCollection<BsonDocument> col;
-
-            try
-            {
-                lock (db_lock)
-                {
-                    Log("Runner Queue Log to DB");
-
-                    using (var db = new LiteDatabase(db_location))
-                    {
-                        col = db.GetCollection(LOG_COLLECTION);
-
-                        for (int i = 0; i < elem.Length; i++)
-                        {
-                            col.Insert(elem[0]);
-                            elem[0] = null;
-                        }
-
-                        col.EnsureIndex("Id");
-                        col = null;
-                    } 
-                }
-            }
-            catch (Exception _)
-            {
-                throw new Exception(_.Message);
-            }*/
-
             SteamCMDLauncher.Component.DBManager db = new SteamCMDLauncher.Component.DBManager(DatabaseLocation);
-            
-            int len = elem.Length;
-            
-            for (int i = 0; i < len; i++) { db.Insert(LOG_COLLECTION, elem[i]); }
-            
-            // TODO: ADD ENSUREINDEX FUNCTION
+
+            if (!db.InsertBulk(LOG_COLLECTION, elem, "Id")) throw new Exception(db.Reason);
 
             db.Destory();
 
@@ -501,6 +299,7 @@ namespace SteamCMDLauncher
             });
         }
 
+        // TODO: Optimize this function?
         public static string[] FindGameID(string path)
         {
             List<string> rList = new List<string>(10);

@@ -26,7 +26,7 @@ namespace SteamCMDLauncher
 
             Config.Log("[MV] Getting Servers");
             
-            servers = Config.GetServersNew();
+            servers = Config.GetServers();
        
             Config.Log("[MV] Initializing UI Components");
             InitializeComponent();
@@ -163,7 +163,7 @@ namespace SteamCMDLauncher
             if (Config.Require_Get_Server)
             {
                 Config.Log("[PC] Program has been prompt to re-cache the server details...");
-                servers = Config.GetServersNew(); 
+                servers = Config.GetServers(); 
             } 
 
             if(!initEvents)
