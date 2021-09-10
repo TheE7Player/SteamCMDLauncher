@@ -125,6 +125,23 @@ namespace SteamCMDLauncher.UIComponents
             icon.MouseEnter += (s, e) => { ((MaterialDesignThemes.Wpf.PackIcon)s).Cursor = Cursors.Hand; };
             icon.MouseLeave += (s, e) => { ((MaterialDesignThemes.Wpf.PackIcon)s).Cursor = Cursors.Arrow; };
 
+            card.Unloaded += (o, e) =>
+            {
+                MaterialDesignThemes.Wpf.Card card = (MaterialDesignThemes.Wpf.Card)o;
+
+                // Dispose all the panel children
+                StackPanel children = card.Content as StackPanel;
+
+                while (children.Children.Count > 0)
+                {
+                    children.Children.RemoveAt(0);
+                }
+
+                children = null;
+
+                card = null;
+            };
+            
             // Now we sequentially add the items into the panel
             panel.Children.Add(gameName);
             panel.Children.Add(seperator);

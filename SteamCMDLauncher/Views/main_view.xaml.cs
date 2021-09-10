@@ -118,6 +118,12 @@ namespace SteamCMDLauncher
 
                 App.CancelClose = true;
 
+                int size = ServerStack.Children.Count;
+                while (ServerStack.Children.Count > 0)
+                {
+                    ServerStack.Children.RemoveAt(0);
+                }
+ 
                 ServerStack = null;
 
                 Config.Log("[LSV] Clearing up main window events/hooks");

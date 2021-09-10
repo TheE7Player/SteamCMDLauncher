@@ -14,8 +14,7 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class Setup : Window
     {
-        // TODO: Create global dh host here
-
+        UIComponents.DialogHostContent dh;
         private bool first_time_run = true;
 
         private string selectedGame = string.Empty;
@@ -24,6 +23,7 @@ namespace SteamCMDLauncher
         
         private int selectedGame_ID;
         private int[] available_IDS;
+        private bool disposed = false;
 
         public Setup(bool firstrun = true)
         {
@@ -33,6 +33,8 @@ namespace SteamCMDLauncher
             App.CancelClose = true;
 
             InitializeComponent();
+
+            dh = new UIComponents.DialogHostContent(RootDialog, true, true);
 
             ReturnBack.Visibility = (!first_time_run) ? Visibility.Visible : Visibility.Hidden;
 
@@ -53,26 +55,72 @@ namespace SteamCMDLauncher
                 }
 
                 ServerFolderButton.IsEnabled = !SteamCMDButton.IsEnabled;
+
+                cmdLoc = null;
             }
 
             this.GameDropDown.ItemsSource = GetSupportedGames();
         }
 
-        private List<string> GetSupportedGames()
+        private string[] GetSupportedGames()
         {
-            string file = System.Text.Encoding.Default.GetString(SteamCMDLauncher.Properties.Resources.dedicated_server_list);
+            string file;
 
-            JObject objectA = JObject.Parse(file);
-            
-            file = null;
+            string key_id = "id";
+            string key_game = "game";
+            string key_svr = "server";
 
-            available_IDS = objectA["server"]
+            JObject objectA;
+            JToken[] objects;
+
+            string[] output = null;
+
+            try
+            {
+                file = System.Text.Encoding.Default.GetString(SteamCMDLauncher.Properties.Resources.dedicated_server_list);
+                
+                objectA = JObject.Parse(file);
+
+                objects = objectA[key_svr].Children().ToArray();
+
+                int size = objects.Length;
+
+                available_IDS = new int[size];
+                output = new string[size];
+
+                for (int i = 0; i < size; i++)
+                {
+                    available_IDS[i] = objects[i].Value<int>(key_id);
+                    output[i] = objects[i].Value<string>(key_game);
+                }
+
+                /*int[] ids = objectA["server"]
                 .Children()
-                .Select(x => x.Value<int>("id")).ToArray();
+                .Select(x => x.Value<int>("id")).ToArray();*/
 
-            return objectA["server"]
+                //available_IDS = ids;
+                //ids = null;
+
+                /*
+                 * return objectA["server"]
                 .Children()
                 .Select(x => x["game"].ToString()).ToList();
+                 */
+
+
+            }
+            finally
+            {
+                file = null;
+                objectA = null;
+                objects = null;
+
+                key_game = null;
+                key_svr = null;
+                key_svr = null;
+            }
+
+            return output;
         }
 
         private string Show_AG_Dialog(string[] games)
@@ -81,10 +129,7 @@ namespace SteamCMDLauncher
             string current_game = string.Empty;
             
             string game_id = string.Empty;
-
-            // Holds the logic to show and change the dialog
-            UIComponents.DialogHostContent confirmDialog = new UIComponents.DialogHostContent(RootDialog);
-                  
+              
             // Holds the current found number (iterator)
             int count = 1;
            
@@ -98,23 +143,42 @@ namespace SteamCMDLauncher
                 current_game = Config.GetGameByAppId(game);
 
                 // Change the dialog to reflect if that was the game that was found
-                confirmDialog.YesNoDialog($"Found Game {count++} of {max}", $"Is the game your adding '{current_game}'?");
-
-                // Show the dialog
-                confirmDialog.ShowDialog();
+                dh.YesNoDialog($"Found Game {count++} of {max}", $"Is the game your adding '{current_game}'?");
 
                 // Keep going if the result is pending (-1) or is false (0) - Do this until one is true (if)
-                if (confirmDialog.GetResult() == 1) { game_id = game; break; }
+                if (dh.GetResult() == 1) { game_id = game; break; }
 
             }
-
-            confirmDialog.Destory();
-           
-            confirmDialog = null;
-            
+         
             current_game = null;
 
             return game_id;
+        }
+
+        private void Destory()
+        {
+            if(!disposed)
+            {
+                selectedGame = null;
+                steamcmd_location = null;
+            
+                folder_location = null;
+            
+                available_IDS = null;
+
+                this.GameDropDown.ItemsSource = null;
+                this.GameDropDown = null;
+
+                SteamCMDButton.ToolTip = null;
+
+                if (!dh.Destoryed)
+                {
+                    dh.Destory();
+                    dh = null;
+                }
+
+                disposed = true;
+            }
         }
 
         #region Events
@@ -136,9 +200,7 @@ namespace SteamCMDLauncher
         {        
             steamcmd_location = Config.GetFolder("steamcmd.exe", new Action(() =>
             {
-                UIComponents.DialogHostContent ui = new UIComponents.DialogHostContent(RootDialog);
-                ui.OKDialog("The given path doesn't contain the 'steamcmd.exe' to install the game files! Try again.");
-                ui.ShowDialog();
+                dh.OKDialog("The given path doesn't contain the 'steamcmd.exe' to install the game files! Try again.");
                 this.Hide();
             }));
             
@@ -162,7 +224,7 @@ namespace SteamCMDLauncher
             folder_location = Config.GetFolder(string.Empty, string.Empty);
             if (folder_location.Length > 0)
             {
-                Config.Log(folder_location);
+                Config.Log($"[SETUP] Install location was set to: \"{folder_location}\"");
 
                 if (!Card3.IsEnabled)
                     Card3.IsEnabled = true;
@@ -172,12 +234,16 @@ namespace SteamCMDLauncher
         private void InstallServer_Click(object sender, RoutedEventArgs e)
         {
 
-            UIComponents.DialogHostContent installDialog = new UIComponents.DialogHostContent(RootDialog, false);
+            Config.Log("[SETUP] Starting server install process");
 
-            installDialog.GameInstallDialog(selectedGame);
+            // Need to turn of wait command
+            dh.IsWaiting(false);
 
-            installDialog.ChangePropertyText("GameInstallStatus", "Pre-running 'steamexe.exe' - waiting for result");
+            dh.GameInstallDialog(selectedGame);
 
+            dh.ChangePropertyText("GameInstallStatus", "Pre-running 'steamexe.exe' - waiting for result");
+
+            Config.Log("[SETUP] Install Process 1/4: Setting up SteamCMD Object");
             Component.SteamCMD cmd = new Component.SteamCMD(steamcmd_location);
 
             // Force all the buttons to be inactive
@@ -202,34 +268,47 @@ namespace SteamCMDLauncher
                 }
             }
 
-            installDialog.ShowDialog();
+            dh.ShowDialog();
 
             Task _ = Task.Run(async () =>
             {
+                Config.Log("[SETUP] Install Process 2/4: Running SteamCMD itself for any updates to install");
                 cmd.PreRun();
 
                 await this.Dispatcher.Invoke(async () =>
                 {
-                    installDialog.ChangePropertyText("GameInstallStatus", "Installing... Don't close this window");
+                    dh.ChangePropertyText("GameInstallStatus", "Installing... Don't close this window");
+
+                    Config.Log("[SETUP] Install Process 3/4: Installing the game");
 
                     await Task.Delay(3000);
 
                     cmd.InstallGame(selectedGame_ID, folder_location);
 
-                    installDialog.ChangePropertyText("GameInstallStatus", "Installed! Return back to main page.");
+                    dh.ChangePropertyText("GameInstallStatus", "Installed! Return back to main page.");
+
+                    Config.Log("[SETUP] Install Process 4/4: Game has been installed, taking user to home page");
 
                     await Task.Delay(100);
                     
                     Config.AddServer(selectedGame_ID, folder_location);
 
-                    await Task.Delay(2100);
-
-                    installDialog.CloseDialog();
+                    Config.Log("[SETUP] Added server information into the database");
 
                     await Task.Delay(2100);
 
-                    installDialog.Destory();
+                    dh.CloseDialog();
 
+                    await Task.Delay(2100);
+
+                    Config.Log("[SETUP] Now destroying any unmanaged objects");
+
+                    dh.Destory();
+                    
+                    dh = null;
+                    cmd = null;
+
+                    Config.Log("[SETUP] Now returning back to main window");
                     App.WindowClosed(this);
                     App.WindowOpen(new main_view());
                 });
@@ -254,38 +333,41 @@ namespace SteamCMDLauncher
 
                     if (!string.IsNullOrEmpty(found_game))
                         appid_loc = found_game;
-                }
 
-                UIComponents.DialogHostContent dialog = new UIComponents.DialogHostContent(RootDialog);
+                    found_game = null;
+                }
 
                 if(string.IsNullOrEmpty(appid_loc))
                 {
-                    dialog.OKDialog("Sorry but the program didn't manage to find the appid based on current folders\nPlease help by stating what commands and files to run that in this program.");
-                    dialog.ShowDialog();
+                    dh.OKDialog("Sorry but the program didn't manage to find the appid based on current folders\nPlease help by stating what commands and files to run that in this program.");
                     return;
                 }
 
                 int result;
                 if(!Int32.TryParse(appid_loc, out result))
                 {
-                    dialog.OKDialog($"Unable to support (from parsing) from id '{appid_loc}' - some features may be not implemented or available");
-                    dialog.ShowDialog();
+                    dh.OKDialog($"Unable to support (from parsing) from id '{appid_loc}' - some features may be not implemented or available");
                     return;
                 }
 
                 if(!available_IDS.Any(x => x == result))
                 {
-                    dialog.OKDialog($"Unable to support from id '{appid_loc}' - some features may be not implemented or available");
-                    dialog.ShowDialog();
+                    dh.OKDialog($"Unable to support from id '{appid_loc}' - some features may be not implemented or available");
                     return;
                 }
 
                 Config.Log($"[SETUP] Adding server with ID {appid_loc} to folder: {folder_location}");
                 Config.AddServer(result, folder_location);
 
-                dialog.OKDialog("Server has been added - Returning to home screen");
-                dialog.ShowDialog();
+                dh.OKDialog("Server has been added - Returning to home screen");
 
+                Config.Log("[SETUP] Now destroying any unmanaged objects");
+                Destory();
+
+                found_games = null;
+                appid_loc = null;
+
+                Config.Log("[SETUP] Returning back to home page");
                 App.WindowClosed(this);
                 App.WindowOpen(new main_view());
             }
@@ -294,6 +376,10 @@ namespace SteamCMDLauncher
         // Return back to home screen (if not first time/setup)
         private void ReturnBack_Click(object sender, RoutedEventArgs e)
         {
+            Config.Log("[SETUP] Now destroying any unmanaged objects");
+            Destory();
+
+            Config.Log("[SETUP] Now returning back to main window");
             App.WindowClosed(this);
             App.WindowOpen(new main_view());
         }

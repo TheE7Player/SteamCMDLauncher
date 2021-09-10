@@ -333,12 +333,6 @@ namespace SteamCMDLauncher
                 WindowOpen(new main_view(needsUpdate));
         }
 
-        [Conditional("DEBUG")]
-        private static void DebugBeep(int freq, float seconds)
-        {          
-            Console.Beep(freq, (int)(seconds * 1000));
-        }
-
         public static void WindowOpen(Window instance, bool AsDialog = false)
         {
             string current_instance = instance.DependencyObjectType.Name;
@@ -350,8 +344,7 @@ namespace SteamCMDLauncher
             if (ActiveWindow != null) { ActiveWindow.Close(); ActiveWindow = null; }
 
             ActiveWindow = instance;
-            //DebugBeep(800, 0.35f);
-
+  
             instance = null;
 
             if (!AsDialog) ActiveWindow.Show(); else ActiveWindow.ShowDialog();
@@ -360,8 +353,6 @@ namespace SteamCMDLauncher
         public static void WindowClosed(Window sender)
         {
             string window = sender.DependencyObjectType.Name;
-
-            //DebugBeep(400, 0.35f);
 
             Config.Log($"[EXIT EVENT] Cancel request was requested from window: {window}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {window})");
             // Exit the program entirely if it should do (no depending tasks to be done)

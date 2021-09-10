@@ -16,6 +16,7 @@ namespace SteamCMDLauncher.UIComponents
         private bool? result;
         private bool isWaiting;
         private bool forceOpenWhenCall = false;
+        public bool Destoryed { get; private set; }
         #endregion
 
         /// <summary>
@@ -112,9 +113,13 @@ namespace SteamCMDLauncher.UIComponents
 
         public void Destory()
         {
-            df = null;
-            _dialog = null;
-            result = null;
+            if (!Destoryed)
+            {
+                Destoryed = true;
+                df = null;
+                _dialog = null;
+                result = null;
+            }
         }
 
         public void IsWaiting(bool result) => isWaiting = result;
