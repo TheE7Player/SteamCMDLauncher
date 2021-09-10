@@ -37,8 +37,6 @@ namespace SteamCMDLauncher
         #endregion
 
         #region Properties
-        public static bool Require_Get_Server { get; private set; } = false;
-
         public static bool DatabaseExists => System.IO.File.Exists(db_location);
 
         public static string DatabaseLocation => db_location;
@@ -79,7 +77,6 @@ namespace SteamCMDLauncher
 
             db.Destory();
 
-            key = null;
             collection = null;
             db = null;
 
@@ -96,9 +93,6 @@ namespace SteamCMDLauncher
 
             if(!db.Insert(SERVER_INFO_COLLECTION, eee)) throw new Exception(db.Reason);
             
-            if (!Require_Get_Server)
-               Require_Get_Server = true;
-
             AddLog(u_id, LogType.ServerAdd, $"New server added with ID: {u_id}");
            
             db.Destory();
@@ -115,11 +109,13 @@ namespace SteamCMDLauncher
         {
             var db = new SteamCMDLauncher.Component.DBManager(db_location);
             
-            if(!db.RemoveMany(id, SERVER_INFO_COLLECTION) || !db.RemoveMany(id, SERVER_ALIAS_COLLECTION))
+            if(!db.RemoveMany(id, SERVER_INFO_COLLECTION))
             {
                 Log($"[Remove Server] {db.Reason}");
                 return false;
             }
+
+            db.RemoveMany(id, SERVER_ALIAS_COLLECTION);
 
             db.Destory();
             
@@ -144,7 +140,6 @@ namespace SteamCMDLauncher
             return ContainsServers;
         }
         
-        //TODO: Work this memory problem here
         public static Component.Struct.ServerCardInfo[] GetServers()
         {
             var db = new SteamCMDLauncher.Component.DBManager(db_location);
@@ -154,8 +149,6 @@ namespace SteamCMDLauncher
             db.Destory();
 
             db = null;
-
-            if (Require_Get_Server) Require_Get_Server = false;
 
             return server_info;
         }

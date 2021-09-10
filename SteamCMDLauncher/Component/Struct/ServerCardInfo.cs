@@ -2,6 +2,15 @@
 {
     public struct ServerCardInfo
     {
+        /*~ServerCardInfo()
+        {
+            Config.Log($"[SCI] Card deconstructor was called for: {Unique_ID}");
+            Unique_ID = null;
+            GameID = null;
+            Alias = null;
+            Folder = null;
+        }*/
+
         public string Unique_ID;
         public string GameID;
         public string Alias;

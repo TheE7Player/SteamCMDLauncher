@@ -12,7 +12,7 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class main_view : Window
     {
-        private Component.Struct.ServerCardInfo[] servers;
+        private static int server_count;
         private UIComponents.DialogHostContent HostDialog;
 
         static bool initEvents = false;
@@ -21,41 +21,25 @@ namespace SteamCMDLauncher
         public main_view(bool update = false)
         {
             out_of_date = update;
-
-            Config.Log("[MV] Loaded Main Window");
-
-            Config.Log("[MV] Getting Servers");
-            
-            servers = Config.GetServers();
-       
+   
             Config.Log("[MV] Initializing UI Components");
             InitializeComponent();
 
             AppVersion.Text = App.Version;
-
-            UpdateIcon.Visibility = update ? Visibility.Visible : Visibility.Hidden;
-            versionToolTip.Text = update ? "Your not running the latest version possible" : "Your running the latest version";
-
-            Config.Log("[MV] Setting up dialog host");
-            HostDialog = new UIComponents.DialogHostContent(RootDialog, true, true);
             
-            UpdateRefreshButton();
-
-            Config.Log("[MV] Populating Cards");
-            PopulateCards();
+            UpdateIcon.Visibility = update ? Visibility.Visible : Visibility.Hidden;
+            versionToolTip.Text = update ? "Your not running the latest version possible" : "Your running the latest version";       
         }
-
-        private Component.Struct.ServerCardInfo GetServerByID(string id) => servers.FirstOrDefault(x => x.Unique_ID == id);
         
         private void UpdateRefreshButton()
         {
             MaterialDesignThemes.Wpf.PackIcon refreshButtonIcon = (MaterialDesignThemes.Wpf.PackIcon)RefreshServers.Content;
 
-            refreshButtonIcon.Kind = (servers.Length > 0) ?
+            refreshButtonIcon.Kind = (server_count > 0) ?
                 MaterialDesignThemes.Wpf.PackIconKind.Restart :
                 MaterialDesignThemes.Wpf.PackIconKind.RestartOff;
 
-            RefreshServers.IsEnabled = servers.Length > 0;
+            RefreshServers.IsEnabled = server_count > 0;
 
             refreshButtonIcon = null;
         }
@@ -92,7 +76,9 @@ namespace SteamCMDLauncher
         private void LoadServerView(string id)
         {
             Config.Log("LoadServerView was invoked");
-            
+
+            Component.Struct.ServerCardInfo[] servers = Config.GetServers();
+
             if (servers is null)
             {
                 Config.Log("[LSV] 'server' array was empty, this shouldn't be the case!");
@@ -101,7 +87,7 @@ namespace SteamCMDLauncher
             }
 
             Config.Log("[LSV] Getting server information based from id chosen");
-            Component.Struct.ServerCardInfo current_server = GetServerByID(id);
+            Component.Struct.ServerCardInfo current_server = servers.FirstOrDefault(x => x.Unique_ID == id);
             Config.Log("[LSV] Getting server information based was given");
 
             if (current_server.IsEmpty)
@@ -121,12 +107,15 @@ namespace SteamCMDLauncher
             }
 
             Config.Log("[LSV] Generating the server window");
+            
             ServerView server_window = new ServerView(id, current_server.Alias, current_server.Folder, current_server.GameID);
-
+            
+            servers = null;
+            
             if (server_window.IsReady)
             {
                 Config.Log("[LSV] Clearing up main window objects");
-                servers = null;
+
                 App.CancelClose = true;
 
                 ServerStack = null;
@@ -159,13 +148,6 @@ namespace SteamCMDLauncher
             // Create a card instance
             UIComponents.ServerCard Card = new UIComponents.ServerCard();
 
-            // Check if any updates are needed since last update
-            if (Config.Require_Get_Server)
-            {
-                Config.Log("[PC] Program has been prompt to re-cache the server details...");
-                servers = Config.GetServers(); 
-            } 
-
             if(!initEvents)
             {
                 Config.Log("[PC] Hooking Button Events");
@@ -174,10 +156,13 @@ namespace SteamCMDLauncher
                 initEvents = true;
             }
 
-            ServerStack.VerticalAlignment = (servers.Length == 0) ? VerticalAlignment.Top : VerticalAlignment.Center;
+            Component.Struct.ServerCardInfo[] svr_l = Config.GetServers();
+            server_count = svr_l.Length;
+
+            ServerStack.VerticalAlignment = (server_count == 0) ? VerticalAlignment.Top : VerticalAlignment.Center;
 
             // Loop over each record stored
-            if (servers.Length == 0)
+            if (server_count == 0)
             {
                 Config.Log("[PC] 'server' was empty, showing no servers were found to client");
 
@@ -198,14 +183,15 @@ namespace SteamCMDLauncher
                 return;
             }
 
-            foreach (Component.Struct.ServerCardInfo svr in servers)
+            for (int i = 0; i < server_count; i++)
             {
-                Config.Log($"[PC] Loading Server Card for {svr.Unique_ID}");
-                ServerStack.Children.Add(Card.CreateCard(Config.GetGameByAppId(svr.GameID), svr.Alias, svr.Folder, svr.Unique_ID));
+                Config.Log($"[PC] Loading Server Card for {svr_l[i].Unique_ID}");
+                ServerStack.Children.Add(Card.CreateCard(Config.GetGameByAppId(svr_l[i].GameID), svr_l[i].Alias, svr_l[i].Folder, svr_l[i].Unique_ID));
             }
 
             // Dereference the object as we don't need it anymore
             Card = null;
+            svr_l = null;
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -274,6 +260,16 @@ namespace SteamCMDLauncher
                     });
                 });
             }
+
+            Config.Log("[MV] Loaded Main Window");
+
+            Config.Log("[MV] Setting up dialog host");
+            HostDialog = new UIComponents.DialogHostContent(RootDialog, true, true);
+
+            Config.Log("[MV] Populating Cards");
+            PopulateCards();
+
+            UpdateRefreshButton();
         }
 
         private void Window_Closed(object sender, EventArgs e)

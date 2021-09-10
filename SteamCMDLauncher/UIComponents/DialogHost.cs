@@ -87,9 +87,12 @@ namespace SteamCMDLauncher.UIComponents
                 df = null;
             }
 
-            _dialog.IsOpen = false;
+            if (_dialog != null)
+            {
+                _dialog.IsOpen = false;
 
-            _dialog.DialogContent = null;
+                _dialog.DialogContent = null;
+            }
         }
 
         public void ShowDialog()

@@ -14,6 +14,8 @@ namespace SteamCMDLauncher
     /// </summary>
     public partial class Setup : Window
     {
+        // TODO: Create global dh host here
+
         private bool first_time_run = true;
 
         private string selectedGame = string.Empty;
@@ -147,8 +149,6 @@ namespace SteamCMDLauncher
                 Config.Log($"[SETUP] CMD setup is allocated in \"{steamcmd_location}\"");
                 Config.AddEntry_BJSON("cmd", steamcmd_location, Config.INFO_COLLECTION);
 
-                //Config.Log(steamcmd_location);
-
                 ServerFolderButton.IsEnabled = true;
 
                 if (!Card1.IsEnabled)
@@ -202,8 +202,6 @@ namespace SteamCMDLauncher
                 }
             }
 
-            main_view main_win = new main_view();
-
             installDialog.ShowDialog();
 
             Task _ = Task.Run(async () =>
@@ -232,9 +230,8 @@ namespace SteamCMDLauncher
 
                     installDialog.Destory();
 
-                    main_win.Show();
-
                     App.WindowClosed(this);
+                    App.WindowOpen(new main_view());
                 });
             });
         }
@@ -289,9 +286,8 @@ namespace SteamCMDLauncher
                 dialog.OKDialog("Server has been added - Returning to home screen");
                 dialog.ShowDialog();
 
-                main_view mw = new main_view();
                 App.WindowClosed(this);
-                mw.Show();
+                App.WindowOpen(new main_view());
             }
         }
         

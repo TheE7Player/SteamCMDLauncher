@@ -344,23 +344,24 @@ namespace SteamCMDLauncher
             string current_instance = instance.DependencyObjectType.Name;
             
             Config.Log($"[WO] Current main window instance is: {current_instance}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {current_instance})");
+            
+            current_instance = null;
 
-            if (ActiveWindow != null) { ActiveWindow = null; GC.Collect(); }
+            if (ActiveWindow != null) { ActiveWindow.Close(); ActiveWindow = null; }
 
             ActiveWindow = instance;
+            //DebugBeep(800, 0.35f);
 
-            current_instance = null;
-            
-            DebugBeep(800, 0.35f);
+            instance = null;
 
-            if (!AsDialog) instance.Show(); else instance.ShowDialog();
+            if (!AsDialog) ActiveWindow.Show(); else ActiveWindow.ShowDialog();
         }
 
         public static void WindowClosed(Window sender)
         {
             string window = sender.DependencyObjectType.Name;
 
-            DebugBeep(400, 0.35f);
+            //DebugBeep(400, 0.35f);
 
             Config.Log($"[EXIT EVENT] Cancel request was requested from window: {window}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {window})");
             // Exit the program entirely if it should do (no depending tasks to be done)

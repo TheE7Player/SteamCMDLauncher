@@ -49,6 +49,8 @@ namespace SteamCMDLauncher
         private Dictionary<string, string> config_files;
         #endregion
 
+        private bool disposed = false;
+
         public ServerView(string id, string alias, string folder, string app_id = "")
         {
             this.IsReady = false;
@@ -147,7 +149,7 @@ namespace SteamCMDLauncher
 
                 if(!result)
                 {
-                    dh.OKDialog("Error with deleting the server from collection and alias - If needed, clear the cache fully on next startup.\nHold 'R_CTRL' until 3 beeps are heard in next bootup.");
+                    dh.OKDialog("Error with deleting the server from collection and alias - If needed, clear the cache fully on next startup.\nHold 'R_CTRL' until 1 beep is heard in next boot up.");
                     return;
                 }
 
@@ -573,6 +575,9 @@ namespace SteamCMDLauncher
 
         private void ReturnToHomePage()
         {
+            if (disposed) return;
+            disposed = true;
+
             // Deference all string types
             id = null;
             alias = null;
@@ -581,14 +586,14 @@ namespace SteamCMDLauncher
             last_save_location = null;
             current_alias = null;
             config_files = null;
-            
+
             // Use any method with its own deconstructors, events or disposable methods
             waitTime.Elapsed -= TimerElapsed;
+            waitTime.Dispose();
 
             configBox.DropDownClosed -= ToggleConfigBoxColour;
             configBox.DropDownOpened -= ToggleConfigBoxColour;
 
-            waitTime.Dispose();
             gsm.Destory();
             dh.Destory();
 
@@ -618,6 +623,7 @@ namespace SteamCMDLauncher
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             ReturnToHomePage();
+            e.Cancel = true;
         }
 
         private void ReturnBack_Click(object sender, RoutedEventArgs e)
