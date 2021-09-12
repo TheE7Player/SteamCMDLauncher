@@ -338,14 +338,13 @@ namespace SteamCMDLauncher
             string current_instance = instance.DependencyObjectType.Name;
             
             Config.Log($"[WO] Current main window instance is: {current_instance}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {current_instance})");
-            
-            current_instance = null;
-
+                   
             if (ActiveWindow != null) { ActiveWindow.Close(); ActiveWindow = null; }
 
             ActiveWindow = instance;
   
             instance = null;
+            current_instance = null;
 
             if (!AsDialog) ActiveWindow.Show(); else ActiveWindow.ShowDialog();
         }
@@ -366,6 +365,7 @@ namespace SteamCMDLauncher
                 Config.Log($"[EXIT EVENT] Cancel request was rejected from window: {window}.xaml");
                 ActiveWindow?.Hide();
             }
+
             window = null;
             sender = null;
         }

@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Linq;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace SteamCMDLauncher
 {
@@ -14,6 +15,10 @@ namespace SteamCMDLauncher
     {
         private static int server_count;
         private UIComponents.DialogHostContent HostDialog;
+        private BackgroundWorker ram_bgworker;
+        private System.Diagnostics.Process self_process;
+
+        private System.Windows.Media.Animation.DoubleAnimation textFadeAnimation;
 
         static bool initEvents = false;
         bool out_of_date = false;
@@ -28,9 +33,89 @@ namespace SteamCMDLauncher
             AppVersion.Text = App.Version;
             
             UpdateIcon.Visibility = update ? Visibility.Visible : Visibility.Hidden;
-            versionToolTip.Text = update ? "Your not running the latest version possible" : "Your running the latest version";       
+            versionToolTip.Text = update ? "Your not running the latest version possible" : "Your running the latest version";
         }
-        
+
+        #region Ram Background
+        private void Ram_bgworker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            RamText.Text = $"{e.ProgressPercentage}MB";
+
+            if(textFadeAnimation is null)
+            {
+                textFadeAnimation = new System.Windows.Media.Animation.DoubleAnimation()
+                {
+                    From = 0, To = 100,
+                    Duration = TimeSpan.FromSeconds(10),
+                    FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop,
+                    SpeedRatio = 0.05
+                };
+            }
+
+            RamText.BeginAnimation(OpacityProperty, textFadeAnimation);
+
+            sender = null;
+            e = null;
+        }
+
+        private void Ram_bgworker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            // Getting RAM usage: https://stackoverflow.com/a/59269258
+
+            BackgroundWorker worker = sender as BackgroundWorker;
+           
+            if(self_process == null)
+            {
+                self_process = System.Diagnostics.Process.GetCurrentProcess();
+            }
+
+            long ram;
+            while (true)
+            {
+                if (worker.CancellationPending) { e.Cancel = true; break; }
+                
+                ram = self_process.WorkingSet64;
+
+                // ram / 1048576
+                // => 1024 * 1024, (ram / 1048576) > (ram / 1024 / 1024)
+
+                worker.ReportProgress(Convert.ToInt32(ram / 1048576));
+
+                System.Threading.Thread.Sleep(10000);
+            }
+
+            worker = null;
+            sender = null;
+        }
+
+        bool bg_disposed = false;
+        private void Stop_RunBGWorker()
+        {
+            Config.Log("[MV] Background worker was told to stop, disposing of unmanaged objects");
+
+            if (!bg_disposed)
+            {
+                if (ram_bgworker.IsBusy) ram_bgworker.CancelAsync();
+
+                ram_bgworker.DoWork -= Ram_bgworker_DoWork;
+                ram_bgworker.ProgressChanged -= Ram_bgworker_ProgressChanged;
+
+                self_process.Dispose();
+                              
+                self_process = null;
+                ram_bgworker = null;
+                textFadeAnimation = null;
+                
+                bg_disposed = true;
+            } 
+            else
+            {
+                Config.Log("[MV] Background worker has already been disposed of? Please ensure it is!");
+            }
+        }
+
+        #endregion
+
         private void UpdateRefreshButton()
         {
             MaterialDesignThemes.Wpf.PackIcon refreshButtonIcon = (MaterialDesignThemes.Wpf.PackIcon)RefreshServers.Content;
@@ -139,6 +224,7 @@ namespace SteamCMDLauncher
                 GC.Collect();
 
                 Config.Log("[LSV] Showing the window to client");
+                Stop_RunBGWorker();
                 App.WindowClosed(this);
                 App.WindowOpen(server_window);
             }
@@ -217,7 +303,7 @@ namespace SteamCMDLauncher
         {
             // Tell the program we're not closing fully, we just want to show another window.
             App.CancelClose = true;
-
+            Stop_RunBGWorker();
             App.WindowClosed(this);
             App.WindowOpen(new Setup(false));
         }
@@ -267,6 +353,12 @@ namespace SteamCMDLauncher
                 });
             }
 
+            ram_bgworker = new BackgroundWorker();
+            ram_bgworker.WorkerReportsProgress = true;
+            ram_bgworker.WorkerSupportsCancellation = true;
+            ram_bgworker.DoWork += Ram_bgworker_DoWork;
+            ram_bgworker.ProgressChanged += Ram_bgworker_ProgressChanged;
+
             Config.Log("[MV] Loaded Main Window");
 
             Config.Log("[MV] Setting up dialog host");
@@ -276,10 +368,15 @@ namespace SteamCMDLauncher
             PopulateCards();
 
             UpdateRefreshButton();
+
+            ram_bgworker.RunWorkerAsync();
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
+            Stop_RunBGWorker();
+            sender = null;
+            e = null;
             App.WindowClosed(this);
         }
     }

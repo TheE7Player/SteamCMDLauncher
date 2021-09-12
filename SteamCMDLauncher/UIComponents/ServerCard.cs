@@ -30,11 +30,12 @@ namespace SteamCMDLauncher.UIComponents
         private string btn_folder_text = "View Folder";
         
         private int server_count = 1;
-        private readonly double WIDTH = 300;
-        private readonly double HEIGHT = 200;
-        private readonly double ICON_SIZE = 25;
+        private const double WIDTH = 300;
+        private const double HEIGHT = 200;
+        private const double ICON_SIZE = 25;
         #endregion
 
+        #region Constructor & Destructor 
         public ServerCard()
         {
             // Reset the server count if need be
@@ -46,12 +47,109 @@ namespace SteamCMDLauncher.UIComponents
             btn_view_text = null;
             btn_folder_text = null;
         }
+        #endregion
+
+        #region Events
+        private void ChangeCursor(object sender, MouseEventArgs e)
+        {
+            MaterialDesignThemes.Wpf.PackIcon self = (MaterialDesignThemes.Wpf.PackIcon)sender;
+
+            self.Cursor = self.Cursor != Cursors.Hand ? Cursors.Hand : Cursors.Arrow;
+
+            self = null;
+            e = null;
+            sender = null;
+        }
+
+        private void ButtonClick(object sender, RoutedEventArgs e)
+        {
+            Button self = (Button)sender;
+
+            string Name = self.Name[1..];
+            string Tag = self.Tag as string;
+
+            Component.EventHooks.InvokeServerCard(Name, Tag);
+
+            Name = null;
+            Tag = null;
+
+            self = null;
+            sender = null;
+            e = null;
+        }
+
+        private void Cleanup(object sender, RoutedEventArgs e)
+        {
+            MaterialDesignThemes.Wpf.Card card = (MaterialDesignThemes.Wpf.Card)sender;
+
+            // Clear tag, which may contain extra information
+            card.Tag = null;
+
+            // Dispose all the panel children
+            StackPanel children = card.Content as StackPanel;
+
+            /*
+             *  Len(6):
+                [0] gameName : text
+                [1] seperator : sep
+                [2] serverName : text
+                [3] icon : PackIcon
+                [4] viewButton : button
+                [5] viewServer : button
+            */
+
+            TextBlock name = (TextBlock)children.Children[0],
+            svr_name = (TextBlock)children.Children[2];
+
+            Button folder = (Button)children.Children[4],
+            svr_view = (Button)children.Children[5];
+
+            MaterialDesignThemes.Wpf.PackIcon icon = (MaterialDesignThemes.Wpf.PackIcon)children.Children[3];
+
+            Separator sep = (Separator)children.Children[1];
+
+            name.Text = null;
+            svr_name = null;
+
+            icon.MouseLeave -= ChangeCursor;
+            icon.MouseEnter -= ChangeCursor;
+            icon.ToolTip = null;
+
+            folder.Name = null;
+            svr_view.Name = null;
+
+            folder.Tag = null;
+            svr_view.Tag = null;
+
+            folder.Click -= ButtonClick;
+            svr_view.Click -= ButtonClick;
+
+            name = null;
+            svr_name = null;
+            folder = null;
+            svr_view = null;
+            icon = null;
+            sep = null;
+
+            children.Children.RemoveRange(0, 6);
+
+            children = null;
+
+            card.Unloaded -= Cleanup;
+
+            card = null;
+
+            sender = null;
+            e = null;
+        }
+        #endregion
 
         public MaterialDesignThemes.Wpf.Card CreateCard(string game, string alias, string folder, string _id)
         {
             // Setup the objects first
             MaterialDesignThemes.Wpf.Card card = new MaterialDesignThemes.Wpf.Card();
             MaterialDesignThemes.Wpf.PackIcon icon = new MaterialDesignThemes.Wpf.PackIcon();
+            
             StackPanel panel = new StackPanel();
             Button viewButton, viewServer;
             TextBlock gameName, serverName;
@@ -98,16 +196,21 @@ namespace SteamCMDLauncher.UIComponents
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = txt_game_margin
             };
-          
+
             // Now we setup the buttons
 
-            viewButton = new Button { Content = btn_folder_text, Margin = btn_folder_margin };
-            viewServer = new Button { Content = btn_view_text, Margin = btn_view_margin };
+            // Fix if the ID starts with number, this prevents "not a valid value for property 'Name'" exception
+            string modified_id = $"S{_id}";
+
+            viewButton = new Button { Content = btn_folder_text, Margin = btn_folder_margin, Name = modified_id, Tag = folder };
+            viewServer = new Button { Content = btn_view_text, Margin = btn_view_margin, Name = modified_id };
+
+            modified_id = null;
 
             // Add an event to the buttons
-            viewButton.Click += (_, e) => { Component.EventHooks.InvokeServerCard(_id, folder); };
-            viewServer.Click += (_, e) => { Component.EventHooks.InvokeServerCard(_id); };
-           
+            viewButton.Click += ButtonClick;
+            viewServer.Click += ButtonClick;
+
             bool folder_exists = System.IO.Directory.Exists(folder);
 
             // Set the icon depending if the folder exists
@@ -122,25 +225,10 @@ namespace SteamCMDLauncher.UIComponents
             icon.Padding = ico_margin;
 
             // These events change the cursor type
-            icon.MouseEnter += (s, e) => { ((MaterialDesignThemes.Wpf.PackIcon)s).Cursor = Cursors.Hand; };
-            icon.MouseLeave += (s, e) => { ((MaterialDesignThemes.Wpf.PackIcon)s).Cursor = Cursors.Arrow; };
+            icon.MouseEnter += ChangeCursor;
+            icon.MouseLeave += ChangeCursor;
 
-            card.Unloaded += (o, e) =>
-            {
-                MaterialDesignThemes.Wpf.Card card = (MaterialDesignThemes.Wpf.Card)o;
-
-                // Dispose all the panel children
-                StackPanel children = card.Content as StackPanel;
-
-                while (children.Children.Count > 0)
-                {
-                    children.Children.RemoveAt(0);
-                }
-
-                children = null;
-
-                card = null;
-            };
+            card.Unloaded += Cleanup;
             
             // Now we sequentially add the items into the panel
             panel.Children.Add(gameName);
@@ -156,10 +244,12 @@ namespace SteamCMDLauncher.UIComponents
             // Do Any Cleanup
             fixed_string = null;
             icon = null;
-            //panel = null;
-            //viewButton = null; viewServer = null; 
+            panel = null;
+            viewButton = null; viewServer = null;
             gameName = null; serverName = null;
             seperator = null;
+
+            game = null; alias = null; folder = null; _id = null;
 
             // Finish, time to return
             return card;

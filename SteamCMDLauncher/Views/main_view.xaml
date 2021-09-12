@@ -33,11 +33,12 @@
                     <materialDesign:PackIcon x:Name="UpdateIcon" Kind="SyncAlert" Foreground="IndianRed" Height="30" Width="30" Margin="10,0,10,0" VerticalAlignment="Center" />
                 </StackPanel>
             </TextBlock>
-            
-            <Button Margin="1006,50,36,38" Click="NewServer_Click">Add Another Server</Button>
+
+            <TextBlock x:Name="RamText" FontSize="18" Foreground="#FFEDF2F3" Margin="700,50,400,40" VerticalAlignment="Center" TextAlignment="Right">2048MB</TextBlock>
             <Button x:Name="RefreshServers" Margin="898,50,279,38" Click="RefreshServers_Click" >
                 <materialDesign:PackIcon Kind="RestartOff" Foreground="White" Height="25" Width="25"/>
             </Button>
+            <Button Margin="1006,50,36,38" Click="NewServer_Click">Add Another Server</Button>
         </Grid>
         <Grid Grid.Row="1">
             <TextBlock FontSize="22" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,20,0,0">Welcome! Select a server to view or launch:</TextBlock>

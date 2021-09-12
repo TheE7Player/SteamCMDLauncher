@@ -382,8 +382,6 @@ namespace SteamCMDLauncher
 
                 dh.OKDialog(sb.ToString());
 
-                sb.Clear();
-
                 sb = null;
                 any_required_empty = null;
                 
@@ -484,7 +482,7 @@ namespace SteamCMDLauncher
             // Finally the seconds
             sb.Append(TotalTime.Seconds > 9 ? $"{TotalTime.Seconds}" : $"0{TotalTime.Seconds}");
 
-            tb_Status.Text = $"Server Halted: {sb.ToString()}";
+            tb_Status.Text = $"Server Halted: {sb}";
             sb = null;
         }
         
