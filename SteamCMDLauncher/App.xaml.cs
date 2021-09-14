@@ -191,6 +191,25 @@ namespace SteamCMDLauncher
                 utc_format = null;
             }        
         }
+
+        private Process[] SameProcesses()
+        {
+            Process self = Process.GetCurrentProcess();
+            
+            Span<Process> targets = Process.GetProcessesByName(self.ProcessName).AsSpan();
+
+            int slice_start = 0;
+
+            for (int i = 0; i < targets.Length; i++)
+            {
+                if (self.Id != targets[i].Id) { slice_start++; } else { break; }
+            }
+
+            self = null;
+
+            return targets.Slice(0, slice_start).ToArray();
+        }
+
         #endregion
 
         #region Window Logic
@@ -201,7 +220,7 @@ namespace SteamCMDLauncher
         {
             // Disable Hardware Acceleration
 
-            if((System.Windows.Media.RenderCapability.Tier >> 16) == 0) 
+            if (System.Windows.Media.RenderCapability.Tier >> 16 == 0)
             {
                 Config.Log("[RENDERER] GPU Tier 0 - Forcing Software Renderer as Hardware Render isn't possible");
                 System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
@@ -237,36 +256,31 @@ namespace SteamCMDLauncher
 
             Config.Log("Checking for any same running applications");
 
-            // Get the current running process of itself - Kill the others
-            Process self = Process.GetCurrentProcess();
+            Process[] other_app = SameProcesses();
 
-            Process[] other_app = Process.GetProcessesByName(self.ProcessName).Where(x => x.Id != self.Id).ToArray();
-
-            if(other_app?.Length == 0)
+            if (other_app?.Length == 0)
             {
                 Config.Log("No other running instances, good to go!");
-            } 
+            }
             else
             {
-                Array.ForEach(other_app, new Action<Process>((x) =>
+                int size = other_app.Length;
+                for (int i = 0; i < size; i++)
                 {
-                    Config.Log($"Found redundant process of itself at ID {x.Id}... prompting a kill...");
-                    x.Kill();
+                    Config.Log($"Found redundant process of itself at ID {other_app[i].Id}... prompting a kill...");
+                    other_app[i].Kill();
 
-                    if(x.WaitForExit(2000))
+                    if(other_app[i].WaitForExit(2000))
                     {
-                        if (!x.HasExited)
+                        if (!other_app[i].HasExited)
                         {
-                            Config.Log($"Redundant process of {x.Id} didn't close down by itself!");
-                            MessageBox.Show($"Another instance of ID {x.Id} is running - Please close it down before running again! Exiting...");
+                            Config.Log($"Redundant process of {other_app[i].Id} didn't close down by itself!");
+                            MessageBox.Show($"Another instance of ID {other_app[i].Id} is running - Please close it down before running again! Exiting...");
                             return;
                         }
                     }
-                }));
+                }
             }
-
-            other_app = null;
-            self = null;
 
             // Setting up exception handlers
             Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler(AppDispatcherUnhandledException);
@@ -346,7 +360,10 @@ namespace SteamCMDLauncher
             instance = null;
             current_instance = null;
 
-            if (!AsDialog) ActiveWindow.Show(); else ActiveWindow.ShowDialog();
+            if (!AsDialog)
+            { ActiveWindow.Show(); }
+            else
+            { ActiveWindow.ShowDialog(); }
         }
 
         public static void WindowClosed(Window sender)
@@ -385,14 +402,14 @@ namespace SteamCMDLauncher
             // Till the compiler we are dealing with this exception ourself
             e.Handled = true;
 
-            // Create the exception window, and pass in the exception that got raised
-            Views.exception win = new Views.exception(e.Exception);
+            CancelClose = true;
 
-            // Close down the current window (if set, not always works)
-            App.Current.MainWindow.Close();
+            // Close this window
+            WindowClosed(MainWindow);
 
+            // Create the exception window, and pass in the exception that got raised           
             // Show the exception dialog and halt for an close event
-            win.ShowDialog();
+            WindowOpen(new Views.exception(e.Exception), true);
 
             // Exit the program entirely
             Environment.Exit(0);

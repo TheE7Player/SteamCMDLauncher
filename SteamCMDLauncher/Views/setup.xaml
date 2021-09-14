@@ -21,46 +21,40 @@
 
         <materialDesign:DialogHost Grid.RowSpan="3" x:Name="RootDialog" IsOpen="False" >
             <materialDesign:DialogHost.DialogContent>
-                <StackPanel></StackPanel> 
+                <Canvas/>
             </materialDesign:DialogHost.DialogContent>
         </materialDesign:DialogHost>
 
-        <Grid Grid.Row="0">
-            <TextBlock FontSize="36" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
-            <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">Setup Servers</TextBlock>
-            <Button x:Name="ReturnBack" Margin="966,42,64,46" Visibility="Hidden" Click="ReturnBack_Click" Content="Return Back"/>
-        </Grid>
-        
-        <Grid Grid.Row="1" Margin="40,20,0,0">
-            <TextBlock Foreground="#FFEDF2F3" FontWeight="Bold" FontSize="20">Let's first setup a server, if you have done so already - press the button and locate the server folder:</TextBlock>
-            <Button x:Name="SteamCMDButton" Margin="1,50,1063,18" Click="SteamCMD_Click">SteamCMD Location</Button>
-            <Button x:Name="ServerFolderButton" Margin="205,50,785,18" IsEnabled="False" Click="ServerFolderButton_Click">Server Folder Location</Button>
-        </Grid>
+        <TextBlock FontSize="36" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
+        <TextBlock FontSize="30" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">Setup Servers</TextBlock>
+        <Button x:Name="ReturnBack" Margin="966,42,64,46" Visibility="Hidden" Click="ReturnBack_Click" Content="Return Back"/>
 
-        <Grid Grid.Row="2">
-            <materialDesign:Card x:Name="Card1" Background="#FFF3F3EF" Margin="60,50,913,78" IsEnabled="False">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 1:</TextBlock>
-                    <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="10" TextWrapping="Wrap" Text="Select the type of game server you'd like to host:" Height="68"/>
-                    <ComboBox materialDesign:HintAssist.Hint="Select a game" Padding="10" Margin="10,0,10,0" x:Name="GameDropDown" SelectionChanged="GameDropDown_SelectionChanged" />
-                </StackPanel>
-            </materialDesign:Card>
+        <TextBlock Grid.Row="1" Foreground="{StaticResource White}" FontWeight="Bold" FontSize="20" Margin="40,0,20,0">Let's first setup a server, if you have done so already - press the button and locate the server folder:</TextBlock>
+        <Button Grid.Row="1" x:Name="SteamCMDButton" Margin="42,60,1022,28" Click="SteamCMD_Click">SteamCMD Location</Button>
+        <Button Grid.Row="1" x:Name="ServerFolderButton" Margin="271,60,719,28" IsEnabled="False" Click="ServerFolderButton_Click">Server Folder Location</Button>
 
-            <materialDesign:Card x:Name="Card2" Background="#FFF3F3EF" Margin="486,50,486,78" IsEnabled="False">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 2:</TextBlock>
-                    <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="20" TextWrapping="Wrap" Text="Locate where you want to store the server files:" Height="68"/>
-                    <Button x:Name="SelectDirFolder" Width="196" Content="Select Folder" Margin="0,30,0,0" Click="Location_Click"/>
-                </StackPanel>
-            </materialDesign:Card>
+        <materialDesign:Card Grid.Row="2" x:Name="Card1" Background="{StaticResource White}" Margin="60,50,913,78" IsEnabled="False">
+            <StackPanel>
+                <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 1:</TextBlock>
+                <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="10" TextWrapping="Wrap" Text="Select the type of game server you'd like to host:" Height="68"/>
+                <ComboBox materialDesign:HintAssist.Hint="Select a game" Padding="10" Margin="10,0,10,0" x:Name="GameDropDown" SelectionChanged="GameDropDown_SelectionChanged" />
+            </StackPanel>
+        </materialDesign:Card>
 
-            <materialDesign:Card x:Name="Card3" Background="#FFF3F3EF" Margin="912,50,60,78" IsEnabled="False">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 3:</TextBlock>
-                    <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="20" TextWrapping="Wrap" Text="Install the required files (This may take many minutes or hours depending on download size)" Height="86"/>
-                    <Button Width="196" Content="Install" Margin="0,30,0,0" Click="InstallServer_Click"  />
-                </StackPanel>
-            </materialDesign:Card>
-        </Grid>
+        <materialDesign:Card Grid.Row="2" x:Name="Card2" Background="{StaticResource White}" Margin="486,50,486,78" IsEnabled="False">
+            <StackPanel>
+                <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 2:</TextBlock>
+                <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="20" TextWrapping="Wrap" Text="Locate where you want to store the server files:" Height="68"/>
+                <Button x:Name="SelectDirFolder" Width="196" Content="Select Folder" Margin="0,30,0,0" Click="Location_Click"/>
+            </StackPanel>
+        </materialDesign:Card>
+
+        <materialDesign:Card Grid.Row="2" x:Name="Card3" Background="{StaticResource White}" Margin="912,50,60,78" IsEnabled="False">
+            <StackPanel>
+                <TextBlock Style="{StaticResource MaterialDesignHeadline4TextBlock}" Padding="10">Step 3:</TextBlock>
+                <TextBlock Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0" Padding="20" TextWrapping="Wrap" Text="Install the required files (This may take many minutes or hours depending on download size)" Height="86"/>
+                <Button Width="196" Content="Install" Margin="0,30,0,0" Click="InstallServer_Click"  />
+            </StackPanel>
+        </materialDesign:Card>
     </Grid>
 </Window>

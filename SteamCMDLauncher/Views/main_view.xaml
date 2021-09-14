@@ -19,34 +19,32 @@
         </Grid.RowDefinitions>
         <materialDesign:DialogHost Grid.RowSpan="3" x:Name="RootDialog" IsOpen="False" >
             <materialDesign:DialogHost.DialogContent>
-                <StackPanel></StackPanel>
+                <Canvas/>
             </materialDesign:DialogHost.DialogContent>
         </materialDesign:DialogHost>
-        <Grid Grid.Row="0">
-            <TextBlock FontSize="36" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
-            <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">
-                <TextBlock.ToolTip>
-                    <TextBlock x:Name="versionToolTip">Your not running the latest version of this program</TextBlock>  
-                </TextBlock.ToolTip>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock x:Name="AppVersion">Version Y.X.X</TextBlock>
-                    <materialDesign:PackIcon x:Name="UpdateIcon" Kind="SyncAlert" Foreground="IndianRed" Height="30" Width="30" Margin="10,0,10,0" VerticalAlignment="Center" />
-                </StackPanel>
-            </TextBlock>
 
-            <TextBlock x:Name="RamText" FontSize="18" Foreground="#FFEDF2F3" Margin="700,50,400,40" VerticalAlignment="Center" TextAlignment="Right">2048MB</TextBlock>
-            <Button x:Name="RefreshServers" Margin="898,50,279,38" Click="RefreshServers_Click" >
-                <materialDesign:PackIcon Kind="RestartOff" Foreground="White" Height="25" Width="25"/>
-            </Button>
-            <Button Margin="1006,50,36,38" Click="NewServer_Click">Add Another Server</Button>
-        </Grid>
-        <Grid Grid.Row="1">
-            <TextBlock FontSize="22" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,20,0,0">Welcome! Select a server to view or launch:</TextBlock>
-        </Grid>
-        <Grid Grid.Row="2">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                <StackPanel x:Name="ServerStack" Orientation="Horizontal" Margin="44,0,35,30" VerticalAlignment="Center" />
-            </ScrollViewer>
-        </Grid>
+        <TextBlock FontSize="36" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
+        <TextBlock FontSize="30" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">
+            <TextBlock.ToolTip>
+                <TextBlock x:Name="versionToolTip">Your not running the latest version of this program</TextBlock>
+            </TextBlock.ToolTip>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="AppVersion">Version Y.X.X</TextBlock>
+                <materialDesign:PackIcon x:Name="UpdateIcon" Kind="SyncAlert" Foreground="IndianRed" Height="30" Width="30" Margin="10,0,10,0" VerticalAlignment="Center" />
+            </StackPanel>
+        </TextBlock>
+
+        <materialDesign:PackIcon x:Name="RamIcon" Kind="Minus" Foreground="Yellow" Height="25" Width="25" Margin="773,53,0,0"/>
+        <TextBlock x:Name="RamText" FontSize="18" Foreground="{StaticResource White}" Margin="796,54,387,0" VerticalAlignment="Top" TextAlignment="Center">2048MB</TextBlock>
+        <Button x:Name="RefreshServers" Margin="898,50,279,38" Click="RefreshServers_Click" >
+            <materialDesign:PackIcon Kind="RestartOff" Foreground="{StaticResource White}" Height="25" Width="25"/>
+        </Button>
+        <Button Margin="1006,50,36,38" Click="NewServer_Click">Add Another Server</Button>
+
+        <TextBlock Grid.Row="1" FontSize="22" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,20,0,0">Welcome! Select a server to view or launch:</TextBlock>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ServerStack" Orientation="Horizontal" Margin="44,0,35,30" VerticalAlignment="Center" />
+        </ScrollViewer>
     </Grid>
 </Window>

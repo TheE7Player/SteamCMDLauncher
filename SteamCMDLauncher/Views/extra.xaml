@@ -13,7 +13,7 @@
     <Grid>
         <materialDesign:DialogHost x:Name="RootDialog" IsOpen="False" >
             <materialDesign:DialogHost.DialogContent>
-                <StackPanel></StackPanel>
+                <Canvas/>
             </materialDesign:DialogHost.DialogContent>
         </materialDesign:DialogHost>
         <materialDesign:Card Margin="200,55,200,100" materialDesign:ShadowAssist.ShadowDepth="Depth4" UniformCornerRadius="12" Height="auto">

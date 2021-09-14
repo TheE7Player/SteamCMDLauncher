@@ -17,6 +17,7 @@ namespace SteamCMDLauncher
         private UIComponents.DialogHostContent HostDialog;
         private BackgroundWorker ram_bgworker;
         private System.Diagnostics.Process self_process;
+        private static int ram_difference;
 
         private System.Windows.Media.Animation.DoubleAnimation textFadeAnimation;
 
@@ -37,11 +38,16 @@ namespace SteamCMDLauncher
         }
 
         #region Ram Background
+        bool icon_set = false;
         private void Ram_bgworker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             RamText.Text = $"{e.ProgressPercentage}MB";
 
-            if(textFadeAnimation is null)
+            // MenuUp - More
+            // Minus - No Change
+            // MenuDown - Less
+
+            if (textFadeAnimation is null)
             {
                 textFadeAnimation = new System.Windows.Media.Animation.DoubleAnimation()
                 {
@@ -50,6 +56,41 @@ namespace SteamCMDLauncher
                     FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop,
                     SpeedRatio = 0.05
                 };
+            }
+
+            if(!icon_set)
+            {
+                if (ram_difference == 0) { ram_difference = e.ProgressPercentage; }
+                else
+                {
+                    if (e.ProgressPercentage == ram_difference)
+                    {
+                        // Value was the same as last time
+                        if (RamIcon.Kind != MaterialDesignThemes.Wpf.PackIconKind.Minus)
+                            RamIcon.Kind = MaterialDesignThemes.Wpf.PackIconKind.Minus;
+
+                        double size = 25;
+                        
+                        RamIcon.Width = size;
+                        RamIcon.Height = size;
+                        RamIcon.Foreground = Brushes.Yellow;
+                    }
+                    else
+                    {
+                        bool result = e.ProgressPercentage > ram_difference;
+                        double size = 40;
+                        
+                        RamIcon.Kind = result ? MaterialDesignThemes.Wpf.PackIconKind.MenuUp : MaterialDesignThemes.Wpf.PackIconKind.MenuDown;
+                        RamIcon.Foreground = result ? Brushes.Red : Brushes.Green;
+                        ram_difference = e.ProgressPercentage;
+
+                        RamIcon.Margin = new Thickness(RamIcon.Margin.Left, 45, RamIcon.Margin.Right, RamIcon.Margin.Bottom);
+
+                        RamIcon.Width = size;
+                        RamIcon.Height = size;
+                    }
+                }
+                icon_set = true;
             }
 
             RamText.BeginAnimation(OpacityProperty, textFadeAnimation);
@@ -107,6 +148,8 @@ namespace SteamCMDLauncher
                 textFadeAnimation = null;
                 
                 bg_disposed = true;
+                RamText = null;
+                RamIcon = null;
             } 
             else
             {

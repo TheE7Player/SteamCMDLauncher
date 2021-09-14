@@ -20,93 +20,80 @@
         </Grid.RowDefinitions>
         <materialDesign:DialogHost Grid.RowSpan="3" x:Name="RootDialog" IsOpen="False" >
             <materialDesign:DialogHost.DialogContent>
-                <StackPanel></StackPanel>
+                <Canvas/>
             </materialDesign:DialogHost.DialogContent>
         </materialDesign:DialogHost>
-        <Grid Grid.Row="0">
-            <TextBlock FontSize="36" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
-            <TextBlock FontSize="30" Foreground="#FFEDF2F3" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">Server View</TextBlock>
-            <Button x:Name="ReturnBack" Margin="966,42,64,46" Click="ReturnBack_Click" Content="Return Back"/>
-        </Grid>
-        <Grid Grid.Row="1" >
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="321*"/>
-                <ColumnDefinition Width="319*"/>
-            </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal">
-                <TextBox Grid.Column="0"
-                    Name="ServerAlias"
-                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                    VerticalAlignment="Top"
-                    Height="55"
-                    VerticalScrollBarVisibility="Hidden" Width="475"
-                    FontSize="16" Margin="42,10,20,0" Foreground="#FFECE3E3" KeyUp="ServerAlias_KeyUp"
-                   >
-                    <TextBox.Text>
-                        <Binding Path="Alias">
-                            <Binding.ValidationRules>
-                                <validate:ServerAliasValidation ValidatesOnTargetUpdated="True"/>
-                            </Binding.ValidationRules>
-                        </Binding>
-                    </TextBox.Text>
-                </TextBox>
-                <Button Grid.Column="0" Click="DeleteServer_Click" Margin="0,12,0,0" Width="74" Height="50" HorizontalAlignment="Center" VerticalAlignment="Top">
-                    <materialDesign:PackIcon Kind="Delete" Foreground="White" Width="35" Height="35"/>
+        
+        <TextBlock FontSize="36" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
+        <TextBlock FontSize="30" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">Server View</TextBlock>
+        <Button x:Name="ReturnBack" Margin="966,42,64,46" Click="ReturnBack_Click" Content="Return Back"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <TextBox
+                Name="ServerAlias"
+                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                VerticalAlignment="Top"
+                Height="55"
+                VerticalScrollBarVisibility="Hidden" Width="475"
+                FontSize="16" Margin="42,10,20,0" Foreground="{StaticResource White}" KeyUp="ServerAlias_KeyUp"
+                >
+                <TextBox.Text>
+                    <Binding Path="Alias">
+                        <Binding.ValidationRules>
+                            <validate:ServerAliasValidation ValidatesOnTargetUpdated="True"/>
+                        </Binding.ValidationRules>
+                    </Binding>
+                </TextBox.Text>
+            </TextBox>
+            <Button Click="DeleteServer_Click" Margin="0,12,0,0" Width="74" Height="50" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <materialDesign:PackIcon Kind="Delete" Foreground="{StaticResource White}" Width="35" Height="35"/>
+            </Button>
+            <TextBlock x:Name="configStatus" Style="{DynamicResource MaterialDesignBody3TextBlock}" Foreground="Wheat" FontSize="20" Text="No Config Loaded" VerticalAlignment="Center" Margin="25,0,0,20"/>
+            <ComboBox x:Name="configBox" Width="400" Foreground="{StaticResource White}" IsEnabled="False" FontSize="15" SelectionChanged="configBox_SelectionChanged" DropDownOpened="ToggleConfigBoxColour" DropDownClosed="ToggleConfigBoxColour" Margin="20,0,0,10" />
+        </StackPanel>
+
+        <GroupBox Grid.Row="2" Header="Server Actions" Width="240" Height="400" Margin="0,0,955,0">
+            <StackPanel>
+                <TextBlock Foreground="{StaticResource White}" 
+                            FontWeight="DemiBold"
+                            Text="Status:"
+                            FontSize="18" Margin="5,10,5,5"/>
+                <TextBlock x:Name="tb_Status" Foreground="{StaticResource White}"
+                            FontWeight="DemiBold"
+                            Text="Offline"
+                            FontSize="16" Margin="5,10,5,10"/>
+                <Button Margin="0,20,0,10" x:Name="ToggleServer" Click="ToggleServer_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="PlayArrow" Margin="0,0,5,0" Foreground="{StaticResource White}" Width="25" Height="25"/>
+                        <TextBlock VerticalAlignment="Center">Start Server</TextBlock>
+                    </StackPanel>
+                </Button>
+                <Button Margin="0,10,0,10" Click="ValidateServer_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="ClockCheckOutline" Margin="0,0,5,0" Foreground="{StaticResource White}" Width="22" Height="22"/>
+                        <TextBlock VerticalAlignment="Center">Validate Server</TextBlock>
+                    </StackPanel>
+                </Button>
+                <Button Margin="0,10,0,10" Click="UpdateButton_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="Update" Margin="0,0,5,0" Foreground="{StaticResource White}" Width="25" Height="25"/>
+                        <TextBlock VerticalAlignment="Center">Update Server</TextBlock>
+                    </StackPanel>
+                </Button>
+                <Button Margin="0,10,0,10" Click="SaveConfig_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="ContentSave" Margin="0,0,5,0" Foreground="{StaticResource White}" Width="25" Height="25"/>
+                        <TextBlock VerticalAlignment="Center">Save Settings</TextBlock>
+                    </StackPanel>
+                </Button>
+                <Button Margin="0,10,0,10" Click="LoadConfig_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon VerticalAlignment="Center" Kind="Upload" Margin="0,0,5,0" Foreground="{StaticResource White}" Width="25" Height="25"/>
+                        <TextBlock VerticalAlignment="Center">Load Settings</TextBlock>
+                    </StackPanel>
                 </Button>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="0,-30,10,0">
-                <TextBlock x:Name="configStatus" Style="{DynamicResource MaterialDesignBody3TextBlock}" Foreground="Wheat" FontSize="20" Text="No Config Loaded" VerticalAlignment="Center" Margin="10,0,20,0"/>
-                <ComboBox x:Name="configBox" Width="400" Foreground="White" IsEnabled="False" FontSize="15" SelectionChanged="configBox_SelectionChanged" DropDownOpened="ToggleConfigBoxColour" DropDownClosed="ToggleConfigBoxColour" />
-            </StackPanel>
-        </Grid>
-        <Grid Grid.Row="2">
-            <StackPanel Orientation="Horizontal" Margin="25,0,25,20">
-                <GroupBox Header="Server Actions" Width="240" Height="400" Margin="0,0,30,0">
-                    <StackPanel>
-                        <TextBlock Foreground="White" 
-                                   FontWeight="DemiBold"
-                                   Text="Status:"
-                                   FontSize="18" Margin="5,10,5,5"/>
-                        <TextBlock x:Name="tb_Status" Foreground="White"
-                                   FontWeight="DemiBold"
-                                   Text="Offline"
-                                   FontSize="16" Margin="5,10,5,10"/>
-                        <Button Margin="0,20,0,10" x:Name="ToggleServer" Click="ToggleServer_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon VerticalAlignment="Center" Kind="PlayArrow" Margin="0,0,5,0" Foreground="White" Width="25" Height="25"/>
-                                <TextBlock VerticalAlignment="Center">Start Server</TextBlock>
-                            </StackPanel>
-                        </Button>
-                        <Button Margin="0,10,0,10" Click="ValidateServer_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon VerticalAlignment="Center" Kind="ClockCheckOutline" Margin="0,0,5,0" Foreground="White" Width="22" Height="22"/>
-                                <TextBlock VerticalAlignment="Center">Validate Server</TextBlock>
-                            </StackPanel>
-                        </Button>
-                        <Button Margin="0,10,0,10" Click="UpdateButton_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon VerticalAlignment="Center" Kind="Update" Margin="0,0,5,0" Foreground="White" Width="25" Height="25"/>
-                                <TextBlock VerticalAlignment="Center">Update Server</TextBlock>
-                            </StackPanel>
-                        </Button>
-                        <Button Margin="0,10,0,10" Click="SaveConfig_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon VerticalAlignment="Center" Kind="ContentSave" Margin="0,0,5,0" Foreground="White" Width="25" Height="25"/>
-                                <TextBlock VerticalAlignment="Center">Save Settings</TextBlock>
-                            </StackPanel>
-                        </Button>
-                        <Button Margin="0,10,0,10" Click="LoadConfig_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon VerticalAlignment="Center" Kind="Upload" Margin="0,0,5,0" Foreground="White" Width="25" Height="25"/>
-                                <TextBlock VerticalAlignment="Center">Load Settings</TextBlock>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </GroupBox>
-                <GroupBox x:Name="ServerGroupBox" Header="Server Settings" Width="944">
-
-                </GroupBox>
-            </StackPanel>
-        </Grid>
+        </GroupBox>
+        <GroupBox Grid.Row="2" x:Name="ServerGroupBox" Header="Server Settings" Width="944" Margin="306,0,30,42"/>
     </Grid>
 </Window>
