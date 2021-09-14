@@ -56,7 +56,7 @@ namespace SteamCMDLauncher
             this.IsReady = false;
             this.id = id;
             this.alias = alias;
-            this.appid = (string.IsNullOrEmpty(app_id)) ? string.Empty : app_id;
+            this.appid = app_id ?? string.Empty;
             this.folder = folder;
 
             waitTime = new System.Timers.Timer(1000);
@@ -64,6 +64,14 @@ namespace SteamCMDLauncher
             waitTime.AutoReset = true;
 
             gsm = new Component.GameSettingManager(appid, folder);
+
+            var test = new Component.DBManager(Config.DatabaseLocation);
+
+            var eeeee = test.ServerDetails(Config.LOG_COLLECTION, id);
+
+            test.Destory();
+
+            test = null;
 
             if (!gsm.ResourceFolderFound)
             {
@@ -606,6 +614,7 @@ namespace SteamCMDLauncher
             ServerAlias = null;
             RootDialog = null;
             ServerGroupBox = null;
+            this.DataContext = null;
 
             // Perform forced GC collection to prevent memory leaks
             GC.Collect();

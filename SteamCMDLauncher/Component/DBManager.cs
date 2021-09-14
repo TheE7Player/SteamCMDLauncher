@@ -22,7 +22,7 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         /// <param name="path">The path to the database file (*.db)</param>
         public DBManager(string path)
-        { 
+        {
             try
             {
                 System.Threading.Monitor.Enter(db_lock);
@@ -36,7 +36,7 @@ namespace SteamCMDLauncher.Component
             catch (System.IO.IOException)
             {
                 throw new Exception("Database read failed, database is being used currently or doesn't exist");
-            }   
+            }
         }
 
         /// <summary>
@@ -333,7 +333,14 @@ namespace SteamCMDLauncher.Component
             return result;
         }
 
-        public Component.Struct.ServerCardInfo[] GetCurrentServers(string server_table, string alias_table, int size)
+        /// <summary>
+        /// Gets all the current servers that are saved and gets its aliases if set also
+        /// </summary>
+        /// <param name="server_table">The table to grab the servers from</param>
+        /// <param name="alias_table">The table that contains each servers aliases</param>
+        /// <param name="size">The max size it should return</param>
+        /// <returns></returns>
+        public Struct.ServerCardInfo[] GetCurrentServers(string server_table, string alias_table, int size)
         {
             WeakReference table_server, table_alias, server_enum, alias_search;
             Component.Struct.ServerCardInfo[] output = null;
@@ -393,6 +400,66 @@ namespace SteamCMDLauncher.Component
             }
 
             return output;
+        }
+    
+        /// <summary>
+        /// Gets the information from the servers based on the ID given
+        /// </summary>
+        /// <param name="table">The table which contains the server logs of each action</param>
+        /// <param name="id">The server id to look for</param>
+        public Component.Struct.ServerLog ServerDetails(string table, string id)
+        {
+            WeakReference table_server, table_documents;
+
+            Struct.ServerLog result = new Struct.ServerLog(0);
+
+            try
+            {
+                System.Threading.Monitor.Enter(db_lock);
+                Config.Log("[DBM] Entering ServerDetails");
+
+                table_server = GetTable(table);
+
+                table_documents = new WeakReference(((ILiteCollection<BsonDocument>)table_server.Target).FindAll());
+
+                if (table_documents != null)
+                {
+                    string id_find = "svr_id";
+                    
+                    IEnumerable<BsonDocument> details = ((IEnumerable<BsonDocument>)table_documents.Target).Where(x => x["svr_id"].Equals(id));
+
+                    int length = details.Count();
+
+                    result.ResizeNew(length);
+
+                    string colType = "type";
+                    string colDetail = "info";
+                    string colUTC = "time";
+
+                    foreach (BsonDocument item in details)
+                    {
+                        result.Add(item[colType], item[colDetail], item[colUTC]);
+                    }
+
+                    colType = null;
+                    colDetail = null;
+                    colUTC = null;
+                    details = null;
+                    id_find = null;
+                }
+            }
+            finally
+            {
+                table_server = null;
+                table_documents = null;
+                table = null;
+                id = null;
+                System.Threading.Monitor.Exit(db_lock);
+                Config.Log("[DBM] Exiting ServerDetails");
+            }
+
+
+            return result;
         }
     }
 }
