@@ -3,6 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Threading;
+using System.Collections.Concurrent;
+using System.IO;
 
 namespace SteamCMDLauncher.Component
 {
@@ -11,11 +16,29 @@ namespace SteamCMDLauncher.Component
         private LiteDatabase db;
         private bool disposed;
         private static readonly object db_lock = new object();
-        
+
         /// <summary>
         /// States the reason why it failed (if any)
         /// </summary>
         public string Reason { get; private set; }
+
+        private void StartLock(string message, bool constructor = false)
+        {       
+            System.Threading.Monitor.Enter(db_lock);
+
+            Config.Log($"[DBM] {message}");
+
+            message = null;
+        }
+
+        private void EndLock(string message, bool constructor = false)
+        {
+            System.Threading.Monitor.Exit(db_lock);
+            
+            Config.Log($"[DBM] {message}");
+            
+            message = null;
+        }
 
         /// <summary>
         /// Creates the DB instance and connects to it
@@ -25,17 +48,19 @@ namespace SteamCMDLauncher.Component
         {
             try
             {
-                System.Threading.Monitor.Enter(db_lock);
-                Config.Log("[DBM] Creating DBManager instance");
+                StartLock("Creating DBManager instance", true);
                 db = new LiteDatabase(path);
                 disposed = false;
                 Reason = string.Empty;
-                Config.Log("[DBM] Finished DBManager instance");
-                System.Threading.Monitor.Exit(db_lock);
             }
-            catch (System.IO.IOException)
+            catch (Exception ex)
             {
+                Config.Log($"[DBM] DBManager Cont error: {ex.Message}");
                 throw new Exception("Database read failed, database is being used currently or doesn't exist");
+            }
+            finally
+            {
+                EndLock("Finished DBManager instance", true);
             }
         }
 
@@ -44,18 +69,18 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         public void Destory()
         {
-            Config.Log($"[DBM] Starting .Destory()");
+            Config.Log("[DBM] Starting .Destory()");
             if (!disposed)
             {
                 db.Dispose();
                 db = null;
                 disposed = true;
                 Reason = null;
-                Config.Log($"[DBM] Manager has been disposed of successfully");
+                Config.Log("[DBM] Manager has been disposed of successfully");
             } 
             else
             {
-                Config.Log($"[DBM] Manager has already been disposed of, this shouldn't have been called or accessed!");
+                Config.Log("[DBM] Manager has already been disposed of, this shouldn't have been called or accessed!");
             }
         }
 
@@ -70,12 +95,12 @@ namespace SteamCMDLauncher.Component
         public bool Insert(string table, BsonDocument document)
         {
             WeakReference _table;
+            
             bool r = false;
+                      
             try
             {
-                System.Threading.Monitor.Enter(db_lock);
-
-                Config.Log("[DBM] Entering Insert");
+                StartLock("Entering Insert");
 
                 _table = GetTable(table);
                 
@@ -93,11 +118,10 @@ namespace SteamCMDLauncher.Component
                 table = null;
                 document = null;
                 _table = null;
-                System.Threading.Monitor.Exit(db_lock);
-                Config.Log("[DBM] Exiting Insert");
+                EndLock("Exiting Insert");
             }
             
-           return r;
+            return r;
         }
 
         /// <summary>
@@ -108,43 +132,43 @@ namespace SteamCMDLauncher.Component
         /// <param name="ensure_index">The column to ensure that an index is in place (hashed)</param>
         /// <returns></returns>
         public bool InsertBulk(string table, BsonDocument[] documents, string ensure_index)
-        {
-            System.Threading.Monitor.Enter(db_lock);
-            
-            Config.Log("[DBM] Entering InsertBulk");
-            
+        {                   
             WeakReference _table = GetTable(table);
             
             bool r = false;
 
-            if (_table != null)
+            try
             {
-                int bulk_size = documents.Length;
-            
-                BsonValue result;
-            
-                for (int i = 0; i < bulk_size; i++)
-                {
-                    result = ((ILiteCollection<BsonDocument>)_table.Target).Insert(documents[i]);
-
-                    if (result.IsNull) { Reason = $"Element {i} returned false: {documents[i]}"; break; }
-                }
-
-                if(r) ((ILiteCollection<BsonDocument>)_table.Target).EnsureIndex(ensure_index);
+                StartLock("Entering InsertBulk");
                 
-                result = null;
-
-                r = true;
-            }
+                if (_table != null)
+                {
+                    int bulk_size = documents.Length;
             
-            documents = null;           
-            ensure_index = null;
-            _table = null;
-            table = null;
+                    BsonValue result;
+            
+                    for (int i = 0; i < bulk_size; i++)
+                    {
+                        result = ((ILiteCollection<BsonDocument>)_table.Target).Insert(documents[i]);
 
-            System.Threading.Monitor.Exit(db_lock);
+                        if (result.IsNull) { Reason = $"Element {i} returned false: {documents[i]}"; break; }
+                    }
 
-            Config.Log("[DBM] Exiting InsertBulk");
+                    ((ILiteCollection<BsonDocument>)_table.Target).EnsureIndex(ensure_index);
+                
+                    result = null;
+
+                    r = true;
+                }
+            }
+            finally
+            {
+                documents = null;
+                ensure_index = null;
+                _table = null;
+                table = null;
+                EndLock("Exiting InsertBulk");
+            }
 
             return r;
         }
@@ -158,12 +182,10 @@ namespace SteamCMDLauncher.Component
         {
             WeakReference _table;
             bool r = false;
-
+            
             try
             {
-                System.Threading.Monitor.Enter(db_lock);
-               
-                Config.Log("[DBM] Entering ClearTable");
+                StartLock("Entering ClearTable");
                 
                 _table = GetTable(table);
 
@@ -173,9 +195,7 @@ namespace SteamCMDLauncher.Component
             {   
                 table = null;
                 _table = null;
-                System.Threading.Monitor.Exit(db_lock);
-
-                Config.Log("[DBM] Exiting ClearTable"); 
+                EndLock("Exiting ClearTable");
             }
             
             return r;
@@ -190,12 +210,10 @@ namespace SteamCMDLauncher.Component
         public WeakReference FilterKey(string table, string key)
         {
             WeakReference _table, self;
-
+            
             try
             {
-                System.Threading.Monitor.Enter(db_lock);
-                
-                Config.Log("[DBM] Entering FilterKey");
+                StartLock("Entering FilterKey");
                 
                 _table = GetTable(table);
 
@@ -208,8 +226,7 @@ namespace SteamCMDLauncher.Component
                 _table = null;
                 key = null;
                 table = null;
-                System.Threading.Monitor.Exit(db_lock);
-                Config.Log("[DBM] Exiting FilterKey");
+                EndLock("Exiting FilterKey");
             }
             
             return self;
@@ -224,10 +241,10 @@ namespace SteamCMDLauncher.Component
         {
             WeakReference _table;
             int count;
+            
             try
             {
-                System.Threading.Monitor.Enter(db_lock);
-                Config.Log("[DBM] Entering GetDocumentCount");
+                StartLock("Entering GetDocumentCount");
                 _table = GetTable(table);
                 count = ((ILiteCollection<BsonDocument>)_table.Target).FindAll().Count();
             }
@@ -235,8 +252,7 @@ namespace SteamCMDLauncher.Component
             {
                 _table = null;
                 table = null;
-                System.Threading.Monitor.Exit(db_lock);
-                Config.Log("[DBM] Exiting GetDocumentCount");
+                EndLock("Exiting GetDocumentCount");
             }
             return count;
         }
@@ -252,24 +268,22 @@ namespace SteamCMDLauncher.Component
         {
             WeakReference _table;
             bool r = false;
-
+            
             try
             {
-                System.Threading.Monitor.Enter(db_lock);
-                
-                Config.Log("[DBM] Entering RemoveMany");
-                
+                StartLock("Entering RemoveMany");
+
                 _table = GetTable(target);
 
-                if(((ILiteCollection<BsonDocument>)_table.Target).DeleteMany(x => x[target_key] == document_id) == 0)
+                if (((ILiteCollection<BsonDocument>)_table.Target).DeleteMany(x => x[target_key] == document_id) == 0)
                 {
                     Reason = $"Cannot delete documents from table '{target}' with id: {document_id}, as they aren't any to begin with.";
-                } 
-                else 
+                }
+                else
                 {
                     r = true;
                     db.Rebuild();
-                }  
+                }
             }
             finally
             {
@@ -277,8 +291,7 @@ namespace SteamCMDLauncher.Component
                 document_id = null;
                 target = null;
                 target_key = null;
-                System.Threading.Monitor.Exit(db_lock);
-                Config.Log("[DBM] Exiting RemoveMany");
+                EndLock("Exiting RemoveMany");
             }
 
             return r;
@@ -298,16 +311,15 @@ namespace SteamCMDLauncher.Component
             WeakReference _table;
             
             int result = 0;
-
+            
             try
             {
-                System.Threading.Monitor.Enter(db_lock);
-                
-                Config.Log("[DBM] Entering UpdateOrInsert");
+                StartLock("Entering UpdateOrInsert");
                 
                 _table = GetTable(table);
 
-                old_document = custom_query == null ? ((ILiteCollection<BsonDocument>)_table.Target).FindOne(id) : ((ILiteCollection<BsonDocument>)_table.Target).FindOne(custom_query);
+                old_document = custom_query == null ? ((ILiteCollection<BsonDocument>)_table.Target).FindById(id) :
+                    ((ILiteCollection<BsonDocument>)_table.Target).FindOne(custom_query);
 
                 result = old_document == null ? 1 : 2;
 
@@ -326,8 +338,7 @@ namespace SteamCMDLauncher.Component
                 table = null;
                 document = null;
                 id = null;
-                System.Threading.Monitor.Exit(db_lock);
-                Config.Log("[DBM] Exiting UpdateOrInsert");
+                EndLock("Exiting UpdateOrInsert");
             }
 
             return result;
@@ -346,15 +357,13 @@ namespace SteamCMDLauncher.Component
             Component.Struct.ServerCardInfo[] output = null;
             List<Component.Struct.ServerCardInfo> server_list;
             int fixed_size = 0;
-
+            
             try
             {
-                System.Threading.Monitor.Enter(db_lock);
-
-                Config.Log("[DBM] Entering GetCurrentServers");
+                StartLock("Entering GetCurrentServers");
 
                 table_server = GetTable(server_table);
-                table_alias = GetTable(server_table);
+                table_alias = GetTable(alias_table);
 
                 server_list = new List<Struct.ServerCardInfo>(size);
 
@@ -367,18 +376,24 @@ namespace SteamCMDLauncher.Component
                     fixed_size = server_size.Length;
 
                     server_list = new List<Struct.ServerCardInfo>(fixed_size);
-
+                    
+                    string alias;
+                    
                     for (int i = 0; i < fixed_size; i++)
                     {
                         alias_search = new WeakReference(((ILiteCollection<BsonDocument>)table_alias.Target).FindOne(Query.EQ("_id", server_size[i]["_id"])));
+
+                        alias = (BsonDocument)alias_search.Target == null ? string.Empty : ((BsonDocument)alias_search?.Target)["alias"].AsString;
 
                         server_list.Add(new Component.Struct.ServerCardInfo()
                         {
                             Unique_ID = server_size[i]["_id"],
                             GameID = server_size[i]["app_id"].RawValue.ToString(),
                             Folder = server_size[i]["folder"],
-                            Alias = alias_search is null ? string.Empty : ((BsonDocument)(alias_search.Target))["alias"].AsString
+                            Alias = alias
                         });
+
+                        alias = null;
                     }
 
                     server_size = null;
@@ -394,9 +409,8 @@ namespace SteamCMDLauncher.Component
                 table_alias = null;
                 server_list = null;
                 server_enum = null;
-                alias_search = null;
-                System.Threading.Monitor.Exit(db_lock);
-                Config.Log("[DBM] Exiting GetCurrentServers");
+                alias_search = null; 
+                EndLock("Exiting GetCurrentServers");
             }
 
             return output;
@@ -412,11 +426,10 @@ namespace SteamCMDLauncher.Component
             WeakReference table_server, table_documents;
 
             Struct.ServerLog result = new Struct.ServerLog(0);
-
+         
             try
             {
-                System.Threading.Monitor.Enter(db_lock);
-                Config.Log("[DBM] Entering ServerDetails");
+                StartLock("Entering ServerDetails");
 
                 table_server = GetTable(table);
 
@@ -430,20 +443,25 @@ namespace SteamCMDLauncher.Component
 
                     int length = details.Count();
 
-                    result.ResizeNew(length);
-
-                    string colType = "type";
-                    string colDetail = "info";
-                    string colUTC = "time";
-
-                    foreach (BsonDocument item in details)
+                    if(length > 0)
                     {
-                        result.Add(item[colType], item[colDetail], item[colUTC]);
+
+                        result.ResizeNew(length);
+
+                        string colType = "type";
+                        string colDetail = "info";
+                        string colUTC = "time";
+
+                        foreach (BsonDocument item in details)
+                        {
+                            result.Add(item[colType], item[colDetail], item[colUTC]);
+                        }
+
+                        colType = null;
+                        colDetail = null;
+                        colUTC = null;
                     }
 
-                    colType = null;
-                    colDetail = null;
-                    colUTC = null;
                     details = null;
                     id_find = null;
                 }
@@ -454,10 +472,8 @@ namespace SteamCMDLauncher.Component
                 table_documents = null;
                 table = null;
                 id = null;
-                System.Threading.Monitor.Exit(db_lock);
-                Config.Log("[DBM] Exiting ServerDetails");
+                EndLock("Exiting ServerDetails");
             }
-
 
             return result;
         }

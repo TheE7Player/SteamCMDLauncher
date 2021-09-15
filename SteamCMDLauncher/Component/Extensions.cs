@@ -32,9 +32,9 @@ namespace SteamCMDLauncher
         /// <returns>True if both strings are the exact same (characters and length)</returns>
         public static bool Same(this string A, string B)
         {
-            if (A.Length != B.Length) return false;
+            if (A?.Length != B?.Length) return false;
 
-            if (!A.Trim().ToLower().Equals(B.Trim().ToLower())) return false;
+            if (!(bool)A?.Trim().ToLower().Equals(B?.Trim().ToLower())) return false;
 
             return true;
         }

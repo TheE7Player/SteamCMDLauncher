@@ -54,7 +54,7 @@ namespace SteamCMDLauncher
         /// <returns></returns>
         public static bool AddEntry_BJSON(string key, object value, string collection)
         {
-            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            Component.DBManager db = new Component.DBManager(db_location);
 
             BsonDocument insert_value = new BsonDocument { ["_id"] = GetID(), [key] = new BsonValue(value) };
 
@@ -71,7 +71,7 @@ namespace SteamCMDLauncher
 
         public static BsonValue GetEntryByKey(string key, string collection)
         {
-            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            Component.DBManager db = new Component.DBManager(db_location);
 
             BsonValue item = ((BsonValue)db.FilterKey(collection, key).Target);
 
@@ -85,7 +85,7 @@ namespace SteamCMDLauncher
 
         public static bool AddServer(int id, string folder_loc)
         {
-            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            Component.DBManager db = new Component.DBManager(db_location);
 
             string u_id = GetID();
             
@@ -107,15 +107,20 @@ namespace SteamCMDLauncher
 
         public static bool RemoveServer(string id)
         {
-            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            Component.DBManager db = new Component.DBManager(db_location);
             
+            // Remove the server location and ID
             if(!db.RemoveMany(id, SERVER_INFO_COLLECTION))
             {
-                Log($"[Remove Server] {db.Reason}");
+                Log($"[Remove Server] Failed to remove server details: {db.Reason}");
                 return false;
             }
 
+            // Remove the server alias (if changed)
             db.RemoveMany(id, SERVER_ALIAS_COLLECTION);
+
+            // Remove all the logging information (actions) from this database
+            db.RemoveMany(id, LOG_COLLECTION, "svr_id");
 
             db.Destory();
             
@@ -129,7 +134,7 @@ namespace SteamCMDLauncher
 
         public static bool HasServers()
         {
-            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            Component.DBManager db = new Component.DBManager(db_location);
 
             bool ContainsServers = db.GetDocumentCount(SERVER_INFO_COLLECTION) > 0;
             
@@ -142,7 +147,7 @@ namespace SteamCMDLauncher
         
         public static Component.Struct.ServerCardInfo[] GetServers()
         {
-            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            Component.DBManager db = new Component.DBManager(db_location);
 
             Component.Struct.ServerCardInfo[] server_info = db.GetCurrentServers(SERVER_INFO_COLLECTION, SERVER_ALIAS_COLLECTION, 20);
 
@@ -187,7 +192,7 @@ namespace SteamCMDLauncher
 
         public static bool ChangeServerAlias(string id, string new_alias)
         {
-            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            Component.DBManager db = new Component.DBManager(db_location);
 
             BsonDocument document = new BsonDocument { ["_id"] = id, ["alias"] = new_alias };
             BsonDocument document_old = null;
@@ -215,7 +220,7 @@ namespace SteamCMDLauncher
 
         public static bool ChangeServerFolder(string id, string old_location, string new_location)
         {
-            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            Component.DBManager db = new Component.DBManager(db_location);
 
             BsonDocument document = new BsonDocument { ["_id"] = id, ["folder"] = new_location };
             BsonDocument document_old = null;
@@ -246,7 +251,7 @@ namespace SteamCMDLauncher
         {
             Log("Clearing log table");
 
-            var db = new SteamCMDLauncher.Component.DBManager(db_location);
+            Component.DBManager db = new Component.DBManager(db_location);
 
             bool result = db.ClearTable(LOG_COLLECTION);
 
@@ -263,7 +268,7 @@ namespace SteamCMDLauncher
         {
             if (elem is null) return;
 
-            SteamCMDLauncher.Component.DBManager db = new SteamCMDLauncher.Component.DBManager(DatabaseLocation);
+            Component.DBManager db = new Component.DBManager(db_location);
 
             if (!db.InsertBulk(LOG_COLLECTION, elem, "Id")) throw new Exception(db.Reason);
 
@@ -273,7 +278,7 @@ namespace SteamCMDLauncher
         }
     
         public static void AddLog(string id, LogType lType, string details)
-        {         
+        {
             if (LogQueue is null)
             {
                 LogQueue = new Component.AutoFlushQueue<BsonDocument>(4, QueueRunner_Wait)
@@ -292,7 +297,6 @@ namespace SteamCMDLauncher
             });
         }
 
-        // TODO: Optimize this function?
         public static string[] FindGameID(string path)
         {
             List<string> rList = new List<string>(10);

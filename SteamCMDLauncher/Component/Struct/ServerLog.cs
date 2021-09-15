@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SteamCMDLauncher.Component.Struct
+﻿namespace SteamCMDLauncher.Component.Struct
 {
     public struct ServerLog
     {
@@ -10,7 +6,11 @@ namespace SteamCMDLauncher.Component.Struct
         public string[] detail;
         public string[] utc_time;
         public bool Empty;
+
+        public int Capacity => counter;
+        
         private int counter;
+
 
         public ServerLog(int size = 10)
         {

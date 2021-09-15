@@ -323,8 +323,6 @@ namespace SteamCMDLauncher.Component
                         controls[fixed_name_tab][fixed_control_name].Add(string.Empty, string.Join('|', to_fix));
                     }
 
-                    // TODO: Should continue 'if' array is assigned?
-
                     // Now we get the controls individual attributes
                     tab_control_children = tab_control_parent.Current.Children<JObject>().Properties().GetEnumerator();
 
@@ -498,8 +496,8 @@ namespace SteamCMDLauncher.Component
 
         public string[] RequiredFields()
         {
-            //TODO: Use Span? This list may cause a leak.
             List<string> r = new List<string>();
+            string[] output;
 
             foreach (UIComponents.GameSettingControl comp in componenets)
             {
@@ -510,7 +508,10 @@ namespace SteamCMDLauncher.Component
                 }
             }
 
-            return r.ToArray();
+            output = r.ToArray();
+            r = null;
+
+            return output;
         }
 
         public string[] GetSafeConfig(Action OnComplete = null)

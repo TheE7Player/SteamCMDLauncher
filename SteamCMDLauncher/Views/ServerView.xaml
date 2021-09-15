@@ -26,6 +26,9 @@
         
         <TextBlock FontSize="36" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
         <TextBlock FontSize="30" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">Server View</TextBlock>
+        <Button x:Name="LogButton" Click="ViewLog_Click" Margin="550,0,0,0" Width="50" Height="50">
+            <materialDesign:PackIcon Kind="ConsoleLine" Foreground="{StaticResource White}" Width="25" Height="25"/>
+        </Button>
         <Button x:Name="ReturnBack" Margin="966,42,64,46" Click="ReturnBack_Click" Content="Return Back"/>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal">

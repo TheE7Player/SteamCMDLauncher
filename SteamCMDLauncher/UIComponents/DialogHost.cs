@@ -343,6 +343,34 @@ namespace SteamCMDLauncher.UIComponents
             if (forceOpenWhenCall) ShowDialog();
         }
 
+        public void ShowComponent(string title, UIElement control)
+        {
+            StackPanel MainPanel = new StackPanel();
+
+            Button btn = new Button() { Content = "OK" };
+
+            MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
+
+            MainPanel.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 2) });
+
+            MainPanel.Children.Add(new Separator() { Margin = new Thickness(0, 0, 0, 15) });
+
+            MainPanel.Children.Add(control);
+
+            btn.Click += (_, e) =>
+            {
+                ExitState();
+            };
+
+            btn.Margin = new Thickness(20,20,20,0);
+
+            MainPanel.Children.Add(btn);
+
+            _dialog.DialogContent = MainPanel;
+
+            if (forceOpenWhenCall) ShowDialog();
+        }
+
         #endregion
     }
 }

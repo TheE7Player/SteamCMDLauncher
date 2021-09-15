@@ -134,7 +134,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
                 if(!string.IsNullOrEmpty(number_range) && !content_set)
                 {
-                    // TODO: Do validation if more ranges are set ( > 2 )
+                    // TODO: Do validation if more ranges are set ( > 2 )?
                     string[] range = number_range.Split("-");
 
                     int min = Convert.ToInt32(range[0]);
@@ -158,7 +158,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
             else
             {
                 // Try and find the default value
-                var obj = cb.Items.Cast<object>().FirstOrDefault(x => string.Compare(x.ToString(), self.defaultValue) == 0);
+                object obj = cb.Items.Cast<object>().FirstOrDefault(x => string.Compare(x.ToString(), self.defaultValue) == 0);
                 
                 int idx = cb.Items.IndexOf(obj);
                 

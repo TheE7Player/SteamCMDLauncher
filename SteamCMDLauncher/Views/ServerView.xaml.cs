@@ -65,14 +65,6 @@ namespace SteamCMDLauncher
 
             gsm = new Component.GameSettingManager(appid, folder);
 
-            var test = new Component.DBManager(Config.DatabaseLocation);
-
-            var eeeee = test.ServerDetails(Config.LOG_COLLECTION, id);
-
-            test.Destory();
-
-            test = null;
-
             if (!gsm.ResourceFolderFound)
             {
                 NotReadyReason = "Failed to find the resource folder - please ensure your not running outside the application folder!"; 
@@ -114,14 +106,19 @@ namespace SteamCMDLauncher
         {
             // Work around for: 'The calling thread must be STA' error
             // And 'because a different thread owns it' error
-            Application.Current.Dispatcher.Invoke((Action)delegate {  
-                Keyboard.ClearFocus(); 
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Keyboard.ClearFocus();
                 waitTime.Stop();
 
                 if (!prevent_update && !alias.Same(ServerAlias.Text))
                 {
                     alias = ServerAlias.Text.Trim();
-                    Config.ChangeServerAlias(id, ServerAlias.Text.Trim());
+                    if(Config.ChangeServerAlias(id, ServerAlias.Text.Trim()))
+                    {
+                        System.Threading.Thread.Sleep(4000);
+                        LogButton.IsEnabled = true;
+                    }
                 }
             });
             waitTime.Interval = 1000;
@@ -134,12 +131,15 @@ namespace SteamCMDLauncher
             waitTime.Interval += 250;
 
             ServerAlias.GetBindingExpression(TextBox.TextProperty).UpdateSource();
-
+            
+            LogButton.IsEnabled = false;
+            
             if (ServerAlias.GetBindingExpression(TextBox.TextProperty).HasError)
             {
                 waitTime.Stop();
                 waitTime.Interval = 1000;
                 prevent_update = true;
+                LogButton.IsEnabled = true;
             } 
             else
             {
@@ -592,7 +592,6 @@ namespace SteamCMDLauncher
             last_save_location = null;
             current_alias = null;
             config_files = null;
-
             // Use any method with its own deconstructors, events or disposable methods
             waitTime.Elapsed -= TimerElapsed;
             waitTime.Dispose();
@@ -625,6 +624,54 @@ namespace SteamCMDLauncher
             App.CancelClose = true;
             App.WindowClosed(this);
             App.WindowOpen(new main_view());
+        }
+
+        private void ViewLog_Click(object sender, RoutedEventArgs e)
+        {
+            Component.DBManager test = new Component.DBManager(Config.DatabaseLocation);
+
+            Component.Struct.ServerLog data = test.ServerDetails(Config.LOG_COLLECTION, id);
+
+            if (!data.Empty)
+            {
+                DataGrid table = new DataGrid();
+
+                table.HorizontalAlignment = HorizontalAlignment.Stretch;
+                table.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+
+                int len_max = data.Capacity;
+
+                List<Component.Struct.ServerLogBinding> items = new List<Component.Struct.ServerLogBinding>(len_max);
+
+                for (int i = 0; i < len_max; i++)
+                {
+                    items.Add(new Component.Struct.ServerLogBinding() { Date = data.utc_time[i], Type = data.types[i].ToString(), Reason = data.detail[i] });
+                }
+
+                table.MaxWidth = 800;
+                table.MaxHeight = 350;
+                table.ItemsSource = items;
+                table.IsReadOnly = true;
+                table.HorizontalScrollBarVisibility = ScrollBarVisibility.Visible;
+                table.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
+
+                items = null;
+
+                dh.ShowComponent($"Server Log Details [{len_max}]", table);
+
+                table = null;
+            }
+            else
+            {
+                dh.OKDialog("No logs were found for this server, chance that the log has been cleared or failed to note changes.");
+            }
+
+            test.Destory();
+            data.Destory();
+
+            test = null;
+            sender = null;
+            e = null;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

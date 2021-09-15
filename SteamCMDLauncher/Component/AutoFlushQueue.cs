@@ -51,7 +51,7 @@ namespace SteamCMDLauncher.Component
 
             _timer.Start();
 
-            if (pointer > _queue.Length)
+            if (pointer >= _queue.Length)
                 pointer = 0;
 
             _queue[pointer] = element;
