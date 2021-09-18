@@ -50,7 +50,11 @@
                 </ComboBox>
 
                 <!-- Control's Extra Abilities -->
-                <GroupBox x:Name="ControlExtra" Header="Extra Options" Margin="2,5,2,10" Height="267"/>
+                <GroupBox x:Name="ControlExtra" Header="Extra Options" Margin="2,5,2,10" Height="267">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="2"/>
+                    </ScrollViewer>
+                </GroupBox>
 
                 <!-- Control's Append Button -->
                 <Button Click="AddComponent_Click">ADD TO CONFIG</Button>

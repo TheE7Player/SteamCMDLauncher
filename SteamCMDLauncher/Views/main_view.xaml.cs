@@ -136,14 +136,17 @@ namespace SteamCMDLauncher
 
             if (!bg_disposed)
             {
-                if (ram_bgworker.IsBusy) ram_bgworker.CancelAsync();
+                if (ram_bgworker != null)
+                {
+                    if (ram_bgworker.IsBusy) ram_bgworker.CancelAsync();
 
-                ram_bgworker.DoWork -= Ram_bgworker_DoWork;
-                ram_bgworker.ProgressChanged -= Ram_bgworker_ProgressChanged;
-
-                self_process.Dispose();
-                              
+                    ram_bgworker.DoWork -= Ram_bgworker_DoWork;
+                    ram_bgworker.ProgressChanged -= Ram_bgworker_ProgressChanged;
+                }
+                
+                self_process?.Dispose();
                 self_process = null;
+                
                 ram_bgworker = null;
                 textFadeAnimation = null;
                 
@@ -369,10 +372,6 @@ namespace SteamCMDLauncher
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // App closing after select new server fix
-            if (App.CancelClose)
-                App.CancelClose = false;
-
             Config.Log("[MV] Window has been fully loaded");
 
             if (out_of_date)
@@ -413,23 +412,34 @@ namespace SteamCMDLauncher
             UpdateRefreshButton();
 
             ram_bgworker.RunWorkerAsync();
+            
+            // App closing after select new server fix
+            if (App.CancelClose)
+                App.CancelClose = false;
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
+            Config.Log("[MV] Window_Close has been called, this will likely exit the program");
+            
             Stop_RunBGWorker();
-            sender = null;
-            e = null;
-            App.WindowClosed(this);
+            
+            sender = null; e = null;
+            
+            if(!App.CancelClose) App.WindowClosed(this);
         }
 
         private void GameConfig_Click(object sender, RoutedEventArgs e)
         {
+            Config.Log("[MV] Booting up the Configuration Builder");
+
             App.CancelClose = true;
+            
             App.WindowClosed(this);
+            
             App.WindowOpen(new Views.ConfigGen());
-            sender = null;
-            e = null;
+            
+            sender = null; e = null;
         }
     }
 }

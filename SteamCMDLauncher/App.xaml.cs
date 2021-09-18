@@ -353,7 +353,7 @@ namespace SteamCMDLauncher
             
             Config.Log($"[WO] Current main window instance is: {current_instance}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {current_instance})");
                    
-            if (ActiveWindow != null) { ActiveWindow.Close(); ActiveWindow = null; }
+            if (ActiveWindow != null) { ActiveWindow = null; }
 
             ActiveWindow = instance;
   
@@ -374,9 +374,9 @@ namespace SteamCMDLauncher
             // Exit the program entirely if it should do (no depending tasks to be done)
             if (!CancelClose)
             {
-                Config.Log($"[EXIT EVENT] Cancel request was granted from window: {window}.xaml");            
+                Config.Log($"[EXIT EVENT] Cancel request was granted from window: {window}.xaml");
                 Environment.Exit(0);
-            } 
+            }
             else
             {
                 Config.Log($"[EXIT EVENT] Cancel request was rejected from window: {window}.xaml");
