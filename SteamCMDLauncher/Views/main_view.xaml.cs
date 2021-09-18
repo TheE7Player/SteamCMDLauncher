@@ -422,5 +422,14 @@ namespace SteamCMDLauncher
             e = null;
             App.WindowClosed(this);
         }
+
+        private void GameConfig_Click(object sender, RoutedEventArgs e)
+        {
+            App.CancelClose = true;
+            App.WindowClosed(this);
+            App.WindowOpen(new Views.ConfigGen());
+            sender = null;
+            e = null;
+        }
     }
 }

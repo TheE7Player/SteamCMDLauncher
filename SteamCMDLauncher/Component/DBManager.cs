@@ -439,7 +439,7 @@ namespace SteamCMDLauncher.Component
                 {
                     string id_find = "svr_id";
                     
-                    IEnumerable<BsonDocument> details = ((IEnumerable<BsonDocument>)table_documents.Target).Where(x => x["svr_id"].Equals(id));
+                    IEnumerable<BsonDocument> details = ((IEnumerable<BsonDocument>)table_documents.Target).Where(x => x[id_find].Equals(id));
 
                     int length = details.Count();
 

@@ -1,0 +1,60 @@
+﻿<Window x:Class="SteamCMDLauncher.Views.ConfigGen"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SteamCMDLauncher.Views"
+        mc:Ignorable="d"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignDarkBackground}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Title="Config Generator" Height="720" Width="1280" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Closed="Window_Closed">
+    <Grid Margin="20">
+        <!-- DialogHost: Shows a dialog to the screen -->
+        <materialDesign:DialogHost x:Name="RootDialog" IsOpen="False" >
+            <materialDesign:DialogHost.DialogContent>
+                <Canvas/>
+            </materialDesign:DialogHost.DialogContent>
+        </materialDesign:DialogHost>
+        
+        <!-- Headings -->
+        <TextBlock FontSize="30" Style="{StaticResource DefaultBold}">SteamCMDLauncher Configuration Editor</TextBlock>
+        <TextBlock Style="{StaticResource DefaultBold}" Margin="0,38,0,0">Alpha 0.1</TextBlock>
+
+        <!-- Load/Save Config Buttons -->
+        <Button Content="Load Config" VerticalAlignment="Top" Margin="0,75,1100,0"/>
+        <Button Content="Save Config" VerticalAlignment="Top" Margin="135,75,970,0"/>
+
+        <!-- GroupBox to generate controls -->
+        <GroupBox Header="Create Control" VerticalAlignment="Top" Margin="0,135,904,0" Height="500" FontSize="16" Foreground="{StaticResource White}">
+            <StackPanel>
+                <!-- Control's Name -->
+                <TextBox x:Name="ControlName" materialDesign:HintAssist.Hint="Control Name" Margin="2,5,2,10"/>
+
+                <!-- Control's Type -->
+                <ComboBox x:Name="ControlType" materialDesign:HintAssist.Hint="Control Type" Margin="2,5,2,10">
+                    <ComboBoxItem>Text Box</ComboBoxItem>
+                    <ComboBoxItem>Password Box</ComboBoxItem>
+                    <ComboBoxItem>Check Box</ComboBoxItem>
+                    <ComboBoxItem>Combo Box</ComboBoxItem>
+                </ComboBox>
+
+                <!-- Control's Category it belongs to -->
+                <ComboBox x:Name="ControlCategory" materialDesign:HintAssist.Hint="Category Type" Margin="2,5,2,10">
+                    <ComboBoxItem>General</ComboBoxItem>
+                    <ComboBoxItem>Misc</ComboBoxItem>
+                    <ComboBoxItem>Other</ComboBoxItem>
+                    <ComboBoxItem Tag="Add">Add New Category</ComboBoxItem>
+                </ComboBox>
+
+                <!-- Control's Extra Abilities -->
+                <GroupBox x:Name="ControlExtra" Header="Extra Options" Margin="2,5,2,10" Height="267"/>
+
+                <!-- Control's Append Button -->
+                <Button Click="AddComponent_Click">ADD TO CONFIG</Button>
+            </StackPanel>
+        </GroupBox>
+    </Grid>
+</Window>

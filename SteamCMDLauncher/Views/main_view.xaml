@@ -23,8 +23,8 @@
             </materialDesign:DialogHost.DialogContent>
         </materialDesign:DialogHost>
 
-        <TextBlock FontSize="36" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
-        <TextBlock FontSize="30" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,70,0,0">
+        <TextBlock FontSize="36" Style="{StaticResource DefaultBold}" Margin="41,30,0,0">Steam CMD Launcher</TextBlock>
+        <TextBlock FontSize="30" Style="{StaticResource DefaultBold}" Margin="41,70,0,0">
             <TextBlock.ToolTip>
                 <TextBlock x:Name="versionToolTip">Your not running the latest version of this program</TextBlock>
             </TextBlock.ToolTip>
@@ -34,14 +34,18 @@
             </StackPanel>
         </TextBlock>
 
-        <materialDesign:PackIcon x:Name="RamIcon" Kind="Minus" Foreground="Yellow" Height="25" Width="25" Margin="773,53,0,0"/>
-        <TextBlock x:Name="RamText" FontSize="18" Foreground="{StaticResource White}" Margin="796,54,387,0" VerticalAlignment="Top" TextAlignment="Center">2048MB</TextBlock>
-        <Button x:Name="RefreshServers" Margin="898,50,279,38" Click="RefreshServers_Click" >
-            <materialDesign:PackIcon Kind="RestartOff" Foreground="{StaticResource White}" Height="25" Width="25"/>
+        <materialDesign:PackIcon x:Name="RamIcon" Kind="Minus" Foreground="Yellow" Height="24" Width="26" Margin="750,54,0,0"/>
+        <TextBlock x:Name="RamText" FontSize="18" Foreground="{StaticResource White}" Margin="774,54,410,0" VerticalAlignment="Top" TextAlignment="Center">2048MB</TextBlock>
+
+        <Button x:Name="RefreshServers" Margin="940,50,265,38" Click="RefreshServers_Click" >
+            <materialDesign:PackIcon Kind="RestartOff" Style="{StaticResource PackIconDefault}"/>
+        </Button>
+        <Button Margin="875,50,330,38" Click="GameConfig_Click" >
+            <materialDesign:PackIcon Kind="NoteEdit" Style="{StaticResource PackIconDefault}"/>
         </Button>
         <Button Margin="1006,50,36,38" Click="NewServer_Click">Add Another Server</Button>
 
-        <TextBlock Grid.Row="1" FontSize="22" Foreground="{StaticResource White}" FontWeight="Bold" FontFamily="Arial Black" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="41,20,0,0">Welcome! Select a server to view or launch:</TextBlock>
+        <TextBlock Grid.Row="1" Style="{StaticResource DefaultBold}" Margin="41,20,0,0">Welcome! Select a server to view or launch:</TextBlock>
 
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <StackPanel x:Name="ServerStack" Orientation="Horizontal" Margin="44,0,35,30" VerticalAlignment="Center" />
