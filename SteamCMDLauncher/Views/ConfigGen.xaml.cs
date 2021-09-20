@@ -1,8 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Data;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace SteamCMDLauncher.Views
 {
@@ -12,9 +15,16 @@ namespace SteamCMDLauncher.Views
     public partial class ConfigGen : Window
     {
         private int priorityControlLevel = 0;
-        private UIComponents.DialogHostContent dh;
         private bool disposed = false;
+       
+        private char lastControlType = '\0';
+        
+        private UIComponents.DialogHostContent dh;
         private Lazy<DataTable> table;
+        private Lazy<Dictionary<string, Dictionary<string, string[]>>> output_directory;
+
+        //private JObject output;
+        //private JObject lang_output;
 
         public ConfigGen()
         {
@@ -238,30 +248,47 @@ namespace SteamCMDLauncher.Views
 
             StackPanel content = ((ScrollViewer)ControlExtra.Content).Content as StackPanel;
 
-            content.Children.Clear();
-
             if (clear)
             {
+                content.Children.Clear();
                 content.Children.Add(new TextBlock { Text = "No Type Was Selected" });
+                lastControlType = '\0';
             }
             else
             {
                 // Text, Password, Check, Combo (l)
                 char[] compoent_idx = new char[] { 't', 'p', 'c', 'l' };
+                
                 char t = compoent_idx[ControlType.SelectedIndex];
+
+                // Clear the controls ONLY if the control has been changed
+                if (lastControlType == '\0') lastControlType = t;
+                else if (lastControlType != t)
+                {
+                    lastControlType = t;
+                    content.Children.Clear();
+                }
+                else
+                {
+                    // Ignore the creation of new objects
+
+                    content = null;
+                    compoent_idx = null;
+                    return;
+                }
+
                 compoent_idx = null;
 
                 Thickness default_space = new Thickness(0, 5, 0, 5);
 
-                TextBox control_name = new TextBox() { Tag = "name", Margin = default_space };
-                TextBox control_label = new TextBox() { Tag = "text", Margin = default_space };
-                TextBox control_def = new TextBox() { Tag = "default", Margin = default_space };
-                TextBox control_hint = new TextBox() { Tag = "hint", Margin = default_space };
-                TextBox control_alert = new TextBox() { Tag = "alert", Margin = default_space };
-                TextBox control_cmd = new TextBox() { Tag = "command", Margin = default_space };
-                TextBox control_cmd_pf = new TextBox() { Tag = "command_prefix", Margin = default_space };
+                TextBox control_label = new TextBox() { Name = "text", Tag = 1, Margin = default_space };
+                TextBox control_def = new TextBox() { Name = "default", Margin = default_space };
+                TextBox control_hint = new TextBox() { Name = "hint", Margin = default_space };
+                TextBox control_alert = new TextBox() { Name = "alert", Margin = default_space };
+                TextBox control_cmd = new TextBox() { Name = "command", Tag = 1, Margin = default_space };
+                TextBox control_cmd_pf = new TextBox() { Name = "command_prefix", Margin = default_space };
                 
-                ComboBox control_tag = new ComboBox() { Tag = "tag", Margin = default_space };
+                ComboBox control_tag = new ComboBox() { Name = "tag", Margin = default_space };
 
                 // Add the tags that go alongside this control
                 control_tag.Items.Add(new ComboBoxItem { Content = "NONE" });
@@ -272,14 +299,14 @@ namespace SteamCMDLauncher.Views
                 // This entity is read only and is invisible (collapsed) and is auto-filled
                 TextBox control_type = new TextBox()
                 {
-                    Tag = "type",
+                    Name = "type",
                     Margin = default_space,
                     IsEnabled = false,
+                    Tag = 1,
                     Text = t == 't' ? "input" : t == 'p' ? "pass" : t == 'c' ? "check" : "combo",
                     Visibility = Visibility.Collapsed
                 };
 
-                MaterialDesignThemes.Wpf.HintAssist.SetHint(control_name, "Control Identifier (Not the name)");
                 MaterialDesignThemes.Wpf.HintAssist.SetHint(control_label, "Control Label (Title)");
                 MaterialDesignThemes.Wpf.HintAssist.SetHint(control_cmd, "Command (Denoted with $)");
                 MaterialDesignThemes.Wpf.HintAssist.SetHint(control_cmd_pf, "Command Prefix");
@@ -288,17 +315,15 @@ namespace SteamCMDLauncher.Views
                 MaterialDesignThemes.Wpf.HintAssist.SetHint(control_alert, "Alert Warning (Optional)");
                 MaterialDesignThemes.Wpf.HintAssist.SetHint(control_tag, "Server Argument (Optional)");
 
-                content.Children.Add(control_name);
-                content.Children.Add(control_cmd);
-                content.Children.Add(control_cmd_pf);
                 content.Children.Add(control_type);
                 content.Children.Add(control_label);
+                content.Children.Add(control_cmd);
+                content.Children.Add(control_cmd_pf);
                 content.Children.Add(control_tag);
                 content.Children.Add(control_def);
                 content.Children.Add(control_hint);
                 content.Children.Add(control_alert);
 
-                control_name = null;
                 control_type = null;
                 control_label = null;
                 control_def = null;
@@ -312,11 +337,11 @@ namespace SteamCMDLauncher.Views
                 {
                     // If the control type is an input or password
 
-                    CheckBox blank = new CheckBox() { Content = "Can Be Blank", Tag = "can_leave_blank", Margin = default_space };
+                    CheckBox blank = new CheckBox() { Content = "Can Be Blank", Name = "can_leave_blank", Margin = default_space, IsChecked = true };
                    
-                    TextBox placeholder = new TextBox() { Tag = "placeholder", Margin = default_space },
-                        width = new TextBox() { Tag = "width", Margin = default_space },
-                        control_blank = new TextBox() { Tag = "blank_alert", Margin = default_space };
+                    TextBox placeholder = new TextBox() { Name = "placeholder", Margin = default_space },
+                        width = new TextBox() { Name = "width", Margin = default_space },
+                        control_blank = new TextBox() { Name = "blank_alert", Margin = default_space };
 
 
                     MaterialDesignThemes.Wpf.HintAssist.SetHint(placeholder, "Placeholder (Optional)");
@@ -330,7 +355,7 @@ namespace SteamCMDLauncher.Views
 
                     if(t == 't')
                     {
-                        TextBox controlFile = new TextBox() { Tag = "write_to", Margin = default_space };
+                        TextBox controlFile = new TextBox() { Name = "write_to", Margin = default_space };
 
                         MaterialDesignThemes.Wpf.HintAssist.SetHint(controlFile, "Write file (Optional)");
 
@@ -348,11 +373,13 @@ namespace SteamCMDLauncher.Views
                 if(t == 'c')
                 {
                     // If the control type is a check box
-                    TextBox valTrue = new TextBox() { Tag = "return_true", Margin = default_space },
-                        valFalse = new TextBox() { Tag = "return_false", Margin = default_space };
+                    TextBox valTrue = new TextBox() { Name = "return_true", Margin = default_space },
+                        valFalse = new TextBox() { Name = "return_false", Margin = default_space };
 
                     MaterialDesignThemes.Wpf.HintAssist.SetHint(valTrue, "On True/Checked");
                     MaterialDesignThemes.Wpf.HintAssist.SetHint(valFalse, "On False/Unchecked");
+
+                    // TODO: Validate if at least one has a value
 
                     content.Children.Add(valTrue);
                     content.Children.Add(valFalse);
@@ -364,7 +391,9 @@ namespace SteamCMDLauncher.Views
                 if(t == 'l')
                 {
                     // If the control type is a combo box 
-                    TextBox comboTar = new TextBox { Tag = "combo-target", Margin = default_space };
+
+                    //TODO: DO an operation with "combo_target" to "combo-target" once validating (Name cannot contain "-")
+                    TextBox comboTar = new TextBox { Name = "combo_target", Margin = default_space };
 
                     Button keyPair = new Button { Content = "Set Key Pairs" };
 
@@ -391,13 +420,131 @@ namespace SteamCMDLauncher.Views
         #endregion
 
         #region Control Functions/Methods
+        
+        private void GenerateJSON()
+        {
+            /*if (output == null)
+            {
+                output = new JObject();
+            }
+
+            JObject controlOut = new JObject();
+
+            ctrl_type = null;
+
+            int ctrl_idx = ControlType.SelectedIndex;
+            controlOut.Add("type", new JValue(
+                ctrl_idx == 0 ? "input" :
+                ctrl_idx == 1 ? "pass" :
+                ctrl_idx == 2 ? "check" :
+                "combo"
+            ));
+
+            content = null;
+
+            if (!output.ContainsKey(cate))
+            {
+                output.Add(cate, new JObject());
+            }
+
+            JObject why = output.SelectToken(cate) as JObject;
+            why?.Add(ControlName.Text, controlOut.Root);*/
+
+        }
+
+        private bool IterateControls(ref StackPanel content, ref List<string> control, out string fail_reason)
+        {
+            int len = content.Children.Count;
+          
+            Type ctrl_type = null;
+            TextBox ctrl_tb_placeholder = null;
+            ComboBox ctrl_cb_placeholder = null;
+            CheckBox ctrl_chb_placeholder = null;
+
+            try
+            {
+                for (int i = 0; i < len; i++)
+                {
+                    // Get the control type of the control (TextBox or ComboBox etc) 
+                    ctrl_type = content.Children[i].GetType();
+
+                    if (Equals(ctrl_type, typeof(TextBox)))
+                    {
+                        ctrl_tb_placeholder = (TextBox)content.Children[i];
+
+                        bool hasLength = ctrl_tb_placeholder.Text.Length > 0;
+
+                        if ((int?)ctrl_tb_placeholder?.Tag == 1 && !hasLength)
+                        {
+                            fail_reason = $"A text field '{ctrl_tb_placeholder?.Name}' was left blank, where its required to set a value!";
+                            return false;
+                        }
+
+                        if (hasLength)
+                            control.Add($"{ctrl_tb_placeholder?.Name}={ctrl_tb_placeholder.Text}");
+
+                        ctrl_tb_placeholder = null;
+                    }
+                    else if (Equals(ctrl_type, typeof(ComboBox)))
+                    {
+                        ctrl_cb_placeholder = (ComboBox)content.Children[i];
+
+                        bool hasLength = ctrl_cb_placeholder.Text.Length > 0;
+
+                        if ((int?)ctrl_cb_placeholder?.Tag == 1 && !hasLength)
+                        {
+                            fail_reason = $"A combo field '{ctrl_cb_placeholder?.Name}' was left blank, where its required to set a value!";
+                            return false;
+                        }
+
+                        if (ctrl_cb_placeholder.Text.Length > 0)
+                            control.Add($"{ctrl_cb_placeholder?.Name}={ctrl_cb_placeholder.Text}");
+
+                        ctrl_cb_placeholder = null;
+                    }
+                    else
+                    {
+                        ctrl_chb_placeholder = (CheckBox)content.Children[i];
+
+                        control.Add($"{ctrl_chb_placeholder?.Name}={ctrl_chb_placeholder.IsChecked}");
+
+                        ctrl_chb_placeholder = null;
+                    }
+                }
+
+                // Final Error Checks
+
+                // Check 1: If set blank is true, an alert message should be set with it
+                if (control.Contains("can_leave_blank=False"))
+                {
+                    string target_ba = "blank_alert";
+                    if (!control.Any(x => x.StartsWith(target_ba)))
+                    {
+                        target_ba = null;
+                        fail_reason = "Since 'Can Leave Blank' is false, you need to provide a message if its left blank\n(requires 'blank_alert' attribute / \"No Value Warning\" text box )";
+                        return false;
+                    }
+                }
+            }
+            finally
+            {
+                ctrl_type = null;
+                ctrl_tb_placeholder = null;
+                ctrl_cb_placeholder = null;
+                ctrl_chb_placeholder = null;
+            }
+
+            fail_reason = string.Empty;
+            return true;
+        }
+
         private void AddComponent_Click(object sender, RoutedEventArgs e)
         {
             // ADD TO CONFIG button
             sender = null;
             e = null;
 
-            if(priorityControlLevel <= 1)
+            if (priorityControlLevel <= 1)
             {
                 dh.OKDialog(
                     priorityControlLevel == 0 ? "A control must have a name" :
@@ -406,10 +553,68 @@ namespace SteamCMDLauncher.Views
                 return;
             }
 
-            // Reset the controls for the next one
-            ControlName.Text = null;
-            ControlCategory.SelectedIndex = -1;
-            ControlType.SelectedItem = -1;
+            // We validate if a control exists already
+
+            // Step 1: Validate if a category exists...
+            if(output_directory.Value.ContainsKey(ControlCategory.Text))
+            {
+                // Step 2: We now check if a control of this name exists
+                if(output_directory.Value[ControlCategory.Text].ContainsKey(ControlName.Text))
+                {
+                    // We then complain about it to the user...
+                    dh.OKDialog($"A control of this name already exists as \"{ControlName.Text}\" under category: \"{ControlCategory.Text}\"\nPlease change the name to prevent duplicates!");
+                    return;
+                }
+            }
+
+            StackPanel content = ((ScrollViewer)ControlExtra.Content).Content as StackPanel;
+
+            int len = content.Children.Count;
+
+            int ctrl_idx = ControlType.SelectedIndex;
+
+            // Add the current object
+            List<string> control = new List<string>(len);
+
+            bool fault = IterateControls(ref content, ref control, out string fault_reason);
+
+            if (!fault)
+            { 
+                string cate = ControlCategory.Text;
+
+                if (!output_directory.Value.ContainsKey(cate))
+                {
+                    int loopLen = control.Count;
+                    
+                    output_directory.Value.Add(cate, new Dictionary<string, string[]>(loopLen));
+
+                    string propName = ControlName.Text;
+
+                    output_directory.Value[cate].Add(propName, new string[loopLen]);
+
+                    for (int i = 0; i < loopLen; i++)
+                    {
+                        output_directory.Value[cate][propName][i] = control[i];
+                    }
+
+                    propName = null;
+                }
+
+                cate = null;
+                
+                // Reset the controls for the next one
+                ControlName.Text = null;
+                ControlType.SelectedItem = -1;
+                // ControlCategory.SelectedIndex = -1; ~ Category won't be changed as this will make the UI experience annoying
+            } 
+            else
+            {
+                dh.OKDialog(fault_reason);
+            }
+
+            control = null;
+            content = null;
+            fault_reason = null;
         }
         #endregion
 
@@ -434,6 +639,7 @@ namespace SteamCMDLauncher.Views
             dh = new UIComponents.DialogHostContent(RootDialog, true, true);
             
             table = new Lazy<DataTable>();
+            output_directory = new Lazy<Dictionary<string, Dictionary<string, string[]>>>();
 
             PriorityChanged();
 
