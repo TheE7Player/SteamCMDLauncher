@@ -1,5 +1,5 @@
 # Holds hash keys to validate if the json loaded is official
-# Validation was runned after build at (YYYY-MM-DD): 2021-09-20 22:51:27
+# Validation was runned after build at (YYYY-MM-DD): 2021-09-21 21:43:16
 # This process is automated using vlang ~ https://github.com/vlang/v
 dedicated_server_list=7a7652a2754cc230162981173f5e229e111c9d53f59c3699e188baffcdf8314f
 game_setting_222860=26cf936540223cdd56c532f77067582861a6129b7685eabd9de46bfda9433e4d

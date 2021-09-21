@@ -18,7 +18,7 @@
                 <Canvas/>
             </materialDesign:DialogHost.DialogContent>
         </materialDesign:DialogHost>
-        
+
         <!-- Headings -->
         <TextBlock FontSize="30" Style="{StaticResource DefaultBold}">SteamCMDLauncher Configuration Editor</TextBlock>
         <TextBlock Style="{StaticResource DefaultBold}" Margin="0,38,0,0">Alpha 0.1</TextBlock>
@@ -60,5 +60,36 @@
                 <Button Click="AddComponent_Click">ADD TO CONFIG</Button>
             </StackPanel>
         </GroupBox>
+
+        <!-- GroupBox to show JSON Structure -->
+        <GroupBox Header="File Structure" VerticalAlignment="Top" Margin="367,135,408,0" Height="500" FontSize="16" Foreground="{StaticResource White}">
+            <TreeView Padding="2" ItemsSource="{Binding TreeModel}" SelectedItemChanged="TreeView_SelectedItemChanged">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Controls}">
+                        <Grid>
+                            <Label Content="{Binding Name}" Foreground="{StaticResource White}"/>
+                        </Grid>
+                        <HierarchicalDataTemplate.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Foreground="{StaticResource White}" Kind="{Binding Icon}" Margin="2,0,10,0"/>
+                                    <TextBlock Foreground="{StaticResource White}" Text="{Binding CName}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </HierarchicalDataTemplate.ItemTemplate>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+        </GroupBox>
+
+        <!-- Additional Controls / Target exe etc -->
+        <GroupBox Header="Additional Controls (Setup)" VerticalAlignment="Top" Foreground="{StaticResource White}" Margin="861,135,29,0" FontSize="16" Height="197">
+            <StackPanel Margin="4">
+                <TextBox Margin="0,10,0,10" Text="{Binding Path=Target, Mode=TwoWay}"       materialDesign:HintAssist.Hint="Target Exe"/>
+                <TextBox Margin="0,10,0,10" Text="{Binding Path=PreComands, Mode=TwoWay}"   materialDesign:HintAssist.Hint="Additional Arguments"/>
+                <TextBox Margin="0,10,0,10" Text="{Binding Path=JoinCommand, Mode=TwoWay}"  materialDesign:HintAssist.Hint="Join Command (if any)"/>
+            </StackPanel>
+        </GroupBox>
+
     </Grid>
 </Window>

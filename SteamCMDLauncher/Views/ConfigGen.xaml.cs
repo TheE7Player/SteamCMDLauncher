@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Linq;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace SteamCMDLauncher.Views
 {
@@ -14,17 +15,37 @@ namespace SteamCMDLauncher.Views
     /// </summary>
     public partial class ConfigGen : Window
     {
+        #region Attributes
         private int priorityControlLevel = 0;
         private bool disposed = false;
        
         private char lastControlType = '\0';
+        #endregion
+
+        #region Class Attributes
         
         private UIComponents.DialogHostContent dh;
+        
         private Lazy<DataTable> table;
+        
         private Lazy<Dictionary<string, Dictionary<string, string[]>>> output_directory;
+        private Lazy<Dictionary<string, string>> output_lang_directory;
+        
+        private Lazy<JObject> output;
+        private Lazy<JObject> lang_output;
+        #endregion
 
-        //private JObject output;
-        //private JObject lang_output;
+        #region String Attributes/Binding
+        private string target = string.Empty;
+        private string preCommands = string.Empty;
+        private string joinCommand = string.Empty;
+
+        public string Target { get => target; set { target = value; } }
+        public string PreComands { get => preCommands; set { preCommands = value; } }
+        public string JoinCommand { get => joinCommand; set { joinCommand = value; } }
+
+        public ObservableCollection<Component.Struct.ConfigTree> TreeModel { get; set; }
+        #endregion
 
         public ConfigGen()
         {
@@ -156,6 +177,7 @@ namespace SteamCMDLauncher.Views
 
             string tag_look_for = "Add";
 
+            // TODO: This crashes if you type a letter - resolve?
             ComboBoxItem currentCombo = (ComboBoxItem)ControlCategory.Items.GetItemAt(currentIndex);
             bool AddNewCategory = currentCombo.Tag.Equals(tag_look_for);
             
@@ -194,6 +216,40 @@ namespace SteamCMDLauncher.Views
         {
             sender = null; e = null;
             PriorityChanged();
+        }
+
+        #endregion
+
+        #region Binding Related/Controlled
+        private void GenerateTree()
+        {
+            // Clear is used/contains anything
+            if (TreeModel.Count > 0) TreeModel.Clear();
+
+            Component.Struct.ConfigTree config = null;
+            string type = string.Empty;
+
+            // Loop through each category then values
+            foreach (KeyValuePair<string, Dictionary<string, string[]>> category in output_directory.Value)
+            {
+                config = new Component.Struct.ConfigTree() { Name = category.Key };
+
+                foreach (string ctrl in category.Value.Keys)
+                {
+                    type = category.Value[ctrl].SingleOrDefault(x => x.StartsWith("type="));
+
+                    if(type is null)
+                    {
+                        throw new Exception($"[CFG-G] Control named '{ctrl}' didn't return back a control type\n(Missing 'type=' flag)");
+                    }
+
+                    config.Add(ctrl, type[5..]);
+                }
+
+                TreeModel.Add(config.CopyClear());
+            }
+            type = null;
+            config = null;
         }
         #endregion
 
@@ -247,11 +303,12 @@ namespace SteamCMDLauncher.Views
         {
 
             StackPanel content = ((ScrollViewer)ControlExtra.Content).Content as StackPanel;
+            TextBlock No_content = new TextBlock { Text = "No Type Was Selected" };
 
             if (clear)
             {
                 content.Children.Clear();
-                content.Children.Add(new TextBlock { Text = "No Type Was Selected" });
+                content.Children.Add(No_content);
                 lastControlType = '\0';
             }
             else
@@ -262,7 +319,16 @@ namespace SteamCMDLauncher.Views
                 char t = compoent_idx[ControlType.SelectedIndex];
 
                 // Clear the controls ONLY if the control has been changed
-                if (lastControlType == '\0') lastControlType = t;
+                if (lastControlType == '\0') 
+                {
+                    // If any text block that says "No type" exists
+                    if (content.Children.Count == 1 && content.Children[0] is TextBlock)
+                    { 
+                        content.Children.Clear();
+                    }
+                   
+                    lastControlType = t; 
+                }
                 else if (lastControlType != t)
                 {
                     lastControlType = t;
@@ -271,9 +337,9 @@ namespace SteamCMDLauncher.Views
                 else
                 {
                     // Ignore the creation of new objects
-
                     content = null;
                     compoent_idx = null;
+                    No_content = null;
                     return;
                 }
 
@@ -401,8 +467,14 @@ namespace SteamCMDLauncher.Views
 
                     keyPair.Unloaded += (_, e) =>
                     {
-                        keyPair.Click -= ComboStrictDialog;
-                        e = null; _ = null;
+                        Button self = (Button)_;
+
+                        if (keyPair != null)
+                            keyPair.Click -= ComboStrictDialog;
+                        
+                        self.Click -= ComboStrictDialog;
+
+                        e = null; _ = null; self = null;
                     };
 
                     MaterialDesignThemes.Wpf.HintAssist.SetHint(comboTar, "File/Folder Search (\\<file>;*.<ext>)");
@@ -415,6 +487,7 @@ namespace SteamCMDLauncher.Views
             }
 
             content = null;
+            No_content = null;
             GC.Collect();
         }
         #endregion
@@ -502,7 +575,7 @@ namespace SteamCMDLauncher.Views
 
                         ctrl_cb_placeholder = null;
                     }
-                    else
+                    else if (Equals(ctrl_type, typeof(CheckBox)))
                     {
                         ctrl_chb_placeholder = (CheckBox)content.Children[i];
 
@@ -576,29 +649,29 @@ namespace SteamCMDLauncher.Views
             // Add the current object
             List<string> control = new List<string>(len);
 
-            bool fault = IterateControls(ref content, ref control, out string fault_reason);
+            bool no_fault = IterateControls(ref content, ref control, out string fault_reason);
 
-            if (!fault)
+            if (no_fault)
             { 
                 string cate = ControlCategory.Text;
 
+                int loopLen = control.Count;
+
                 if (!output_directory.Value.ContainsKey(cate))
                 {
-                    int loopLen = control.Count;
-                    
                     output_directory.Value.Add(cate, new Dictionary<string, string[]>(loopLen));
-
-                    string propName = ControlName.Text;
-
-                    output_directory.Value[cate].Add(propName, new string[loopLen]);
-
-                    for (int i = 0; i < loopLen; i++)
-                    {
-                        output_directory.Value[cate][propName][i] = control[i];
-                    }
-
-                    propName = null;
                 }
+                
+                string propName = ControlName.Text;
+
+                output_directory.Value[cate].Add(propName, new string[loopLen]);
+
+                for (int i = 0; i < loopLen; i++)
+                {
+                    output_directory.Value[cate][propName][i] = control[i];
+                }
+
+                propName = null;
 
                 cate = null;
                 
@@ -606,6 +679,8 @@ namespace SteamCMDLauncher.Views
                 ControlName.Text = null;
                 ControlType.SelectedItem = -1;
                 // ControlCategory.SelectedIndex = -1; ~ Category won't be changed as this will make the UI experience annoying
+
+                GenerateTree();
             } 
             else
             {
@@ -630,6 +705,19 @@ namespace SteamCMDLauncher.Views
                 ControlType.SelectionChanged -= ControlType_SelectionChanged;
                 ControlCategory.SelectionChanged -= ControlCategory_SelectionChanged;
 
+                target = null;
+                preCommands = null;
+                joinCommand = null;
+
+                table = null;
+                output_directory = null;
+                output_lang_directory = null;
+                output = null;
+                lang_output = null;
+                TreeModel = null;
+
+                DataContext = null;
+                
                 disposed = true;
             }
         }
@@ -640,12 +728,21 @@ namespace SteamCMDLauncher.Views
             
             table = new Lazy<DataTable>();
             output_directory = new Lazy<Dictionary<string, Dictionary<string, string[]>>>();
+            output_lang_directory = new Lazy<Dictionary<string, string>>();
+
+            output = new Lazy<JObject>();
+            lang_output = new Lazy<JObject>();
 
             PriorityChanged();
 
             ControlName.TextChanged += ControlName_TextChanged;
             ControlType.SelectionChanged += ControlType_SelectionChanged;
             ControlCategory.SelectionChanged += ControlCategory_SelectionChanged;
+
+            // For the binding
+            DataContext = this;
+
+            TreeModel = new ObservableCollection<Component.Struct.ConfigTree>();
 
             sender = null;
             e = null;
@@ -664,5 +761,23 @@ namespace SteamCMDLauncher.Views
         }
         #endregion
 
+        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            TreeView currentTree = (TreeView)sender;
+
+            Component.Struct.ConfigTreeItem selectedItem = currentTree.SelectedItem as Component.Struct.ConfigTreeItem;
+
+            // Returns null if the item is not a 'ConfigTreeItem'
+            if(!(selectedItem is null))
+            {
+                //TODO: Iterate over the controls with filled data (of the selected item)
+            }
+
+            e = null;
+            selectedItem = null;
+            sender = null;
+            currentTree = null;
+        
+        }
     }
 }
