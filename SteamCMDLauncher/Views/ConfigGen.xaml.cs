@@ -578,6 +578,36 @@ namespace SteamCMDLauncher.Views
                         // Get the contents by splitting at the first 'equals' occurrence
                         valSplit = ctrl.Value[i].Split('=', 2);
                         
+                        // If its a table, we have to restructure it again!
+                        if(valSplit[0] == "combo-strict")
+                        {
+                            JObject table = new JObject();
+
+                            string data = valSplit[1][1..^1];
+
+                            string[] row = data.Split(';')
+                                .Where(x => !string.IsNullOrWhiteSpace(x))
+                                .ToArray();
+
+                            string[] col = new string[2];
+                            int rowLen = row.Length;
+                            
+                            for (int z = 0; z < rowLen; z++)
+                            {
+                                col = row[z].Split('|', 2);
+                                table.Add(col[0], col[1]);
+                            }
+
+                            col = null;                         
+                            data = null;
+                            row = null;
+
+                            // Then we add it the control
+                            controlOut.Add(valSplit[0], table.Root);
+                            table = null;
+                            continue;
+                        }
+
                         // Add the type ([0]) and its value ([1])
                         controlOut.Add(valSplit[0], valSplit[1]);
                     }
@@ -1033,7 +1063,8 @@ namespace SteamCMDLauncher.Views
 
             string fileName = string.Empty;
 
-            dh.InputDialog("Save Config", "What do you want to name your configuration?\nNote: You'll need to find the AppID in order for the program to detect it.", new Action<string>((x) => {
+            dh.InputDialog("Save Config", "What do you want to name your configuration? (Just the filename, not with extension!)\nNote: You'll need to find the AppID in order for the program to detect it.", new Action<string>((x) =>
+            {
                 fileName = x;
             }));
 
@@ -1049,8 +1080,24 @@ namespace SteamCMDLauncher.Views
 
             GenerateJSON(fileName);
 
+            // Output the file itself
+
+            string output_location = System.IO.Path.Combine(Environment.CurrentDirectory, "configs", $"{fileName}.json");
+
+            System.IO.File.WriteAllText(output_location, output.Value.ToString());
+
+            if(System.IO.File.Exists(output_location))
+            {
+                dh.YesNoDialog("Success", "Your file has been saved in the configuration folder!\nWould you like to view it now?",
+                new Action(() =>
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", output_location);
+                }));
+            }
+
             ill = null;
             fileName = null;
+            output_location = null;
         }
     }
 }
