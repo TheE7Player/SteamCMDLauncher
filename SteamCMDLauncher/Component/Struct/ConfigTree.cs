@@ -36,7 +36,7 @@ namespace SteamCMDLauncher.Component.Struct
     }
 
     public class ConfigTreeItem
-    { 
+    {
         public string CName { get; }
         public string Icon { get; private set; }
         public string Parent;
@@ -55,5 +55,12 @@ namespace SteamCMDLauncher.Component.Struct
             Name = null;
             Type = null;
         }
+
+        /// <summary>
+        /// Returns back the JSON type of the control
+        /// </summary>
+        public string GetActualType => Icon == "FormatText" ? "input" :
+            Icon == "FormTextboxPassword" ? "pass" : Icon == "FormDropdown" ? "combo" :
+            Icon == "CheckboxMultipleMarkedOutline" ? "combo" : string.Empty;
     }
 }

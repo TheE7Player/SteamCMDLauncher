@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text;
 
 namespace SteamCMDLauncher.Views
 {
@@ -27,9 +28,11 @@ namespace SteamCMDLauncher.Views
         private UIComponents.DialogHostContent dh;
         
         private Lazy<DataTable> table;
-        
+        private List<FrameworkElement> CurrentControls;
         private Lazy<Dictionary<string, Dictionary<string, string[]>>> output_directory;
-        private Lazy<Dictionary<string, string>> output_lang_directory;
+        
+        // TODO: Does this variable need to be for loading a config?
+        //private Lazy<Dictionary<string, string>> output_lang_directory;
         
         private Lazy<JObject> output;
         private Lazy<JObject> lang_output;
@@ -274,6 +277,8 @@ namespace SteamCMDLauncher.Views
 
             int width = 700, Height = 350;
 
+            if (table is null) table = new Lazy<DataTable>();
+
             if(!table.IsValueCreated)
             {
                 table.Value.Columns.Add("Key");
@@ -305,6 +310,11 @@ namespace SteamCMDLauncher.Views
             StackPanel content = ((ScrollViewer)ControlExtra.Content).Content as StackPanel;
             TextBlock No_content = new TextBlock { Text = "No Type Was Selected" };
 
+            if(CurrentControls is null)
+            {
+                CurrentControls = new List<FrameworkElement>(10);
+            }
+
             if (clear)
             {
                 content.Children.Clear();
@@ -319,15 +329,15 @@ namespace SteamCMDLauncher.Views
                 char t = compoent_idx[ControlType.SelectedIndex];
 
                 // Clear the controls ONLY if the control has been changed
-                if (lastControlType == '\0') 
+                if (lastControlType == '\0')
                 {
                     // If any text block that says "No type" exists
                     if (content.Children.Count == 1 && content.Children[0] is TextBlock)
-                    { 
+                    {
                         content.Children.Clear();
                     }
                    
-                    lastControlType = t; 
+                    lastControlType = t;
                 }
                 else if (lastControlType != t)
                 {
@@ -342,6 +352,8 @@ namespace SteamCMDLauncher.Views
                     No_content = null;
                     return;
                 }
+
+                CurrentControls.Clear();
 
                 compoent_idx = null;
 
@@ -390,14 +402,24 @@ namespace SteamCMDLauncher.Views
                 content.Children.Add(control_hint);
                 content.Children.Add(control_alert);
 
-                control_type = null;
+                // Add control references
+                CurrentControls.Add(control_type);
+                CurrentControls.Add(control_label);
+                CurrentControls.Add(control_cmd);
+                CurrentControls.Add(control_cmd_pf);
+                CurrentControls.Add(control_tag);
+                CurrentControls.Add(control_def);
+                CurrentControls.Add(control_hint);
+                CurrentControls.Add(control_alert);
+
+                /*control_type = null;
                 control_label = null;
                 control_def = null;
                 control_hint = null;
                 control_alert = null;
                 control_cmd = null;
                 control_cmd_pf = null;
-                control_tag = null;
+                control_tag = null;*/
 
                 if (t == 't' || t == 'p')
                 {
@@ -419,13 +441,19 @@ namespace SteamCMDLauncher.Views
                     content.Children.Add(blank);
                     content.Children.Add(control_blank);
 
-                    if(t == 't')
+                    CurrentControls.Add(placeholder);
+                    CurrentControls.Add(width);
+                    CurrentControls.Add(blank);
+                    CurrentControls.Add(control_blank);
+
+                    if (t == 't')
                     {
                         TextBox controlFile = new TextBox() { Name = "write_to", Margin = default_space };
 
                         MaterialDesignThemes.Wpf.HintAssist.SetHint(controlFile, "Write file (Optional)");
 
                         content.Children.Add(controlFile);
+                        CurrentControls.Add(controlFile);
 
                         controlFile = null;
                     }
@@ -449,6 +477,9 @@ namespace SteamCMDLauncher.Views
 
                     content.Children.Add(valTrue);
                     content.Children.Add(valFalse);
+
+                    CurrentControls.Add(valTrue);
+                    CurrentControls.Add(valFalse);
 
                     valTrue = null;
                     valFalse = null;
@@ -481,6 +512,10 @@ namespace SteamCMDLauncher.Views
 
                     content.Children.Add(comboTar);
                     content.Children.Add(keyPair);
+
+                    CurrentControls.Add(comboTar);
+                    CurrentControls.Add(keyPair);
+                    
                     comboTar = null;
                     keyPair = null;
                 }
@@ -494,35 +529,68 @@ namespace SteamCMDLauncher.Views
 
         #region Control Functions/Methods
         
-        private void GenerateJSON()
+        private void GenerateJSON(string filename)
         {
-            /*if (output == null)
+            if (output is null)
             {
-                output = new JObject();
+                output = new Lazy<JObject>();
             }
 
-            JObject controlOut = new JObject();
-
-            ctrl_type = null;
-
-            int ctrl_idx = ControlType.SelectedIndex;
-            controlOut.Add("type", new JValue(
-                ctrl_idx == 0 ? "input" :
-                ctrl_idx == 1 ? "pass" :
-                ctrl_idx == 2 ? "check" :
-                "combo"
-            ));
-
-            content = null;
-
-            if (!output.ContainsKey(cate))
+            if (lang_output is null)
             {
-                output.Add(cate, new JObject());
+                lang_output = new Lazy<JObject>();
             }
 
-            JObject why = output.SelectToken(cate) as JObject;
-            why?.Add(ControlName.Text, controlOut.Root);*/
+            JObject controlOut = null;
 
+            // Lets now iterate over each control
+            JObject why = null;
+            int lenSize = 0;
+            string[] valSplit = new string[2];
+
+            foreach (KeyValuePair<string, Dictionary<string, string[]>> cate in output_directory.Value)
+            {
+                // Create the directory key if it hasn't already (likely not)
+                if (!output.Value.ContainsKey(cate.Key))
+                {
+                    output.Value.Add(cate.Key, new JObject());
+                }
+
+                // Now we iterate the controls onto it
+                
+                // We select the current iteration category as an Object
+                why = output.Value.SelectToken(cate.Key) as JObject;
+                
+                // Then we loop over the values
+                foreach (KeyValuePair<string, string[]> ctrl in cate.Value)
+                {
+                    // [NOTE] Key is the control name, Value is all the properties for that control
+
+                    // Create a new JsonObject for the controls (node)
+                    controlOut = new JObject();
+
+                    // Get its fixed length size
+                    lenSize = ctrl.Value.Length;
+                    
+                    // Loop through each element available
+                    for (int i = 0; i < lenSize; i++)
+                    {
+                        // Get the contents by splitting at the first 'equals' occurrence
+                        valSplit = ctrl.Value[i].Split('=', 2);
+                        
+                        // Add the type ([0]) and its value ([1])
+                        controlOut.Add(valSplit[0], valSplit[1]);
+                    }
+
+                    // Then add it to the root, we're done here for the category - move to the next category available
+                    why.Add(ctrl.Key, controlOut.Root);
+                }
+            }
+
+            valSplit = null;
+            why = null;
+            controlOut = null;
+            filename = null;
         }
 
         private bool IterateControls(ref StackPanel content, ref List<string> control, out string fail_reason)
@@ -533,11 +601,16 @@ namespace SteamCMDLauncher.Views
             TextBox ctrl_tb_placeholder = null;
             ComboBox ctrl_cb_placeholder = null;
             CheckBox ctrl_chb_placeholder = null;
+            StringBuilder sb = new StringBuilder();
+
+            bool to_add = false;
 
             try
             {
                 for (int i = 0; i < len; i++)
                 {
+                    to_add = false;
+
                     // Get the control type of the control (TextBox or ComboBox etc) 
                     ctrl_type = content.Children[i].GetType();
 
@@ -545,16 +618,15 @@ namespace SteamCMDLauncher.Views
                     {
                         ctrl_tb_placeholder = (TextBox)content.Children[i];
 
-                        bool hasLength = ctrl_tb_placeholder.Text.Length > 0;
+                        to_add = ctrl_tb_placeholder.Text.Length > 0;
 
-                        if ((int?)ctrl_tb_placeholder?.Tag == 1 && !hasLength)
+                        if ((int?)ctrl_tb_placeholder?.Tag == 1 && !to_add)
                         {
                             fail_reason = $"A text field '{ctrl_tb_placeholder?.Name}' was left blank, where its required to set a value!";
                             return false;
                         }
 
-                        if (hasLength)
-                            control.Add($"{ctrl_tb_placeholder?.Name}={ctrl_tb_placeholder.Text}");
+                        sb.AppendFormat("{0}={1}", ctrl_tb_placeholder?.Name, ctrl_tb_placeholder.Text);
 
                         ctrl_tb_placeholder = null;
                     }
@@ -562,16 +634,15 @@ namespace SteamCMDLauncher.Views
                     {
                         ctrl_cb_placeholder = (ComboBox)content.Children[i];
 
-                        bool hasLength = ctrl_cb_placeholder.Text.Length > 0;
+                        to_add = ctrl_cb_placeholder.Text.Length > 0;
 
-                        if ((int?)ctrl_cb_placeholder?.Tag == 1 && !hasLength)
+                        if ((int?)ctrl_cb_placeholder?.Tag == 1 && !to_add)
                         {
                             fail_reason = $"A combo field '{ctrl_cb_placeholder?.Name}' was left blank, where its required to set a value!";
                             return false;
                         }
-
-                        if (ctrl_cb_placeholder.Text.Length > 0)
-                            control.Add($"{ctrl_cb_placeholder?.Name}={ctrl_cb_placeholder.Text}");
+                        
+                        sb.AppendFormat("{0}={1}", ctrl_cb_placeholder?.Name, ctrl_cb_placeholder.Text);
 
                         ctrl_cb_placeholder = null;
                     }
@@ -579,10 +650,39 @@ namespace SteamCMDLauncher.Views
                     {
                         ctrl_chb_placeholder = (CheckBox)content.Children[i];
 
-                        control.Add($"{ctrl_chb_placeholder?.Name}={ctrl_chb_placeholder.IsChecked}");
+                        sb.AppendFormat("{0}={1}", ctrl_chb_placeholder?.Name, ctrl_chb_placeholder.IsChecked);
 
                         ctrl_chb_placeholder = null;
                     }
+
+                    if(to_add) control.Add(sb.ToString());
+                    
+                    sb.Clear();
+                }
+
+                // Initialize DataTable if set (Prop name is: combo-strict)
+                if (table.IsValueCreated)
+                {
+                    sb.Clear();
+                    int rowCount = table.Value.Rows.Count;
+                    object[] row = null;
+
+                    sb.Append("combo-strict=[");
+
+                    for (int i = 0; i < rowCount; i++)
+                    {                      
+                        row = table.Value.Rows[i].ItemArray;
+                        
+                        sb.Append(string.Join('|', row));
+
+                        if (i < rowCount) sb.Append(';');
+                    }
+                    
+                    sb.Append("]");
+                    control.Add(sb.ToString());
+                    
+                    sb.Clear();
+                    row = null;
                 }
 
                 // Final Error Checks
@@ -605,6 +705,7 @@ namespace SteamCMDLauncher.Views
                 ctrl_tb_placeholder = null;
                 ctrl_cb_placeholder = null;
                 ctrl_chb_placeholder = null;
+                sb = null;
             }
 
             fail_reason = string.Empty;
@@ -652,7 +753,7 @@ namespace SteamCMDLauncher.Views
             bool no_fault = IterateControls(ref content, ref control, out string fault_reason);
 
             if (no_fault)
-            { 
+            {
                 string cate = ControlCategory.Text;
 
                 int loopLen = control.Count;
@@ -680,6 +781,9 @@ namespace SteamCMDLauncher.Views
                 ControlType.SelectedItem = -1;
                 // ControlCategory.SelectedIndex = -1; ~ Category won't be changed as this will make the UI experience annoying
 
+                // Reset table for next control
+                table = null;
+                
                 GenerateTree();
             } 
             else
@@ -711,7 +815,7 @@ namespace SteamCMDLauncher.Views
 
                 table = null;
                 output_directory = null;
-                output_lang_directory = null;
+                //output_lang_directory = null;
                 output = null;
                 lang_output = null;
                 TreeModel = null;
@@ -728,7 +832,7 @@ namespace SteamCMDLauncher.Views
             
             table = new Lazy<DataTable>();
             output_directory = new Lazy<Dictionary<string, Dictionary<string, string[]>>>();
-            output_lang_directory = new Lazy<Dictionary<string, string>>();
+            //output_lang_directory = new Lazy<Dictionary<string, string>>();
 
             output = new Lazy<JObject>();
             lang_output = new Lazy<JObject>();
@@ -763,14 +867,152 @@ namespace SteamCMDLauncher.Views
 
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
+            //TODO: Turn this into 'Try Finally'?
+
             TreeView currentTree = (TreeView)sender;
 
             Component.Struct.ConfigTreeItem selectedItem = currentTree.SelectedItem as Component.Struct.ConfigTreeItem;
 
             // Returns null if the item is not a 'ConfigTreeItem'
-            if(!(selectedItem is null))
+            if (!(selectedItem is null))
             {
-                //TODO: Iterate over the controls with filled data (of the selected item)
+
+                string category = selectedItem.Parent;
+
+                // Check if category exists
+                if (!output_directory.IsValueCreated) return;
+
+                if(output_directory.Value.ContainsKey(category))
+                {
+                    string[] value = null;
+                                      
+                    if (output_directory.Value[category].TryGetValue(selectedItem.CName, out value))
+                    {
+                        string[] split_array = new string[2];
+
+                        int iter_size = value.Length;
+
+                        if (CurrentControls is null) throw new Exception("[CFG-G] CurrentControls variable in ConfigGen is empty - this should not be the case.");
+
+                        FrameworkElement ctrl = null;
+
+                        Type ctrl_t = null;
+
+                        // Set the control properties
+                        ControlName.Text = selectedItem.CName;
+
+                        int typeIdx = selectedItem.GetActualType switch
+                        {
+                            "input" => 0,
+                            "pass" => 1,
+                            "check" => 2,
+                            "combo" => 3,
+                            _ => -1
+                        };
+
+                        if (typeIdx == -1)
+                        {
+                            dh.OKDialog($"Unknown Type '{selectedItem.GetActualType}' was found, please correct this.");
+                            return;
+                        }
+                        
+                        ControlType.SelectedIndex = typeIdx;
+
+                        int categoryIdx = -1;
+                        
+                        int cateCount = ControlCategory.Items.Count;
+
+                        ComboBoxItem cbDummy = null;
+
+                        for (int i = 0; i < cateCount; i++)
+                        {
+                            cbDummy = (ComboBoxItem)ControlCategory.Items[i];
+                            if (cbDummy.Content.Equals(selectedItem.Parent))
+                            {
+                                categoryIdx = i;
+                                cbDummy = null;
+                                break;
+                            }
+                            cbDummy = null;
+                        }
+
+                        if (categoryIdx == -1)
+                        {
+                            dh.OKDialog($"Unknown Category '{selectedItem.Parent}' was found, please correct this.");
+                            return;
+                        }
+
+                        ControlCategory.SelectedIndex = categoryIdx;
+
+                        for (int i = 0; i < iter_size; i++)
+                        {
+                            split_array = value[i].Split('=', 2);
+
+                            ctrl = CurrentControls.SingleOrDefault(x => x.Name == split_array[0]);
+
+                            if(ctrl != null)
+                            {
+                                ctrl_t = ctrl.GetType();
+
+                                if (ctrl_t.Equals(typeof(TextBox)))
+                                   ((TextBox)ctrl).Text = split_array[1];
+                                else if (ctrl_t.Equals(typeof(CheckBox)))
+                                    ((CheckBox)ctrl).IsChecked = Convert.ToBoolean(split_array[1]);
+                                else if (ctrl_t.Equals(typeof(ComboBox)))
+                                    ((ComboBox)ctrl).SelectedItem = split_array[1];
+                            }
+                            else
+                            {
+                                if (split_array[0].StartsWith("combo-strict"))
+                                {
+                                    // Load the table data
+                                    table = new Lazy<DataTable>();
+                                    
+                                    table.Value.Columns.Add("Key");
+                                    table.Value.Columns.Add("Value");
+
+                                    // Get the row data
+                                    // Substring so that we eliminate the square brackets ( .Substring(1, len - 1) )
+                                    ReadOnlySpan<char> SpanSlice = split_array[1][1..^1];
+
+                                    string[] rows = SpanSlice.ToString().Split(";");
+                                    string[] columns = null;
+
+                                    int iterSize = rows.Length;
+                                    for (int j = 0; j < iterSize; j++)
+                                    {
+                                        if (string.IsNullOrWhiteSpace(rows[j])) continue;
+
+                                        columns = rows[j].Split('|');
+
+                                        if (columns.Length > 2) throw new Exception($"[CFG-G] Row \"{rows[j]}\" contains more than 2 elements, this shouldn't be the case!");
+
+                                        table.Value.Rows.Add(columns);
+                                    }
+
+                                    columns = null;
+                                    SpanSlice = null;
+                                    rows = null;
+                                }
+                            }
+                        }
+                        
+                        ctrl_t = null;
+                        ctrl = null;
+                        split_array = null;
+                        value = null;
+                    }
+                    else
+                    {
+                        dh.OKDialog($"Sorry but the control assigned to category {category} doesn't contain the control {selectedItem.CName}! This may be a fault!");
+                    }
+                }
+                else
+                {
+                    dh.OKDialog($"Sorry but the category assigned to this control ({category}) doesn't exist or a fault has occurred!");
+                }
+             
+                category = null;
             }
 
             e = null;
@@ -778,6 +1020,37 @@ namespace SteamCMDLauncher.Views
             sender = null;
             currentTree = null;
         
+        }
+
+        private void SafeConfig_Click(object sender, RoutedEventArgs e)
+        {
+            // Save Config Button
+            if(!output_directory.IsValueCreated || output_directory.Value.Count < 1)
+            {
+                dh.OKDialog("No Controls have been inserted yet... please do so before saving!");
+                return;
+            }
+
+            string fileName = string.Empty;
+
+            dh.InputDialog("Save Config", "What do you want to name your configuration?\nNote: You'll need to find the AppID in order for the program to detect it.", new Action<string>((x) => {
+                fileName = x;
+            }));
+
+            // Check if the fileName variable contains any characters that are not allowed in a file name
+            char[] ill = System.IO.Path.GetInvalidFileNameChars();
+            if (fileName.Any(x => ill.Contains(x)))
+            {
+                dh.OKDialog($"The given filename '{fileName}' contained illegal characters, please ensure you don't have any!");
+                ill = null;
+                fileName = null;
+                return;
+            }
+
+            GenerateJSON(fileName);
+
+            ill = null;
+            fileName = null;
         }
     }
 }

@@ -25,7 +25,7 @@
 
         <!-- Load/Save Config Buttons -->
         <Button Content="Load Config" VerticalAlignment="Top" Margin="0,75,1100,0"/>
-        <Button Content="Save Config" VerticalAlignment="Top" Margin="135,75,970,0"/>
+        <Button Content="Save Config" VerticalAlignment="Top" Margin="135,75,970,0" Click="SafeConfig_Click"/>
 
         <!-- GroupBox to generate controls -->
         <GroupBox Header="Create Control" VerticalAlignment="Top" Margin="0,135,904,0" Height="500" FontSize="16" Foreground="{StaticResource White}">

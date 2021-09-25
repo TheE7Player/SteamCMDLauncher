@@ -93,21 +93,6 @@ namespace SteamCMDLauncher
                     available_IDS[i] = objects[i].Value<int>(key_id);
                     output[i] = objects[i].Value<string>(key_game);
                 }
-
-                /*int[] ids = objectA["server"]
-                .Children()
-                .Select(x => x.Value<int>("id")).ToArray();*/
-
-                //available_IDS = ids;
-                //ids = null;
-
-                /*
-                 * return objectA["server"]
-                .Children()
-                .Select(x => x["game"].ToString()).ToList();
-                 */
-
-
             }
             finally
             {
