@@ -529,14 +529,14 @@ namespace SteamCMDLauncher.Views
 
         #region Control Functions/Methods
         
-        private void GenerateJSON(string filename)
+        private void GenerateJSON(string filename, bool languageSupport)
         {
             if (output is null)
             {
                 output = new Lazy<JObject>();
             }
 
-            if (lang_output is null)
+            if (lang_output is null && languageSupport)
             {
                 lang_output = new Lazy<JObject>();
             }
@@ -547,19 +547,45 @@ namespace SteamCMDLauncher.Views
             JObject why = null;
             int lenSize = 0;
             string[] valSplit = new string[2];
+            
+            // Null-these!
+            string cKey = string.Empty;
+            string cTranslations = string.Empty;
+            string[] TextTranslationTypes = new string[] { "text", "placeholder", "alert", "hint", "blank_alert" };
 
+            // Lets deal with the setup key group first (if any)
+
+            if(!string.IsNullOrEmpty(Target) || !string.IsNullOrEmpty(PreComands) || !string.IsNullOrEmpty(JoinCommand))
+            {
+                // Lets now add the setup key
+                JObject setupNode = new JObject();
+
+                if (!string.IsNullOrEmpty(Target)) setupNode.Add("target", Target);
+                if (!string.IsNullOrEmpty(PreComands)) setupNode.Add("precommands", PreComands);
+                if (!string.IsNullOrEmpty(JoinCommand)) setupNode.Add("server_join_command", JoinCommand);
+
+                output.Value.Add("setup", setupNode);
+
+                setupNode = null;
+            }
+            
             foreach (KeyValuePair<string, Dictionary<string, string[]>> cate in output_directory.Value)
             {
+                cKey = !languageSupport ? cate.Key : $"#{cate.Key}";
+
                 // Create the directory key if it hasn't already (likely not)
-                if (!output.Value.ContainsKey(cate.Key))
+                if (!output.Value.ContainsKey(cKey))
                 {
-                    output.Value.Add(cate.Key, new JObject());
+                    output.Value.Add(cKey, new JObject());
+
+                    if (languageSupport)
+                        lang_output.Value.Add(cKey, cKey[1..]);
                 }
 
                 // Now we iterate the controls onto it
                 
                 // We select the current iteration category as an Object
-                why = output.Value.SelectToken(cate.Key) as JObject;
+                why = output.Value.SelectToken(cKey) as JObject;
                 
                 // Then we loop over the values
                 foreach (KeyValuePair<string, string[]> ctrl in cate.Value)
@@ -605,11 +631,26 @@ namespace SteamCMDLauncher.Views
                             // Then we add it the control
                             controlOut.Add(valSplit[0], table.Root);
                             table = null;
+                            
                             continue;
                         }
 
-                        // Add the type ([0]) and its value ([1])
-                        controlOut.Add(valSplit[0], valSplit[1]);
+                        if(languageSupport && TextTranslationTypes.Contains(valSplit[0]))
+                        {
+                            cTranslations = $"#{cate.Key}_{valSplit[0]}";
+
+                            // Add the type ([0]) and its value ([1])
+                            controlOut.Add(valSplit[0], cTranslations);
+
+                            lang_output.Value.Add(cTranslations, valSplit[1]);
+
+                            cTranslations = null;
+                        }
+                        else
+                        {
+                            // Add the type ([0]) and its value ([1])
+                            controlOut.Add(valSplit[0], valSplit[1]);
+                        }
                     }
 
                     // Then add it to the root, we're done here for the category - move to the next category available
@@ -621,6 +662,9 @@ namespace SteamCMDLauncher.Views
             why = null;
             controlOut = null;
             filename = null;
+            cKey = null;
+            cTranslations = null;
+            TextTranslationTypes = null;
         }
 
         private bool IterateControls(ref StackPanel content, ref List<string> control, out string fail_reason)
@@ -825,76 +869,66 @@ namespace SteamCMDLauncher.Views
             content = null;
             fault_reason = null;
         }
-        #endregion
-
-        #region Window Events
-        private void Destory()
+        
+        private void SafeConfig_Click(object sender, RoutedEventArgs e)
         {
-            if(!disposed)
+            // Save Config Button
+            if(!output_directory.IsValueCreated || output_directory.Value.Count < 1)
             {
-                dh.Destory();
-                dh = null;
-
-                ControlName.TextChanged -= ControlName_TextChanged;
-                ControlType.SelectionChanged -= ControlType_SelectionChanged;
-                ControlCategory.SelectionChanged -= ControlCategory_SelectionChanged;
-
-                target = null;
-                preCommands = null;
-                joinCommand = null;
-
-                table = null;
-                output_directory = null;
-                //output_lang_directory = null;
-                output = null;
-                lang_output = null;
-                TreeModel = null;
-
-                DataContext = null;
-                
-                disposed = true;
+                dh.OKDialog("No Controls have been inserted yet... please do so before saving!");
+                return;
             }
-        }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            dh = new UIComponents.DialogHostContent(RootDialog, true, true);
+            string fileName = string.Empty;
+
+            bool includeLanguageSupport = false;
+
+            dh.YesNoDialog("Multiple Language Support", "Does your config support multiple languages?\n(Click 'No' if its intended for personal usage!)", new Action(() => includeLanguageSupport = true));
+
+            dh.InputDialog("Save Config",
+                "What do you want to name your configuration? (Just the filename, not with extension!)\nNote: You'll need to find the AppID in order for the program to detect it.",
+                new Action<string>((x) => fileName = x));
+
+            // Check if the fileName variable contains any characters that are not allowed in a file name
+            char[] ill = System.IO.Path.GetInvalidFileNameChars();
+            if (fileName.Any(x => ill.Contains(x)))
+            {
+                dh.OKDialog($"The given filename '{fileName}' contained illegal characters, please ensure you don't have any!");
+                ill = null;
+                fileName = null;
+                return;
+            }
+
+            GenerateJSON(fileName, includeLanguageSupport);
+
+            // Output the file itself
+            string output_location = System.IO.Path.Combine(Environment.CurrentDirectory, "Resources", $"{fileName}.json");
+            string lang_output_location = includeLanguageSupport ? System.IO.Path.Combine(Environment.CurrentDirectory, "Resources", $"{fileName}_en.json") : string.Empty;
+
+            System.IO.File.WriteAllText(output_location, output.Value.ToString());
             
-            table = new Lazy<DataTable>();
-            output_directory = new Lazy<Dictionary<string, Dictionary<string, string[]>>>();
-            //output_lang_directory = new Lazy<Dictionary<string, string>>();
+            if(!string.IsNullOrEmpty(lang_output_location))
+            {
+                System.IO.File.WriteAllText(lang_output_location, lang_output.Value.ToString());
+            }
 
-            output = new Lazy<JObject>();
-            lang_output = new Lazy<JObject>();
+            if(System.IO.File.Exists(output_location))
+            {
+                dh.YesNoDialog("Success", "Your file has been saved in the configuration folder!\nWould you like to view it now?",
+                new Action(() => { System.Diagnostics.Process.Start("explorer.exe", output_location); }));
+            } else
+            {
+                dh.OKDialog("The file creation process has failed, check the log file if an exception wasn't thrown.");
+            }
 
-            PriorityChanged();
+            output = null;
+            lang_output = null;
 
-            ControlName.TextChanged += ControlName_TextChanged;
-            ControlType.SelectionChanged += ControlType_SelectionChanged;
-            ControlCategory.SelectionChanged += ControlCategory_SelectionChanged;
-
-            // For the binding
-            DataContext = this;
-
-            TreeModel = new ObservableCollection<Component.Struct.ConfigTree>();
-
-            sender = null;
-            e = null;
+            ill = null;
+            fileName = null;
+            output_location = null;
         }
-
-        private void Window_Closed(object sender, EventArgs e)
-        {
-            Destory();
-
-            App.CancelClose = true;
-            App.WindowClosed(this);
-            App.WindowOpen(new main_view());
-
-            sender = null;
-            e = null;
-        }
-        #endregion
-
+        
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             //TODO: Turn this into 'Try Finally'?
@@ -1051,53 +1085,74 @@ namespace SteamCMDLauncher.Views
             currentTree = null;
         
         }
+        #endregion
 
-        private void SafeConfig_Click(object sender, RoutedEventArgs e)
+        #region Window Events
+        private void Destory()
         {
-            // Save Config Button
-            if(!output_directory.IsValueCreated || output_directory.Value.Count < 1)
+            if(!disposed)
             {
-                dh.OKDialog("No Controls have been inserted yet... please do so before saving!");
-                return;
+                dh.Destory();
+                dh = null;
+
+                ControlName.TextChanged -= ControlName_TextChanged;
+                ControlType.SelectionChanged -= ControlType_SelectionChanged;
+                ControlCategory.SelectionChanged -= ControlCategory_SelectionChanged;
+
+                target = null;
+                preCommands = null;
+                joinCommand = null;
+
+                table = null;
+                output_directory = null;
+                //output_lang_directory = null;
+                output = null;
+                lang_output = null;
+                TreeModel = null;
+
+                DataContext = null;
+                
+                disposed = true;
             }
-
-            string fileName = string.Empty;
-
-            dh.InputDialog("Save Config", "What do you want to name your configuration? (Just the filename, not with extension!)\nNote: You'll need to find the AppID in order for the program to detect it.", new Action<string>((x) =>
-            {
-                fileName = x;
-            }));
-
-            // Check if the fileName variable contains any characters that are not allowed in a file name
-            char[] ill = System.IO.Path.GetInvalidFileNameChars();
-            if (fileName.Any(x => ill.Contains(x)))
-            {
-                dh.OKDialog($"The given filename '{fileName}' contained illegal characters, please ensure you don't have any!");
-                ill = null;
-                fileName = null;
-                return;
-            }
-
-            GenerateJSON(fileName);
-
-            // Output the file itself
-
-            string output_location = System.IO.Path.Combine(Environment.CurrentDirectory, "configs", $"{fileName}.json");
-
-            System.IO.File.WriteAllText(output_location, output.Value.ToString());
-
-            if(System.IO.File.Exists(output_location))
-            {
-                dh.YesNoDialog("Success", "Your file has been saved in the configuration folder!\nWould you like to view it now?",
-                new Action(() =>
-                {
-                    System.Diagnostics.Process.Start("explorer.exe", output_location);
-                }));
-            }
-
-            ill = null;
-            fileName = null;
-            output_location = null;
         }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            dh = new UIComponents.DialogHostContent(RootDialog, true, true);
+            
+            table = new Lazy<DataTable>();
+            output_directory = new Lazy<Dictionary<string, Dictionary<string, string[]>>>();
+            //output_lang_directory = new Lazy<Dictionary<string, string>>();
+
+            output = new Lazy<JObject>();
+            lang_output = new Lazy<JObject>();
+
+            PriorityChanged();
+
+            ControlName.TextChanged += ControlName_TextChanged;
+            ControlType.SelectionChanged += ControlType_SelectionChanged;
+            ControlCategory.SelectionChanged += ControlCategory_SelectionChanged;
+
+            // For the binding
+            DataContext = this;
+
+            TreeModel = new ObservableCollection<Component.Struct.ConfigTree>();
+
+            sender = null;
+            e = null;
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            Destory();
+
+            App.CancelClose = true;
+            App.WindowClosed(this);
+            App.WindowOpen(new main_view());
+
+            sender = null;
+            e = null;
+        }
+        #endregion
     }
 }
