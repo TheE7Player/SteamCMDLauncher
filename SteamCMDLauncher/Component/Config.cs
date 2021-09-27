@@ -400,19 +400,23 @@ namespace SteamCMDLauncher
         /// Opens the file dialog, expecting the type requested only
         /// </summary>
         /// <param name="target_type">The file extension to find (.txt, .cfg etc)</param>
+        /// <param name="relative_path">The folder to access from the exe path directly</param>
         /// <returns>Absolute Path to the file, null if cancelled</returns>
-        public static string GetFile(string target_type)
+        public static string GetFile(string target_type, string relative_path = "configs")
         {
             Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog();
 
-            string target_dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "configs");
+            string target_dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relative_path);
 
             if (!Directory.Exists(target_dir))
                 Directory.CreateDirectory(target_dir);
 
             dialog.InitialDirectory = target_dir;
 
-            dialog.Title = "Select the .cfg you need";
+            dialog.Title = "Select the file you need";
+
+            dialog.Filters.Add(new Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogFilter($"{target_type[1..].ToUpper()} Files", $"*{target_type}"));
+            
             dialog.EnsureFileExists = true;
             dialog.EnsurePathExists = true;
 
@@ -426,6 +430,9 @@ namespace SteamCMDLauncher
                 else { break; }
             }
 
+            relative_path = null;
+            target_type = null;
+            dialog = null;
             return string.Empty;
         }
 

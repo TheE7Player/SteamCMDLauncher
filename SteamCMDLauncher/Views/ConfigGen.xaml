@@ -24,7 +24,7 @@
         <TextBlock Style="{StaticResource DefaultBold}" Margin="0,38,0,0">Alpha 0.1</TextBlock>
 
         <!-- Load/Save Config Buttons -->
-        <Button Content="Load Config" VerticalAlignment="Top" Margin="0,75,1100,0"/>
+        <Button Content="Load Config" VerticalAlignment="Top" Margin="0,75,1100,0" Click="LoadConfig_Click"/>
         <Button Content="Save Config" VerticalAlignment="Top" Margin="135,75,970,0" Click="SafeConfig_Click"/>
 
         <!-- GroupBox to generate controls -->

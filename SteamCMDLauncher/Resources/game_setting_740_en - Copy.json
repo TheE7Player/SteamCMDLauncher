@@ -1,0 +1,28 @@
+// Language Game Settings for CSGO (740 - Parent 730)
+{
+	"#General": "General",
+	"#Misc": "Misc",
+	"#Server_Name": "Server Name",
+	"#ServerPort": "Port",
+	"#Is_128_Tick": "Is 128 Tick",
+	"#Is_128_Tick_Hint": "If true, it will run the server on 128 tick - 64 tick if unchecked.",
+	"#Is_Lan": "LAN only",
+	"#Is_Lan_Hint": "Prevent the server from hosting publicly, only people with router access can join",
+	"#Server_Pass": "Server Password",
+	"#Server_Pass_Hint": "Sets the password for anyone connecting to the server (Recommended)",
+	"#Server_Pass_Alert": "If blank, the program will generate a secure password for you",
+	"#Server_Pass_PlaceHolder": "Auto-Generated Password",
+	"#Is_Vac": "VAC Enabled",
+	"#Is_Vac_Hint": "Enables to server to use VAC for security, Disable if server intentions are to cheat/modify files",
+	"#Svr-Map": "Map",
+	"#Svr-Map-Hint": "Select the map to load when first launched - Can be changed running runtime.",
+	"#MaxP": "Max Players",
+	"#Server_Auth": "GSLT Token",
+	"#Server_Auth_Hint": "GSLT - Game Server Login Token\nNeeded to make server public",
+	"#Server_Auth_Alert": "A token is required to allow others to connect to your server, Visit: www.steamcommunity.com/dev/managegameservers",
+	"#Server_Auth_Empty": "GLST wasn't added or is empty - Please insert token to start the server.",
+	"#SVR_GameMode": "Game Mode",
+	"#SourceMod": "SourceMod",
+	"#SM-Admins": "Admins",
+	"#SM-Admins-Hint": "Sets the steam accounts of who is Admin in the server\nUse ';' if more than 1 Admin for this server."
+}

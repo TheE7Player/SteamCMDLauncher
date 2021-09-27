@@ -245,6 +245,64 @@ namespace SteamCMDLauncher.UIComponents
             if (forceOpenWhenCall) ShowDialog();
         }
 
+        public ValueTask<bool> YesNoDialog(string title, string message)
+        {
+            Button Yes, No;
+
+            StackPanel MainPanel = new StackPanel();
+
+            StackPanel ButtonPanel = new StackPanel();
+
+            ButtonPanel.Orientation = Orientation.Horizontal;
+
+            ButtonPanel.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+
+            ButtonPanel.Margin = new System.Windows.Thickness(0, 10, 0, 5);
+
+            MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
+
+            MainPanel.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 2) });
+
+            MainPanel.Children.Add(new Separator() { Margin = new Thickness(0, 0, 0, 5) });
+
+            MainPanel.Children.Add(new TextBlock { Text = message, FontSize = 16, TextWrapping = TextWrapping.Wrap });
+
+            Yes = new Button { Content = "Yes", Margin = new Thickness(0, 0, 5, 0) };
+
+            No = new Button { Content = "No", Margin = new Thickness(5, 0, 0, 0) };
+
+            Yes.Click += (s, e) =>
+            {
+                result = true;
+                ExitState();
+            };
+
+            No.Click += (s, e) =>
+            {
+                result = false;
+                ExitState();
+            };
+
+            ButtonPanel.Children.Add(Yes);
+
+            ButtonPanel.Children.Add(No);
+
+            MainPanel.Children.Add(ButtonPanel);
+
+            _dialog.DialogContent = MainPanel;
+
+            result = null;
+
+            if (forceOpenWhenCall) ShowDialog();
+
+            while (result is null)
+            {
+                Task.Delay(100);
+            }
+
+            return new ValueTask<bool>((bool)result);
+        }
+
         public void OKDialog(string message)
         {
             Button Ok;

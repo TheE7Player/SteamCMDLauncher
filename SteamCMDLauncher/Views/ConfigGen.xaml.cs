@@ -8,13 +8,15 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
+using System.IO;
+using System.ComponentModel;
 
 namespace SteamCMDLauncher.Views
 {
     /// <summary>
     /// Interaction logic for ConfigGen.xaml
     /// </summary>
-    public partial class ConfigGen : Window
+    public partial class ConfigGen : Window, INotifyPropertyChanged
     {
         #region Attributes
         private int priorityControlLevel = 0;
@@ -43,11 +45,22 @@ namespace SteamCMDLauncher.Views
         private string preCommands = string.Empty;
         private string joinCommand = string.Empty;
 
-        public string Target { get => target; set { target = value; } }
-        public string PreComands { get => preCommands; set { preCommands = value; } }
-        public string JoinCommand { get => joinCommand; set { joinCommand = value; } }
+        public string Target { get => target; set { target = value; OnPropertyChanged(nameof(Target)); } }
+        public string PreComands { get => preCommands; set { preCommands = value; OnPropertyChanged(nameof(PreComands)); } }
+        public string JoinCommand { get => joinCommand; set { joinCommand = value; OnPropertyChanged(nameof(JoinCommand)); } }
 
         public ObservableCollection<Component.Struct.ConfigTree> TreeModel { get; set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
+            propertyName = null;
+        }
         #endregion
 
         public ConfigGen()
@@ -929,6 +942,135 @@ namespace SteamCMDLauncher.Views
             output_location = null;
         }
         
+        private void LoadConfig_Click(object sender, RoutedEventArgs e)
+        {
+            // Load config button
+
+            string load_file = null;
+            JObject parseFile = null;
+            JObject parseFile_lang = null;
+            bool requires_localize_file = false;
+            string[] availableFiles = null;
+            System.Threading.Tasks.ValueTask<bool> isFile;
+
+            try
+            {
+                Config.Log("[CFG-G] Started looking for Config and Language Config (If any)");
+                
+                // Get the file the load in
+                load_file = Config.GetFile(".json", "Resources");
+
+                // Parse the file as an JObject
+                parseFile = JObject.Parse(File.ReadAllText(load_file));
+
+                // Validate if we need localize file...
+                foreach (JProperty item in parseFile.Children<JProperty>())
+                {
+                    if (item.Name.StartsWith("#")) { requires_localize_file = true; break; }
+                }
+
+                // Get the current file that is loaded in's folder location and exact name (without extension)
+                string currentFolder = Path.GetDirectoryName(load_file);
+                string currentFile = Path.GetFileNameWithoutExtension(load_file);
+                
+                // Create an Enumerable to hold all language files
+                availableFiles = Directory.GetFiles(currentFolder)
+                    .Where(x => x.Contains($"{currentFile}_"))
+                    .ToArray();
+
+                currentFolder = null; currentFile = null;
+
+                // Check if any files found, report if not
+                if(requires_localize_file && availableFiles.Count() == 0)
+                {
+                    Config.Log("[CFG-G] Required Localize File is set true, but no localize files were found! (_*.json)");
+                    dh.OKDialog("No Localize File Found - it is required that an English Translation is available by default!");
+                    return;
+                }
+                else
+                {
+
+                    Config.Log("[CFG-G] Localize File was found, now perform logic to cache it.");
+                    
+                    bool required_file = false;
+                    int len = availableFiles.Length;
+                    string required_file_loc = string.Empty;
+                    
+                    if(len == 1)
+                    {
+                        required_file_loc = availableFiles[0];
+                        required_file = true;
+                    }
+                    else
+                    {
+                        string shortname = null;
+                        
+                        for (int i = 0; i < len; i++)
+                        {
+                            // Get the filename only of the file
+                            shortname = Path.GetFileNameWithoutExtension(availableFiles[i]);
+                            
+                            // Ask if the file is the correct one
+                            isFile = dh.YesNoDialog($"File {i + 1}/{len}", $"Is the file {shortname}?");
+
+                            // If so, stop and note it
+                            if(isFile.Result)
+                            {
+                                required_file_loc = availableFiles[i];
+                                required_file = true;
+                                break;
+                            }
+                        }
+
+                        shortname = null;
+
+                    }
+
+                    if(!string.IsNullOrEmpty(required_file_loc))
+                    {
+                        parseFile_lang = JObject.Parse(File.ReadAllText(required_file_loc));
+                    }
+
+                    required_file_loc = null;
+                    
+                    if(!required_file)
+                    {
+                        dh.OKDialog("No suitable localize file was selected - cannot continue until one is chosen.");
+                        return;
+                    }
+                }
+
+                Config.Log("[CFG-G] Starting parsing process");
+
+                // Lets start with the setup arguments, as that doesn't require any form of iteration
+                string setup_key = "setup";
+
+                if(parseFile.ContainsKey(setup_key))
+                {
+                    Target = (string)(parseFile[setup_key]["target"] ?? string.Empty);
+                    PreComands = (string)(parseFile[setup_key]["precommands"] ?? string.Empty);
+                    JoinCommand = (string)(parseFile[setup_key]["server_join_command"] ?? string.Empty);
+                }
+
+                setup_key = null;
+
+                Config.Log("[CFG-G] Loaded Config and Language Config (If any)");
+            }
+            catch (Exception)
+            {
+                //TODO: Make exceptions more helpful... maybe...
+                Config.Log("[CFG-G] LoadConfig throw an error");
+                throw;
+            }
+            finally
+            {
+                parseFile = null;
+                load_file = null;
+                parseFile_lang = null;
+                availableFiles = null;
+            }
+        }
+
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             //TODO: Turn this into 'Try Finally'?
@@ -1154,5 +1296,6 @@ namespace SteamCMDLauncher.Views
             e = null;
         }
         #endregion
+
     }
 }
