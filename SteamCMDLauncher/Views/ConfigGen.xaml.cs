@@ -21,6 +21,8 @@ namespace SteamCMDLauncher.Views
         #region Attributes
         private int priorityControlLevel = 0;
         private bool disposed = false;
+
+        private bool isLoadedConfig = false;
        
         private char lastControlType = '\0';
         #endregion
@@ -31,10 +33,12 @@ namespace SteamCMDLauncher.Views
         
         private Lazy<DataTable> table;
         private List<FrameworkElement> CurrentControls;
+
+        private Lazy<Dictionary<string, string>> preloaded_Language;
         private Lazy<Dictionary<string, Dictionary<string, string[]>>> output_directory;
         
         // TODO: Does this variable need to be for loading a config?
-        //private Lazy<Dictionary<string, string>> output_lang_directory;
+        // private Lazy<Dictionary<string, string>> output_lang_directory;
         
         private Lazy<JObject> output;
         private Lazy<JObject> lang_output;
@@ -55,11 +59,13 @@ namespace SteamCMDLauncher.Views
 
         protected void OnPropertyChanged(string propertyName)
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChangedEventArgs propChanged = new PropertyChangedEventArgs(propertyName);
+            
+            PropertyChanged?.Invoke(this, propChanged);
+            
             propertyName = null;
+            
+            propChanged = null;
         }
         #endregion
 
@@ -195,7 +201,7 @@ namespace SteamCMDLauncher.Views
 
             // TODO: This crashes if you type a letter - resolve?
             ComboBoxItem currentCombo = (ComboBoxItem)ControlCategory.Items.GetItemAt(currentIndex);
-            bool AddNewCategory = currentCombo.Tag.Equals(tag_look_for);
+            bool AddNewCategory = ReferenceEquals(currentCombo.Tag, null) ? false : currentCombo.Tag.Equals(tag_look_for);
             
             tag_look_for = null;
 
@@ -256,7 +262,15 @@ namespace SteamCMDLauncher.Views
 
                     if(type is null)
                     {
-                        throw new Exception($"[CFG-G] Control named '{ctrl}' didn't return back a control type\n(Missing 'type=' flag)");
+                        // Check if its validate-folder
+                        if(!ctrl.Equals("validate-folder"))
+                        {
+                            throw new Exception($"[CFG-G] Control named '{ctrl}' didn't return back a control type\n(Missing 'type=' flag)");            
+                        }
+
+                        // TODO: Implement logic for validate-folder
+                        // Do validate-folder here
+                        continue;
                     }
 
                     config.Add(ctrl, type[5..]);
@@ -942,17 +956,102 @@ namespace SteamCMDLauncher.Views
             output_location = null;
         }
         
+        private void LoadTokens(JToken[] elements)
+        {
+            int iterationLen = elements.Length;
+            bool language_file = preloaded_Language.IsValueCreated || preloaded_Language.Value != null;
+
+            // Reset the objects to read the new files
+
+            CurrentControls = null;
+            table = null;
+            output_directory = new Lazy<Dictionary<string, Dictionary<string, string[]>>>();
+
+            string key_iter = null;
+            string ctrl_name = null;
+            string ctrl_value = null;
+            JProperty[] iter = null, inner_iter = null;
+
+            try
+            {
+                for (int i = 0; i < iterationLen; i++)
+                {
+                    // Get the category name
+                    key_iter = language_file ? preloaded_Language.Value[((JProperty)elements[i]).Name] : ((JProperty)elements[i]).Name;
+
+                    // Create the category with 5 capacity by default
+                    output_directory.Value.Add(key_iter, new Dictionary<string, string[]>(5));
+
+                    // Lets now load each one in
+                    iter = elements[i].Children<JObject>()
+                        .Properties()
+                        .ToArray();
+
+                    inner_iter = null;
+
+                    int iterSize = iter.Length;
+                    int innerIterSize = 0;
+
+                    for (int j = 0; j < iterSize; j++)
+                    {
+                        // Get the controls over-all name
+                        ctrl_name = iter[j].Name;
+
+                        // Add it to the dictionary with a size of arguments available
+                        inner_iter = iter[j].Children<JObject>().Properties().ToArray();
+                    
+                        innerIterSize = inner_iter.Length;
+                    
+                        output_directory.Value[key_iter].Add(ctrl_name, new string[innerIterSize]);
+
+                        for (int z = 0; z < innerIterSize; z++)
+                        {
+                            ctrl_value = inner_iter[z].Value.ToString();
+
+                            if (ctrl_value[0] == '#')
+                                ctrl_value = preloaded_Language.Value[ctrl_value];
+
+                            output_directory.Value[key_iter][ctrl_name][z] = $"{inner_iter[z].Name}={ctrl_value}";
+                        }
+                    }
+
+                    iter = null;
+                    inner_iter = null;
+                }
+            }
+            catch (Exception)
+            {
+                Config.Log("[CFG-G] LoadTokens function throw an error - related to the json file or logic!");
+                throw;
+            }
+            finally
+            {
+                iter = null;
+                inner_iter = null;
+                elements = null;
+                key_iter = null;
+                ctrl_name = null;
+                ctrl_value = null;
+            }
+        }
+
         private void LoadConfig_Click(object sender, RoutedEventArgs e)
         {
             // Load config button
+            bool requires_localize_file = false;
+
+            if(!isLoadedConfig) isLoadedConfig = true;
 
             string load_file = null;
+            string[] availableFiles = null;
+
             JObject parseFile = null;
             JObject parseFile_lang = null;
-            bool requires_localize_file = false;
-            string[] availableFiles = null;
-            System.Threading.Tasks.ValueTask<bool> isFile;
 
+            System.Threading.Tasks.ValueTask<bool> isFile;
+            
+            preloaded_Language = null;
+            
             try
             {
                 Config.Log("[CFG-G] Started looking for Config and Language Config (If any)");
@@ -989,7 +1088,6 @@ namespace SteamCMDLauncher.Views
                 }
                 else
                 {
-
                     Config.Log("[CFG-G] Localize File was found, now perform logic to cache it.");
                     
                     bool required_file = false;
@@ -1029,6 +1127,18 @@ namespace SteamCMDLauncher.Views
                     if(!string.IsNullOrEmpty(required_file_loc))
                     {
                         parseFile_lang = JObject.Parse(File.ReadAllText(required_file_loc));
+
+                        preloaded_Language = new Lazy<Dictionary<string, string>>();
+
+                        // Time to cache the variables
+
+                        foreach (var pair in parseFile_lang.Properties())
+                        {
+                            preloaded_Language.Value.Add(pair.Name, pair.Value.ToString());
+                        }
+
+                        // Then unload the JObject
+                        parseFile_lang = null;
                     }
 
                     required_file_loc = null;
@@ -1054,6 +1164,14 @@ namespace SteamCMDLauncher.Views
 
                 setup_key = null;
 
+                // Now lets load in the controls (Skipping the setup key, which should ALWAYS be first)
+                Config.Log("[CFG-G] Running LoadTokens");
+                
+                LoadTokens(parseFile.Children().Skip(1).ToArray());
+                
+                Config.Log("[CFG-G] Finished LoadTokens - Now loading GenerateTree");
+                GenerateTree();
+               
                 Config.Log("[CFG-G] Loaded Config and Language Config (If any)");
             }
             catch (Exception)
@@ -1097,12 +1215,6 @@ namespace SteamCMDLauncher.Views
                         string[] split_array = new string[2];
 
                         int iter_size = value.Length;
-
-                        if (CurrentControls is null) throw new Exception("[CFG-G] CurrentControls variable in ConfigGen is empty - this should not be the case.");
-
-                        FrameworkElement ctrl = null;
-
-                        Type ctrl_t = null;
 
                         // Set the control properties
                         ControlName.Text = selectedItem.CName;
@@ -1149,6 +1261,14 @@ namespace SteamCMDLauncher.Views
                         }
 
                         ControlCategory.SelectedIndex = categoryIdx;
+                        
+                        if (CurrentControls is null)
+                            throw new Exception("[CFG-G] CurrentControls variable in ConfigGen is empty - this should not be the case.");
+
+                        FrameworkElement ctrl = null;
+
+                        Type ctrl_t = null;
+
 
                         for (int i = 0; i < iter_size; i++)
                         {

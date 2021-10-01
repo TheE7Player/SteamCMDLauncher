@@ -1,5 +1,5 @@
 # Holds hash keys to validate if the json loaded is official
-# Validation was runned after build at (YYYY-MM-DD): 2021-09-27 19:10:48
+# Validation was runned after build at (YYYY-MM-DD): 2021-10-01 12:23:29
 # This process is automated using vlang ~ https://github.com/vlang/v
 dedicated_server_list=7a7652a2754cc230162981173f5e229e111c9d53f59c3699e188baffcdf8314f
 game_setting_222860=26cf936540223cdd56c532f77067582861a6129b7685eabd9de46bfda9433e4d
@@ -9,6 +9,5 @@ game_setting_232250_en=e007d137e532610c70cc23aa1add492d9f747af751b40af45c906df40
 game_setting_4020=c170043acbbf6288cbe6cbb00e8db4b96a155da1e6ff7bca32c4577935998867
 game_setting_4020_en=05e29e0a2b2bb5643d67a477197e7b001c68e8d58d826e8bf2e02ad02b53acee
 game_setting_740=2cdc949c22fef6805f2b44f28ea5271659fe9e443051bdb6b746654006bdbf62
-game_setting_740_en - Copy=d2ed11fa315489b248ce1f494171505519aa0df63b431c7255309708be318b7b
 game_setting_740_en=d2ed11fa315489b248ce1f494171505519aa0df63b431c7255309708be318b7b
 server_file_search=552d68185a87554ccefe78874a06ff467903cc2c09df95a89783d6589a727106
