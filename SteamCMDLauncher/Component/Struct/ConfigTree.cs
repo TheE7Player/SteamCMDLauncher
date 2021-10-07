@@ -9,6 +9,8 @@ namespace SteamCMDLauncher.Component.Struct
     {
         public string Name { get; set; }
 
+        public string ValidateTab { get; set; }
+
         public ObservableCollection<ConfigTreeItem> Controls { get; set; }
 
         public ConfigTree()
@@ -24,12 +26,16 @@ namespace SteamCMDLauncher.Component.Struct
 
         public ConfigTree CopyClear()
         {
-            ConfigTree self = new ConfigTree();
-            
-            self.Name = this.Name;
-            self.Controls = this.Controls;
-            this.Name = null;
-            this.Controls = null;
+            ConfigTree self = new ConfigTree
+            {
+                Name = Name,
+                Controls = Controls,
+                ValidateTab = ValidateTab
+            };
+
+            Name = null;
+            Controls = null;
+            ValidateTab = null;
 
             return self;
         }
@@ -44,14 +50,16 @@ namespace SteamCMDLauncher.Component.Struct
         public ConfigTreeItem(string Name, string Type)
         {
             CName = Name;
-            switch (Type)
+
+            Icon = Type switch
             {
-                case "input": Icon = "FormatText"; break;
-                case "pass":  Icon = "FormTextboxPassword"; break;
-                case "combo": Icon = "FormDropdown"; break;
-                case "check": Icon = "CheckboxMultipleMarkedOutline"; break;
-                default: throw new Exception($"[CFG-G] Unknown Binding PackIcon was called ({Type})");
-            }
+                "input" => Icon = "FormatText",
+                "pass" => Icon = "FormTextboxPassword",
+                "combo" => Icon = "FormDropdown",
+                "check" => Icon = "CheckboxMultipleMarkedOutline",
+                _ => throw new Exception($"[CFG-G] Unknown Binding PackIcon was called ({Type})")
+            };
+
             Name = null;
             Type = null;
         }
@@ -59,8 +67,13 @@ namespace SteamCMDLauncher.Component.Struct
         /// <summary>
         /// Returns back the JSON type of the control
         /// </summary>
-        public string GetActualType => Icon == "FormatText" ? "input" :
-            Icon == "FormTextboxPassword" ? "pass" : Icon == "FormDropdown" ? "combo" :
-            Icon == "CheckboxMultipleMarkedOutline" ? "combo" : string.Empty;
+        public string GetActualType => Icon switch
+        {
+            "FormatText" => "input",
+            "FormTextboxPassword" => "pass",
+            "FormDropdown" => "combo",
+            "CheckboxMultipleMarkedOutline" => "check",
+            _ => string.Empty
+        };
     }
 }

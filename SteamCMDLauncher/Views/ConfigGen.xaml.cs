@@ -123,6 +123,9 @@ namespace SteamCMDLauncher.Views
 
         private void NewCategoryAdd(string input)
         {
+            // Stop right away if the cancel prompt is used ( cancel button -> /0 )
+            if (input == "/0") return;
+
             bool name_valid = true;
 
             int letter_len = input.Length;
@@ -176,7 +179,7 @@ namespace SteamCMDLauncher.Views
             }
 
             letters = null;
-
+            input = null;
         }
 
         private void RemoveCategory(ComboBoxItem item)
@@ -200,14 +203,23 @@ namespace SteamCMDLauncher.Views
             string tag_look_for = "Add";
 
             // TODO: This crashes if you type a letter - resolve?
-            ComboBoxItem currentCombo = (ComboBoxItem)ControlCategory.Items.GetItemAt(currentIndex);
-            bool AddNewCategory = ReferenceEquals(currentCombo.Tag, null) ? false : currentCombo.Tag.Equals(tag_look_for);
+
+            // This may be resolved by using 'as' instead of boxing as its type-safe
+            if (!(ControlCategory.Items.GetItemAt(currentIndex) is ComboBoxItem currentCombo))
+            {
+                Config.Log("[CFG-G] currentCombo is null - this means a letter may have been typed in or is an error");
+                return;
+            }
+
+            // Old expression: Equals(currentCombo.Tag, null) ? false : currentCombo.Tag.Equals(tag_look_for)
+            bool AddNewCategory = !Equals(currentCombo.Tag, null) && currentCombo.Tag.Equals(tag_look_for);
             
             tag_look_for = null;
 
             if (AddNewCategory)
             {
                 dh.InputDialog("Add New Category", "Please name the new category... Only Letters are allowed", NewCategoryAdd);
+                ControlCategory.SelectedItem = null;
             }
             else
             {
@@ -1058,6 +1070,9 @@ namespace SteamCMDLauncher.Views
                 
                 // Get the file the load in
                 load_file = Config.GetFile(".json", "Resources");
+
+                // Validate if a file has been chosen
+                if (load_file.Length <= 1) return;
 
                 // Parse the file as an JObject
                 parseFile = JObject.Parse(File.ReadAllText(load_file));

@@ -348,8 +348,11 @@ namespace SteamCMDLauncher.UIComponents
         public void InputDialog(string title, string message, Action<string> result)
         {
             StackPanel MainPanel = new StackPanel();
+            StackPanel ButtonPanel = new StackPanel();
 
             Button btn = new Button() { Content = "Submit" };
+            Button btn_c = new Button() { Content = "Cancel" };
+
             TextBox tb = new TextBox() { Margin = new Thickness(5) };
 
             MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
@@ -368,8 +371,21 @@ namespace SteamCMDLauncher.UIComponents
                 CloseDialog();
             };
 
-            MainPanel.Children.Add(btn);
+            btn_c.Click += (_, e) =>
+            {
+                result("/0");
+                CloseDialog();
+            };
 
+            btn.Margin = new Thickness(0, 0, 20, 0);
+
+            ButtonPanel = new StackPanel() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
+
+            ButtonPanel.Children.Add(btn);
+            ButtonPanel.Children.Add(btn_c);
+
+            MainPanel.Children.Add(ButtonPanel);
+            
             _dialog.DialogContent = MainPanel;
 
             if (forceOpenWhenCall) ShowDialog();

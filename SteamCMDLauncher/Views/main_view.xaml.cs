@@ -111,9 +111,9 @@ namespace SteamCMDLauncher
             }
 
             long ram;
-            while (true)
+            while (!bg_disposed)
             {
-                if (worker.CancellationPending) { e.Cancel = true; break; }
+                if (worker.CancellationPending || bg_disposed) { e.Cancel = true; break; }
                 
                 ram = self_process.WorkingSet64;
 
@@ -432,7 +432,9 @@ namespace SteamCMDLauncher
         private void GameConfig_Click(object sender, RoutedEventArgs e)
         {
             Config.Log("[MV] Booting up the Configuration Builder");
-
+            
+            Stop_RunBGWorker();
+            
             App.CancelClose = true;
             
             App.WindowClosed(this);

@@ -7,42 +7,30 @@ namespace SteamCMDLauncher.Component.Struct
         private string date;
         private string type;
 
-        public string Date { get { return GetLocalTime(date); } set { date = value; } }
-        public string Type { get { return GetType(type); } set { type = value; } }
+        public string Date { get => GetLocalTime(date); set => date = value; }
+        public string Type { get => GetType(type); set => type = value; }
         public string Reason { get; set; }
 
         private string GetType(string type)
         {
-            Config.LogType t;
+            _ = Enum.TryParse(type, out Config.LogType t);
 
-            string output = string.Empty;
-
-            if (!Enum.TryParse<Config.LogType>(type, out t))
-                return "UNK";
-
-            switch (t)
+            string output = t switch
             {
-                case Config.LogType.ServerAdd:
-                    output = "Add"; break;
-                case Config.LogType.FolderChange:
-                    output = "Folder"; break;
-                case Config.LogType.AliasChange:
-                    output = "Alias"; break;
-                case Config.LogType.ServerRun:
-                    output = "Run"; break;
-                case Config.LogType.ServerStop:
-                    output = "Stop"; break;
-                case Config.LogType.ServerError:
-                    output = "Error"; break;
-                case Config.LogType.ServerValidate:
-                    output = "Validation"; break;
-                case Config.LogType.ServerUpdate:
-                    output = "Updating"; break;
-                case Config.LogType.ServerRemove:
-                    output = "Removal"; break;
-            }
+                Config.LogType.ServerAdd => "Add",
+                Config.LogType.FolderChange => "Folder",
+                Config.LogType.AliasChange => "Alias",
+                Config.LogType.ServerRun => "Run",
+                Config.LogType.ServerStop => "Stop",
+                Config.LogType.ServerError => "Error",
+                Config.LogType.ServerValidate => "Validation",
+                Config.LogType.ServerUpdate => "Updating",
+                Config.LogType.ServerRemove => "Removal",
+                _ => "UNK"
+            };
 
             type = null;
+
             return output;
         }
 
