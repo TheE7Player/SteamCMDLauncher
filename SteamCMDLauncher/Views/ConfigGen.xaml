@@ -63,12 +63,20 @@
 
         <!-- GroupBox to show JSON Structure -->
         <GroupBox Header="File Structure" VerticalAlignment="Top" Margin="367,135,408,0" Height="500" FontSize="16" Foreground="{StaticResource White}">
-            <TreeView Padding="2" ItemsSource="{Binding TreeModel}" SelectedItemChanged="TreeView_SelectedItemChanged">
+            <TreeView Padding="2" ItemsSource="{Binding TreeModel}" SelectedItemChanged="TreeView_SelectedItemChanged" Foreground="{StaticResource White}">
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Controls}">
-                        <Grid>
+                        <StackPanel Orientation="Horizontal">
                             <Label Content="{Binding Name}" Foreground="{StaticResource White}"/>
-                        </Grid>
+                            <materialDesign:PackIcon Kind="LockAlert"
+                                                     Tag="{Binding Name}"
+                                                     Foreground="{StaticResource White}"
+                                                     Opacity="{Binding HasRestrictions}"
+                                                     VerticalAlignment="Center"
+                                                     Cursor="Hand"
+                                                     Width="22" Height="22" Margin="10,0,0,0"
+                                                     MouseLeftButtonDown="PackIcon_OnLeftClick"/>
+                        </StackPanel>
                         <HierarchicalDataTemplate.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">

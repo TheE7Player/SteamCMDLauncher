@@ -275,13 +275,18 @@ namespace SteamCMDLauncher.Views
                     if(type is null)
                     {
                         // Check if its validate-folder
-                        if(!ctrl.Equals("validate-folder"))
+                        if(!ctrl.Equals("#validate"))
                         {
                             throw new Exception($"[CFG-G] Control named '{ctrl}' didn't return back a control type\n(Missing 'type=' flag)");            
                         }
 
-                        // TODO: Implement logic for validate-folder
                         // Do validate-folder here
+
+                        // "#validate"
+                        config.ValidateTab = string.Join(';', category.Value[ctrl]);
+
+                        category.Value.Remove("#validate");
+
                         continue;
                     }
 
@@ -1009,6 +1014,22 @@ namespace SteamCMDLauncher.Views
                         // Get the controls over-all name
                         ctrl_name = iter[j].Name;
 
+                        // If its to enable an tab
+                        if(ctrl_name == "validate-folder")
+                        {
+                            string val = iter[j]
+                                .Value.
+                                ToString()[1..^1]
+                                .Replace("\r\n", string.Empty)
+                                .Trim();
+
+                            output_directory.Value[key_iter].Add("#validate", val.Split(", "));
+                            
+                            val = null;
+                            
+                            continue;
+                        }
+
                         // Add it to the dictionary with a size of arguments available
                         inner_iter = iter[j].Children<JObject>().Properties().ToArray();
                     
@@ -1362,6 +1383,98 @@ namespace SteamCMDLauncher.Views
             currentTree = null;
         
         }
+        
+        private void PackIcon_OnLeftClick(object sender, MouseButtonEventArgs e)
+        {
+            // Lock when Tab supports enable state
+            MaterialDesignThemes.Wpf.PackIcon self = null;
+            Component.Struct.ConfigTree tar = null;
+            StringBuilder sb = null;
+            
+            string target = null;
+            string[] target_val = null;
+
+            try
+            {
+                // Get the sender and safe-cast it into an PackIcon
+                self = sender as MaterialDesignThemes.Wpf.PackIcon;
+
+                // Validate if its null - it means the object didn't cast into an PackIcon
+                if (self is null) { dh.OKDialog("Problem: Memory or GC fault - Object you clicked on has lost reference in memory! Not good!"); return; }
+
+                // Now get the information from Tag, safe-cast again to prevent errors
+                target = self.Tag as string;
+
+                // If tag is null, throw an error
+                if (target is null) { dh.OKDialog("Problem: Section referencing was empty - this is a programming fault... Not good!"); return; }
+
+                // Now lets try to get the clicked tab to fetch
+                tar = TreeModel.SingleOrDefault(x => x.Name == target);
+                
+                // If the object is - somehow - not in memory or object any more, show error
+                if(tar is null) { dh.OKDialog("Problem: Memory or GC fault - The target object is not kept in the global heap - Not good!"); return; }
+
+                // Now get the lock state criteria's
+                target = tar.ValidateTab;
+
+                // If the target is not assigned or if the (null-safe) string's length is less than 1
+                if(string.IsNullOrWhiteSpace(target) || target?.Length < 1)
+                {
+                    dh.OKDialog("Problem: The program shouldn't have flagged this tab with an lock state.\nIt may have been kept in memory from last config!");
+                    return;
+                }
+
+                // This means all the information is available
+                sb = new StringBuilder();
+                sb.AppendLine("This tab is only enabled BASED on the following criteria:\n");
+
+                // Split the single-line text into a string array based on character ';' (semi-colon)
+                target_val = target.Split(';');
+
+                // Get the initial array size, this won't likely change during iteration (cached)
+                int tVal = target_val.Length;
+                
+                // A flag which states true or false depending if it contains a dot '.', which indicates its a file.
+                bool isFolder = false;
+                
+                for (int i = 0; i < tVal; i++)
+                {
+                    // Set the state to reflect if its a folder or file
+                    isFolder = !target_val[i].Contains('.');
+                    
+                    // Add the row number
+                    sb.Append($"  {i + 1})  ");
+                    
+                    // Add the initial text which states its type
+                    sb.Append(isFolder ? "Folder: " : "File: ");
+                    
+                    // Append the current assigned value for that row
+                    sb.Append(target_val[i]);
+                    
+                    // Add an newline character, to indicate a new row
+                    sb.Append('\n');
+                }
+
+                // Add the final initial warning / message
+                sb.AppendLine("\nThese can only be changed in file to prevent issues long term!");
+
+                // Show the buffer text to the dialog-host
+                dh.OKDialog(sb.ToString());
+            }
+            finally
+            {
+                self = null;
+                tar = null;
+                sb = null;
+                target = null;
+                target_val = null;
+                sender = null;
+                e = null;
+            }
+        }
+        
+        //TODO: Implement Remove Tab?
+        
         #endregion
 
         #region Window Events
@@ -1430,7 +1543,6 @@ namespace SteamCMDLauncher.Views
             sender = null;
             e = null;
         }
-        #endregion
-
+        #endregion 
     }
 }

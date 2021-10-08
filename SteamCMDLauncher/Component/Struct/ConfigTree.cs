@@ -11,6 +11,8 @@ namespace SteamCMDLauncher.Component.Struct
 
         public string ValidateTab { get; set; }
 
+        public int HasRestrictions { get => ValidateTab?.Length > 0 ? 100 : 0; }
+
         public ObservableCollection<ConfigTreeItem> Controls { get; set; }
 
         public ConfigTree()
