@@ -28,7 +28,7 @@
         <Button Content="Save Config" VerticalAlignment="Top" Margin="135,75,970,0" Click="SafeConfig_Click"/>
 
         <!-- GroupBox to generate controls -->
-        <GroupBox Header="Create Control" VerticalAlignment="Top" Margin="0,135,904,0" Height="500" FontSize="16" Foreground="{StaticResource White}">
+        <GroupBox Header="Create Control" VerticalAlignment="Top" Margin="0,135,654,0" Height="500" FontSize="16" Foreground="{StaticResource White}">
             <StackPanel>
                 <!-- Control's Name -->
                 <TextBox x:Name="ControlName" materialDesign:HintAssist.Hint="Control Name" Margin="2,5,2,10"/>
@@ -61,43 +61,47 @@
             </StackPanel>
         </GroupBox>
 
-        <!-- GroupBox to show JSON Structure -->
-        <GroupBox Header="File Structure" VerticalAlignment="Top" Margin="367,135,408,0" Height="500" FontSize="16" Foreground="{StaticResource White}">
-            <TreeView Padding="2" ItemsSource="{Binding TreeModel}" SelectedItemChanged="TreeView_SelectedItemChanged" Foreground="{StaticResource White}">
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate ItemsSource="{Binding Controls}">
-                        <StackPanel Orientation="Horizontal">
-                            <Label Content="{Binding Name}" Foreground="{StaticResource White}"/>
-                            <materialDesign:PackIcon Kind="LockAlert"
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="620,135,50,29">
+            <StackPanel Orientation="Vertical">
+                <Expander Header="Additional Controls (Setup)" Background="#FF303030" Foreground="{StaticResource White}">
+                    <StackPanel Orientation="Vertical" Margin="15">
+                        <TextBox Margin="0,10,0,10" Text="{Binding Path=Target,      Mode=TwoWay}"  materialDesign:HintAssist.Hint="Target Exe"/>
+                        <TextBox Margin="0,10,0,10" Text="{Binding Path=PreComands,  Mode=TwoWay}"  materialDesign:HintAssist.Hint="Additional Arguments"/>
+                        <TextBox Margin="0,10,0,10" Text="{Binding Path=JoinCommand, Mode=TwoWay}"  materialDesign:HintAssist.Hint="Join Command (if any)"/>
+                    </StackPanel>
+                </Expander>
+
+                <Expander Header="File Structure" IsExpanded="True" Background="#FF303030" Foreground="{StaticResource White}">
+                    <StackPanel Orientation="Vertical">
+                        <TreeView Padding="2" ItemsSource="{Binding TreeModel}" SelectedItemChanged="TreeView_SelectedItemChanged" Foreground="{StaticResource White}">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Controls}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="{Binding Name}" Foreground="{StaticResource White}"/>
+                                        <materialDesign:PackIcon Kind="LockAlert"
                                                      Tag="{Binding Name}"
                                                      Foreground="{StaticResource White}"
+                                                     IsHitTestVisible="{Binding HasRestrictions}"
                                                      Opacity="{Binding HasRestrictions}"
                                                      VerticalAlignment="Center"
-                                                     Cursor="Hand"
+                                                     Cursor="{Binding Cursor}"
                                                      Width="22" Height="22" Margin="10,0,0,0"
                                                      MouseLeftButtonDown="PackIcon_OnLeftClick"/>
-                        </StackPanel>
-                        <HierarchicalDataTemplate.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <materialDesign:PackIcon Foreground="{StaticResource White}" Kind="{Binding Icon}" Margin="2,0,10,0"/>
-                                    <TextBlock Foreground="{StaticResource White}" Text="{Binding CName}"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </HierarchicalDataTemplate.ItemTemplate>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-            </TreeView>
-        </GroupBox>
-
-        <!-- Additional Controls / Target exe etc -->
-        <GroupBox Header="Additional Controls (Setup)" VerticalAlignment="Top" Foreground="{StaticResource White}" Margin="861,135,29,0" FontSize="16" Height="197">
-            <StackPanel Margin="4">
-                <TextBox Margin="0,10,0,10" Text="{Binding Path=Target, Mode=TwoWay}"       materialDesign:HintAssist.Hint="Target Exe"/>
-                <TextBox Margin="0,10,0,10" Text="{Binding Path=PreComands, Mode=TwoWay}"   materialDesign:HintAssist.Hint="Additional Arguments"/>
-                <TextBox Margin="0,10,0,10" Text="{Binding Path=JoinCommand, Mode=TwoWay}"  materialDesign:HintAssist.Hint="Join Command (if any)"/>
+                                    </StackPanel>
+                                    <HierarchicalDataTemplate.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <materialDesign:PackIcon Foreground="{StaticResource White}" Kind="{Binding Icon}" Margin="2,0,10,0"/>
+                                                <TextBlock Foreground="{StaticResource White}" Text="{Binding CName}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </HierarchicalDataTemplate.ItemTemplate>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </StackPanel>
+                </Expander>
             </StackPanel>
-        </GroupBox>
-
+        </ScrollViewer>
     </Grid>
 </Window>

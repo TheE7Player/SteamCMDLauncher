@@ -1,4 +1,7 @@
-﻿using Newtonsoft.Json.Linq;
+﻿#define SKIP_JSON_LOAD
+#define FORCE_LOAD
+
+using Newtonsoft.Json.Linq;
 using System;
 using System.Data;
 using System.Windows;
@@ -596,6 +599,10 @@ namespace SteamCMDLauncher.Views
             string cKey = string.Empty;
             string cTranslations = string.Empty;
             string[] TextTranslationTypes = new string[] { "text", "placeholder", "alert", "hint", "blank_alert" };
+            string translation_name = string.Empty;
+
+            // Deal with the name first
+            //TODO: Handle saving localization file
 
             // Lets deal with the setup key group first (if any)
 
@@ -1088,12 +1095,23 @@ namespace SteamCMDLauncher.Views
             try
             {
                 Config.Log("[CFG-G] Started looking for Config and Language Config (If any)");
-                
-                // Get the file the load in
-                load_file = Config.GetFile(".json", "Resources");
 
+                // Get the file the load in
+
+#if !SKIP_JSON_LOAD || !DEBUG
+                load_file = Config.GetFile(".json", "Resources");
+#else
+                // Skip loading process by pre-loading a config
+                load_file = "C:\\Users\\james\\source\\repos\\SteamCMDLauncher\\SteamCMDLauncher\\bin\\Debug\\netcoreapp3.1\\Resources\\game_setting_740.json";
+#endif
                 // Validate if a file has been chosen
                 if (load_file.Length <= 1) return;
+
+                if(!File.Exists(load_file))
+                {
+                    dh.OKDialog("Configuration failed as it didn't exist.");
+                    return;
+                }
 
                 // Parse the file as an JObject
                 parseFile = JObject.Parse(File.ReadAllText(load_file));
@@ -1475,9 +1493,9 @@ namespace SteamCMDLauncher.Views
         
         //TODO: Implement Remove Tab?
         
-        #endregion
+#endregion
 
-        #region Window Events
+#region Window Events
         private void Destory()
         {
             if(!disposed)
@@ -1528,6 +1546,14 @@ namespace SteamCMDLauncher.Views
 
             TreeModel = new ObservableCollection<Component.Struct.ConfigTree>();
 
+#if !DEBUG
+            dh.OKDialog("This is in alpha stage - Save or Load at your own risk!");
+#endif
+
+#if FORCE_LOAD && DEBUG
+            LoadConfig_Click(null, null);
+#endif
+
             sender = null;
             e = null;
         }
@@ -1543,6 +1569,6 @@ namespace SteamCMDLauncher.Views
             sender = null;
             e = null;
         }
-        #endregion 
+#endregion
     }
 }
