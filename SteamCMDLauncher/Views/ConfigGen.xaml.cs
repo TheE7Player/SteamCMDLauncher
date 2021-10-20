@@ -953,21 +953,22 @@ namespace SteamCMDLauncher.Views
             GenerateJSON(fileName, includeLanguageSupport);
 
             // Output the file itself
-            string output_location = System.IO.Path.Combine(Environment.CurrentDirectory, "Resources", $"{fileName}.json");
-            string lang_output_location = includeLanguageSupport ? System.IO.Path.Combine(Environment.CurrentDirectory, "Resources", $"{fileName}_en.json") : string.Empty;
+            string output_location = Path.Combine(Environment.CurrentDirectory, "Resources", $"{fileName}.json");
+            string lang_output_location = includeLanguageSupport ? Path.Combine(Environment.CurrentDirectory, "Resources", $"{fileName}_en.json") : string.Empty;
 
-            System.IO.File.WriteAllText(output_location, output.Value.ToString());
-            
-            if(!string.IsNullOrEmpty(lang_output_location))
+            File.WriteAllText(output_location, output.Value.ToString());
+
+            if (!string.IsNullOrEmpty(lang_output_location))
             {
-                System.IO.File.WriteAllText(lang_output_location, lang_output.Value.ToString());
+                File.WriteAllText(lang_output_location, lang_output.Value.ToString());
             }
 
-            if(System.IO.File.Exists(output_location))
+            if (File.Exists(output_location))
             {
                 dh.YesNoDialog("Success", "Your file has been saved in the configuration folder!\nWould you like to view it now?",
                 new Action(() => { System.Diagnostics.Process.Start("explorer.exe", output_location); }));
-            } else
+            } 
+            else
             {
                 dh.OKDialog("The file creation process has failed, check the log file if an exception wasn't thrown.");
             }

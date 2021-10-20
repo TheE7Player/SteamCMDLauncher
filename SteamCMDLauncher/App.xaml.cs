@@ -5,15 +5,24 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Diagnostics;
-using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace SteamCMDLauncher
 {
+
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application
     {
+        #region Win32 API
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("User32.dll")]
+        public static extern bool ShowWindow(IntPtr handle, int nCmdShow);
+        #endregion
+
         #region Attributes
         /// <summary>
         /// If the program should exit if an close event is triggered
@@ -41,6 +50,10 @@ namespace SteamCMDLauncher
         public static DateTime StartTime;
 
         private static Window ActiveWindow;
+
+        // FOR WINDOWS: NotifyIcon for when window minimizes 
+        private static System.Windows.Forms.NotifyIcon NotifyIcon;
+        private static bool FirstActivation = true;
         #endregion
 
         #region Methods
@@ -189,7 +202,7 @@ namespace SteamCMDLauncher
                 repo = null;
                 update_path = null;
                 utc_format = null;
-            }        
+            }
         }
 
         private Process[] SameProcesses()
@@ -209,7 +222,6 @@ namespace SteamCMDLauncher
 
             return targets.Slice(0, slice_start).ToArray();
         }
-
         #endregion
 
         #region Window Logic
@@ -339,8 +351,6 @@ namespace SteamCMDLauncher
             // Code for before window opens (optional);
             Cleanup();
 
-            //Window mainWindow;
-
             if (!Config.DatabaseExists || !Config.HasServers())
                 WindowOpen(new Setup());
             else
@@ -355,8 +365,20 @@ namespace SteamCMDLauncher
                    
             if (ActiveWindow != null) { ActiveWindow = null; }
 
+            if (NotifyIcon is null)
+            {
+                NotifyIcon = new System.Windows.Forms.NotifyIcon();
+                NotifyIcon.Icon = new System.Drawing.Icon("icon.ico");
+                NotifyIcon.Visible = false;
+                NotifyIcon.Click += NotifyClick;
+                NotifyIcon.BalloonTipClicked += NotifyClick;
+            }
+
             ActiveWindow = instance;
-  
+
+            ActiveWindow.Deactivated += AsyncToggleNotifyState;
+            ActiveWindow.Activated += AsyncToggleNotifyState;
+
             instance = null;
             current_instance = null;
 
@@ -366,15 +388,54 @@ namespace SteamCMDLauncher
             { ActiveWindow.ShowDialog(); }
         }
 
+        private static void NotifyClick(object sender, EventArgs e)
+        {
+            sender = null; e = null;
+
+            ActiveWindow.ShowInTaskbar = !ActiveWindow.ShowInTaskbar;
+
+            if (ActiveWindow != null)
+            {
+                IntPtr current_hidden_window = new System.Windows.Interop.WindowInteropHelper(ActiveWindow).EnsureHandle();
+                
+                SetForegroundWindow(current_hidden_window);
+                
+                ShowWindow(current_hidden_window, 9);
+            }
+        }
+
+        private static async void AsyncToggleNotifyState(object sender, EventArgs e)
+        {
+            sender = null; e = null;
+
+            if (FirstActivation) { FirstActivation = false; return; }
+
+            await System.Threading.Tasks.Task.Delay(200);
+
+            NotifyIcon.Visible = !ActiveWindow.IsActive;
+            ActiveWindow.ShowInTaskbar = !NotifyIcon.Visible;
+
+            if(NotifyIcon.Visible && !ActiveWindow.IsFocused)
+                NotifyIcon.ShowBalloonTip(250, "Window Hidden", "Click here to resume the window", System.Windows.Forms.ToolTipIcon.Info);
+        }
+
         public static void WindowClosed(Window sender)
         {
             string window = sender.DependencyObjectType.Name;
 
+            ActiveWindow.Activated -= AsyncToggleNotifyState;
+            ActiveWindow.Deactivated -= AsyncToggleNotifyState;
+
             Config.Log($"[EXIT EVENT] Cancel request was requested from window: {window}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {window})");
+            
             // Exit the program entirely if it should do (no depending tasks to be done)
             if (!CancelClose)
             {
                 Config.Log($"[EXIT EVENT] Cancel request was granted from window: {window}.xaml");
+                NotifyIcon.Visible = false;
+                NotifyIcon.Icon = null;
+                NotifyIcon.Dispose();
+                NotifyIcon = null;
                 Environment.Exit(0);
             }
             else
