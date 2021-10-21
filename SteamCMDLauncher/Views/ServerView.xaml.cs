@@ -6,6 +6,8 @@ using System.Windows.Input;
 using System.Threading.Tasks;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace SteamCMDLauncher
 {
@@ -509,6 +511,140 @@ namespace SteamCMDLauncher
                 ServerStop();
             }
         }
+        
+        /// <summary>
+        /// Gets an API call to check if the current local server is the latest version
+        /// </summary>
+        /// <param name="server_dir">The folder location of the ROOT server folder</param>
+        /// <param name="app_id">the servers id number (not the parent game id!)</param>
+        /// <returns></returns>
+        private async ValueTask<bool> IsGameServerUpdated(string server_dir, string app_id)
+        {
+            Config.Log("[SV] IsGameServerUpdated: Creating Unmanaged Objects");
+            // We first use the https://www.steamcmd.net API to get the latest fork of the current server
+            
+            // Create our already defined strings (we know at compile time)
+            string pattern = @"\""public\"":\s+{\""buildid\"":\s+\""(\d+)\""";
+            string app_manif_loc = Path.Combine(server_dir, $"steamapps\\appmanifest_{app_id}.acf");
+            string match_target = "buildid";
+
+            // Create the runtime assigned variables (as it will be determined while running, unknown at compile time)
+            string response = null;
+            string server_buildid = null;
+            string[] local_file = null;
+            string build_id_index_lc = null;
+            Match webRegex = null;
+            Config.Log("[SV] IsGameServerUpdated: Completed Unmanaged Objects");
+            
+            try
+            {
+                Config.Log("[SV] IsGameServerUpdated: Starting API Call");
+
+                // Setup the HTTP Client
+                System.Net.HttpWebRequest httpRequest = (System.Net.HttpWebRequest)System.Net.WebRequest.Create($"https://api.steamcmd.net/v1/info/{app_id}");
+
+                // Tell the request we'd expect a JSON response back
+                httpRequest.Accept = "application/json";
+
+                using (System.Net.WebResponse httpResponse = await httpRequest.GetResponseAsync())
+                {
+                    using StreamReader streamReader = new StreamReader(httpResponse.GetResponseStream());
+                    response = streamReader.ReadToEnd();
+                }
+
+                // Now we use regex to find the id
+                Config.Log("[SV] IsGameServerUpdated: Finished API Call");
+                
+                webRegex = Regex.Match(response, pattern, RegexOptions.Multiline);
+
+                if(!webRegex.Success)
+                {
+                    Config.Log("[SV] IsGameServerUpdated: Issue with API call - Failed to get 'buildid' from JSON Responce");
+                    dh.OKDialog("An issue has occurred as the program wasn't able to identify a 'buildid' from the Server API.\nUpdate the server manually.");
+                    return false;
+                }
+
+                Config.Log("[SV] IsGameServerUpdated: Found latest server 'buildid'");
+                server_buildid = webRegex.Groups[1].Value;
+
+                // Now we check if the appmanifest.acf is available
+
+                Config.Log("[SV] IsGameServerUpdated: Check if the server root has a manifest file");
+                // Validate if such a file exists
+                if (!File.Exists(app_manif_loc))
+                {
+                    Config.Log($"[SV] IsGameServerUpdated: Missing App Manifest File for {app_id}, located in: {server_dir}");
+                    return false;
+                }
+
+                Config.Log("[SV] IsGameServerUpdated: Manifest file was found");
+                // This means it does exist - Time to validate the current build version
+                local_file = File.ReadAllLines(app_manif_loc);
+            
+                // Get the max array length, as this will likely not change over time (cache saving)
+                int app_m_idx = local_file.Length;
+                bool mFound = false;
+                
+                Config.Log("[SV] IsGameServerUpdated: Manifest file 'buildid' find is under way");
+                
+                for (int i = 0; i < app_m_idx; i++)
+                {
+                    if (local_file[i].Length < 8) continue;
+
+                    build_id_index_lc = local_file[i].Trim();
+
+                    if (build_id_index_lc[1..8] == match_target)
+                    {
+                        // Skip until the second last quote mark (")
+                        // Remove the last quote mark (")
+                        // Which returns the buildid by itself
+                        build_id_index_lc = build_id_index_lc[12..^1];
+                        mFound = true;
+                        // Stop as we got the information we need
+                        break; 
+                    }
+                }
+
+                if(!mFound)
+                {
+                    Config.Log("[SV] IsGameServerUpdated: 'buildid' was not found in the manifest file!");
+                    dh.OKDialog("Couldn't find 'buildid' tag in the manifest file - an update check couldn't be performed.\nPerform your own update if needed!");
+                    return false;
+                }
+
+                Config.Log("[SV] IsGameServerUpdated: Manifest file 'buildid' find is complete");
+
+                // Now we compare if both strings are equal (same version)
+                // We're comparing the server to the local, as we cannot guarantee if the local is the same as server
+                if (mFound && !string.Equals(server_buildid, build_id_index_lc))
+                {
+                    return true;
+                }
+            }
+            finally
+            {
+                // Dispose / Dereference any unmanaged objects
+
+                pattern = null;
+                app_manif_loc = null;
+                match_target = null;
+
+                response = null;
+                server_buildid = null;
+                local_file = null;
+                build_id_index_lc = null;
+                webRegex = null;
+
+                local_file = null;
+                app_manif_loc = null;
+                server_dir = null;
+                response = null;
+                app_id = null;
+            }
+
+            // By default return 'false' if 'true' doesn't called
+            return false;
+        }
         #endregion
 
         #region Config Box Related
@@ -701,6 +837,16 @@ namespace SteamCMDLauncher
                     });
                 });
             }
+
+            bool needs_update = await IsGameServerUpdated(folder, appid);
+
+            if(needs_update)
+            {
+                dh.OKDialog("Your running in an older version of the local server files!\nPress 'Update Server' button to get the new files ('Validate Server' if the update is corrupted!)");
+            }
+
+            UpdateBar.IsIndeterminate = false;
+            UpdateBarText.Text = needs_update ? "UPDATE SERVER" : "Update to date";
         }
     }
 }

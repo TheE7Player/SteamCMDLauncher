@@ -31,6 +31,9 @@
         </Button>
         <Button x:Name="ReturnBack" Margin="966,42,64,46" Click="ReturnBack_Click" Content="Return Back"/>
 
+        <TextBlock x:Name="UpdateBarText" FontSize="14" Text="Checking Latest Version" Style="{DynamicResource MaterialDesignBody3TextBlock}" Foreground="{StaticResource White}" Margin="641,44,415,44" VerticalAlignment="Top" HorizontalAlignment="Center"/>
+        <ProgressBar x:Name="UpdateBar" IsIndeterminate="True" Margin="641,71,415,45" />
+        
         <StackPanel Grid.Row="1" Orientation="Horizontal">
             <TextBox
                 Name="ServerAlias"

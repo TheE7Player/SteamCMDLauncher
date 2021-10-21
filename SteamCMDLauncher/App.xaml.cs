@@ -7,6 +7,9 @@ using System.Windows.Threading;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
+// [NOTE] DON'T REMOVE THIS - It's not used in DEBUG mode but RELEASE mode!
+using System.Linq;
+
 namespace SteamCMDLauncher
 {
 
@@ -387,7 +390,7 @@ namespace SteamCMDLauncher
             else
             { ActiveWindow.ShowDialog(); }
         }
-
+        
         private static void NotifyClick(object sender, EventArgs e)
         {
             sender = null; e = null;
@@ -415,7 +418,7 @@ namespace SteamCMDLauncher
             NotifyIcon.Visible = !ActiveWindow.IsActive;
             ActiveWindow.ShowInTaskbar = !NotifyIcon.Visible;
 
-            if(NotifyIcon.Visible && !ActiveWindow.IsFocused)
+            if(NotifyIcon.Visible && !ActiveWindow.IsVisible)
                 NotifyIcon.ShowBalloonTip(250, "Window Hidden", "Click here to resume the window", System.Windows.Forms.ToolTipIcon.Info);
         }
 
