@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 // [NOTE] DON'T REMOVE THIS - It's not used in DEBUG mode but RELEASE mode!
 using System.Linq;
@@ -17,15 +16,7 @@ namespace SteamCMDLauncher
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application
-    {
-        #region Win32 API
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern IntPtr SetForegroundWindow(IntPtr hWnd);
-
-        [DllImport("User32.dll")]
-        public static extern bool ShowWindow(IntPtr handle, int nCmdShow);
-        #endregion
-
+    {     
         #region Attributes
         /// <summary>
         /// If the program should exit if an close event is triggered
@@ -56,7 +47,6 @@ namespace SteamCMDLauncher
 
         // FOR WINDOWS: NotifyIcon for when window minimizes 
         private static System.Windows.Forms.NotifyIcon NotifyIcon;
-        private static bool FirstActivation = true;
         #endregion
 
         #region Methods
@@ -378,9 +368,7 @@ namespace SteamCMDLauncher
             }
 
             ActiveWindow = instance;
-
-            ActiveWindow.Deactivated += AsyncToggleNotifyState;
-            ActiveWindow.Activated += AsyncToggleNotifyState;
+            ActiveWindow.StateChanged += AsyncToggleNotifyState;
 
             instance = null;
             current_instance = null;
@@ -395,39 +383,29 @@ namespace SteamCMDLauncher
         {
             sender = null; e = null;
 
-            ActiveWindow.ShowInTaskbar = !ActiveWindow.ShowInTaskbar;
+            ActiveWindow.ShowInTaskbar = true;
 
-            if (ActiveWindow != null)
-            {
-                IntPtr current_hidden_window = new System.Windows.Interop.WindowInteropHelper(ActiveWindow).EnsureHandle();
-                
-                SetForegroundWindow(current_hidden_window);
-                
-                ShowWindow(current_hidden_window, 9);
-            }
+            Component.Win32API.ForceWindowOpen(ref ActiveWindow);
         }
 
         private static async void AsyncToggleNotifyState(object sender, EventArgs e)
         {
             sender = null; e = null;
 
-            if (FirstActivation) { FirstActivation = false; return; }
-
             await System.Threading.Tasks.Task.Delay(200);
 
-            NotifyIcon.Visible = !ActiveWindow.IsActive;
-            ActiveWindow.ShowInTaskbar = !NotifyIcon.Visible;
+            NotifyIcon.Visible = ActiveWindow.WindowState == WindowState.Minimized;
+            ActiveWindow.ShowInTaskbar = ActiveWindow.WindowState == WindowState.Normal;
 
-            if(NotifyIcon.Visible && !ActiveWindow.IsVisible)
-                NotifyIcon.ShowBalloonTip(250, "Window Hidden", "Click here to resume the window", System.Windows.Forms.ToolTipIcon.Info);
+            if(ActiveWindow.WindowState == WindowState.Minimized)
+              NotifyIcon.ShowBalloonTip(250, "Window Hidden", "Click here to resume the window", System.Windows.Forms.ToolTipIcon.Info);
         }
 
         public static void WindowClosed(Window sender)
         {
             string window = sender.DependencyObjectType.Name;
 
-            ActiveWindow.Activated -= AsyncToggleNotifyState;
-            ActiveWindow.Deactivated -= AsyncToggleNotifyState;
+            ActiveWindow.StateChanged -= AsyncToggleNotifyState;
 
             Config.Log($"[EXIT EVENT] Cancel request was requested from window: {window}.xaml ({ActiveWindow?.DependencyObjectType.Name} -> {window})");
             
