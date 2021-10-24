@@ -447,7 +447,7 @@ namespace SteamCMDLauncher
                     Directory.CreateDirectory(logFolder);
 
                 int currentNumber = Directory.GetFiles(logFolder).Length + 1;
-                SessionFileName = Path.Combine(logFolder, $"scmdl_session_{currentNumber}.txt");
+                SessionFileName = Path.Combine(logFolder, $"scmdl_session_{++currentNumber}.txt");
 
                 logFolder = null;
             }

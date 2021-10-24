@@ -573,25 +573,21 @@ namespace SteamCMDLauncher
 
                 try
                 {
-                    httpResponse = await httpRequest.GetResponseAsync().ConfigureAwait(false);
-                    
-                    while (!ResponceMade)
+                    await httpRequest.GetResponseAsync().ContinueWith(r =>
                     {
-                        if(disposed)
+                        if (!disposed)
+                        { 
+                            ResponceMade = true;
+                            httpResponse = r.Result;
+                            streamReader = new StreamReader(httpResponse.GetResponseStream());
+                            response = streamReader.ReadToEndAsync().Result;
+                        }
+                        else
                         {
                             Config.Log("[SV] IsGameServerUpdated: API Call Disturbed - Forced Called due to disposed window.");
                             httpRequest.Abort();
-                            break;
                         }
-                        await Task.Delay(100);
-                    }
-
-                    if (!disposed)
-                    { 
-                        ResponceMade = true;
-                        streamReader = new StreamReader(httpResponse.GetResponseStream());
-                        response = await streamReader.ReadToEndAsync();
-                    }                 
+                    });                                         
                 }
                 catch (Exception ex)
                 {
