@@ -101,8 +101,7 @@ namespace SteamCMDLauncher
 
         private void Ram_bgworker_DoWork(object sender, DoWorkEventArgs e)
         {
-            // Getting RAM usage: https://stackoverflow.com/a/59269258
-
+            // Getting RAM usage: https://stackoverflow.com/a/59269258       
             BackgroundWorker worker = sender as BackgroundWorker;
            
             if(self_process == null)
@@ -124,9 +123,8 @@ namespace SteamCMDLauncher
 
                 System.Threading.Thread.Sleep(10000);
             }
-
-            worker = null;
             sender = null;
+            worker = null;
         }
 
         bool bg_disposed = false;
@@ -276,8 +274,21 @@ namespace SteamCMDLauncher
             }
             else
             {
-                Config.Log($"[LSV] Window was not ready: {server_window.NotReadyReason}");
-                HostDialog.OKDialog(server_window.NotReadyReason);
+                Config.Log($"[LSV] Window was not ready: FLAG {server_window.NotReadyReason}");
+                
+                if(server_window.NotReadyReason != ServerView.FaultReason.GameNotSupported)
+                    HostDialog.OKDialog(server_window.GetFaultReason());
+                else
+                {
+                    ValueTask<bool> removeDialog = HostDialog.YesNoDialog("Game Not Supported Yet", "Sorry but the game you chose at this time is not officially supported.\nWould you like to remove it at this current time? (You can add it back later)");
+
+                    if(removeDialog.Result == true)
+                    {
+                        Config.Log($"[MV] User has been prompted and agreed to removing the server '{id}' as its currently not supported in version: '{App._version}'");
+                        bool remove = Config.RemoveServer(id);
+                        HostDialog.OKDialog(remove ? "The server has been removed successfully.\nYou may need to restart the program to see the effect." : "Was unable to remove the server.\nThere might be issues with referencing in the database due to this fault.");
+                    }
+                }
             }
         }
 

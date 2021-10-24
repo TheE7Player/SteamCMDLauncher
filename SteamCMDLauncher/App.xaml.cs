@@ -74,6 +74,12 @@ namespace SteamCMDLauncher
         {
             // TODO: [?] Make GHU-C have a action to callback faults on error
 
+            if (!Component.Win32API.IsConnectedToInternet())
+            {
+                Config.Log("[APP] [!] Unable to perform program update check due to no Internet access available. [!] ");
+                return false;
+            }
+
             // The UTC format to convert to: "2021-08-30T17:00:49Z" <- Example of what it looks like
             string utc_format = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'";
 
@@ -223,7 +229,7 @@ namespace SteamCMDLauncher
         /// </summary>
         private void App_Startup(object sender, StartupEventArgs e)
         {
-            // Disable Hardware Acceleration
+            // Disable Hardware Acceleration (If not supported by GPU or CPU)
 
             if (System.Windows.Media.RenderCapability.Tier >> 16 == 0)
             {

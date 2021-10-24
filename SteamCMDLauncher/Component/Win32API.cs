@@ -13,9 +13,13 @@ namespace SteamCMDLauncher.Component
 
         [DllImport("User32.dll")]
         private static extern bool ShowWindow(IntPtr handle, int nCmdShow);
+
+        [DllImport("wininet.dll", SetLastError = true)]
+        extern static bool InternetGetConnectedState(out int lpdwFlags, int dwReserved = 0);
         #endregion
 
         private const int FORCE_WINDOW_OPEN = 9;
+        private const int FLAG_OFFLINE = 32; // (0x20) = 32
 
         public static void ForceWindowOpen(ref System.Windows.Window window)
         {
@@ -26,6 +30,15 @@ namespace SteamCMDLauncher.Component
             SetForegroundWindow(current_hidden_window);
 
             ShowWindow(current_hidden_window, 9);
+        }
+
+        public static bool IsConnectedToInternet()
+        {
+            bool result = InternetGetConnectedState(out int current_flag);
+            
+            Config.Log($"[WAPI32] InternetGetConnectedState returned {result} with flag: {current_flag}");
+            
+            return result;
         }
     }
 }
