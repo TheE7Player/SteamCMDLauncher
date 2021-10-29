@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 namespace SteamCMDLauncher
 {
-    public static class Config
+    public class Config
     {
         #region Variables/Constants
         private static readonly string db_location = System.IO.Path.Combine(Environment.CurrentDirectory, "data.db");
@@ -52,7 +52,7 @@ namespace SteamCMDLauncher
         /// <param name="value">The value assigned to the given key</param>
         /// <param name="collection">The table (collection) to store it under</param>
         /// <returns></returns>
-        public static bool AddEntry_BJSON(string key, object value, string collection)
+        public bool AddEntry_BJSON(string key, object value, string collection)
         {
             Component.DBManager db = new Component.DBManager(db_location);
 
@@ -69,7 +69,7 @@ namespace SteamCMDLauncher
             return result;
         }
 
-        public static BsonValue GetEntryByKey(string key, string collection)
+        public BsonValue GetEntryByKey(string key, string collection)
         {
             Component.DBManager db = new Component.DBManager(db_location);
 
@@ -83,7 +83,7 @@ namespace SteamCMDLauncher
             return (item == null) ? null : item[key];
         }
 
-        public static bool AddServer(int id, string folder_loc)
+        public bool AddServer(int id, string folder_loc)
         {
             Component.DBManager db = new Component.DBManager(db_location);
 
@@ -105,7 +105,7 @@ namespace SteamCMDLauncher
             return true;
         }
 
-        public static bool RemoveServer(string id)
+        public bool RemoveServer(string id)
         {
             Component.DBManager db = new Component.DBManager(db_location);
             
@@ -145,7 +145,7 @@ namespace SteamCMDLauncher
             return ContainsServers;
         }
         
-        public static Component.Struct.ServerCardInfo[] GetServers()
+        public Component.Struct.ServerCardInfo[] GetServers()
         {
             Component.DBManager db = new Component.DBManager(db_location);
 
@@ -158,7 +158,7 @@ namespace SteamCMDLauncher
             return server_info;
         }
        
-        public static string GetGameByAppId(string id)
+        public string GetGameByAppId(string id)
         {
             string file = string.Empty, output = string.Empty;
             JObject jsonObject;
@@ -190,7 +190,7 @@ namespace SteamCMDLauncher
             return output;
         }
 
-        public static bool ChangeServerAlias(string id, string new_alias)
+        public bool ChangeServerAlias(string id, string new_alias)
         {
             Component.DBManager db = new Component.DBManager(db_location);
 
@@ -218,7 +218,7 @@ namespace SteamCMDLauncher
             return result;
         }
 
-        public static bool ChangeServerFolder(string id, string old_location, string new_location)
+        public bool ChangeServerFolder(string id, string old_location, string new_location)
         {
             Component.DBManager db = new Component.DBManager(db_location);
 
@@ -264,7 +264,7 @@ namespace SteamCMDLauncher
             return result;
         }
 
-        public static void RunLogQueue(BsonDocument[] elem)
+        public void RunLogQueue(BsonDocument[] elem)
         {
             if (elem is null) return;
 
@@ -277,7 +277,7 @@ namespace SteamCMDLauncher
             db = null;
         }
     
-        public static void AddLog(string id, LogType lType, string details)
+        public void AddLog(string id, LogType lType, string details)
         {
             if (LogQueue is null)
             {
@@ -297,7 +297,7 @@ namespace SteamCMDLauncher
             });
         }
 
-        public static string[] FindGameID(string path)
+        public string[] FindGameID(string path)
         {
             List<string> rList = new List<string>(10);
 

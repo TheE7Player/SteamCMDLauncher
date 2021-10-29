@@ -130,11 +130,13 @@ namespace SteamCMDLauncher
             if (!prevent_update && !alias.Same(ServerAlias.Text))
             {
                 alias = ServerAlias.Text.Trim();
-                if(Config.ChangeServerAlias(id, ServerAlias.Text.Trim()))
+                Config cfg = new Config(); 
+                if (cfg.ChangeServerAlias(id, ServerAlias.Text.Trim()))
                 {
                     await Task.Delay(4000);
                     LogButton.IsEnabled = true;
                 }
+                cfg = null;
             }
         }
 
@@ -169,8 +171,9 @@ namespace SteamCMDLauncher
         {
             dh.YesNoDialog($"Delete {this.alias}", "Are you sure you want to do this? You can add this later on if need be.\nIt will only remove the instance - not the server folder.", new Action(() =>
             {
-                bool result = Config.RemoveServer(id);
-
+                Config cfg = new Config(); 
+                bool result = cfg.RemoveServer(id);
+                cfg = null;
                 if(!result)
                 {
                     dh.OKDialog("Error with deleting the server from collection and alias - If needed, clear the cache fully on next startup.\nHold 'R_CTRL' until 1 beep is heard in next boot up.");
@@ -194,12 +197,14 @@ namespace SteamCMDLauncher
                 return;
             }
 
-            Config.AddLog(id, update ? Config.LogType.ServerUpdate : Config.LogType.ServerValidate, "Operation Started");
+            Config cfg = new Config();
+
+            cfg.AddLog(id, update ? Config.LogType.ServerUpdate : Config.LogType.ServerValidate, "Operation Started");
             dh.ForceDialog((update) ?
             "Server is now updating.\nThis may take a long while..."
             : "Server is now validating and updating.\nThis may take a long while...", new Task(() =>
             {
-                LiteDB.BsonValue cmdLoc = Config.GetEntryByKey("cmd", Config.INFO_COLLECTION);
+                LiteDB.BsonValue cmdLoc = cfg.GetEntryByKey("cmd", Config.INFO_COLLECTION);
 
                 Component.SteamCMD cmd = new Component.SteamCMD(cmdLoc);
 
@@ -210,7 +215,10 @@ namespace SteamCMDLauncher
                     dh.CloseDialog();
                 });
             }));
-            Config.AddLog(id, update ? Config.LogType.ServerUpdate : Config.LogType.ServerValidate, "Operation Finished");
+
+            cfg.AddLog(id, update ? Config.LogType.ServerUpdate : Config.LogType.ServerValidate, "Operation Finished");
+            
+            cfg = null;
         }
 
         private void ValidateServer_Click(object sender, RoutedEventArgs e)

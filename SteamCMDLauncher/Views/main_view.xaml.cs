@@ -15,9 +15,9 @@ namespace SteamCMDLauncher
     {
         private static int server_count;
         private UIComponents.DialogHostContent HostDialog;
-        private BackgroundWorker ram_bgworker;
+        private System.Windows.Threading.DispatcherTimer ram_bgworker;
         private System.Diagnostics.Process self_process;
-        private static int ram_difference;
+        private static long ram_difference;
 
         private System.Windows.Media.Animation.DoubleAnimation textFadeAnimation;
 
@@ -39,9 +39,14 @@ namespace SteamCMDLauncher
 
         #region Ram Background
         bool icon_set = false;
-        private void Ram_bgworker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+
+        //DispatcherTimer
+
+        //private void
+
+        private void ChangeRamText(long size)
         {
-            RamText.Text = $"{e.ProgressPercentage}MB";
+            RamText.Text = $"{size}MB";
 
             // MenuUp - More
             // Minus - No Change
@@ -60,71 +65,58 @@ namespace SteamCMDLauncher
 
             if(!icon_set)
             {
-                if (ram_difference == 0) { ram_difference = e.ProgressPercentage; }
+                if (ram_difference == 0) { ram_difference = size; }
                 else
                 {
-                    if (e.ProgressPercentage == ram_difference)
+                    if (size == ram_difference)
                     {
                         // Value was the same as last time
                         if (RamIcon.Kind != MaterialDesignThemes.Wpf.PackIconKind.Minus)
                             RamIcon.Kind = MaterialDesignThemes.Wpf.PackIconKind.Minus;
 
-                        double size = 25;
+                        double r_size = 25;
                         
-                        RamIcon.Width = size;
-                        RamIcon.Height = size;
+                        RamIcon.Width = r_size;
+                        RamIcon.Height = r_size;
                         RamIcon.Foreground = Brushes.Yellow;
                     }
                     else
                     {
-                        bool result = e.ProgressPercentage > ram_difference;
-                        double size = 40;
+                        bool result = size > ram_difference;
+                        double r_size = 40;
                         
                         RamIcon.Kind = result ? MaterialDesignThemes.Wpf.PackIconKind.MenuUp : MaterialDesignThemes.Wpf.PackIconKind.MenuDown;
                         RamIcon.Foreground = result ? Brushes.Red : Brushes.Green;
-                        ram_difference = e.ProgressPercentage;
+                        ram_difference = size;
 
                         RamIcon.Margin = new Thickness(RamIcon.Margin.Left, 45, RamIcon.Margin.Right, RamIcon.Margin.Bottom);
 
-                        RamIcon.Width = size;
-                        RamIcon.Height = size;
+                        RamIcon.Width = r_size;
+                        RamIcon.Height = r_size;
                     }
                 }
                 icon_set = true;
             }
 
             RamText.BeginAnimation(OpacityProperty, textFadeAnimation);
-
-            sender = null;
-            e = null;
         }
 
-        private void Ram_bgworker_DoWork(object sender, DoWorkEventArgs e)
+        private void RamElapsed(object sender, EventArgs e)
         {
-            // Getting RAM usage: https://stackoverflow.com/a/59269258       
-            BackgroundWorker worker = sender as BackgroundWorker;
-           
+            // Getting RAM usage: https://stackoverflow.com/a/59269258
+            sender = null; e = null;
+
             if(self_process == null)
             {
                 self_process = System.Diagnostics.Process.GetCurrentProcess();
             }
 
-            long ram;
-            while (!bg_disposed)
+            if (!bg_disposed)
             {
-                if (worker.CancellationPending || bg_disposed) { e.Cancel = true; break; }
-                
-                ram = self_process.WorkingSet64;
-
                 // ram / 1048576
                 // => 1024 * 1024, (ram / 1048576) > (ram / 1024 / 1024)
-
-                worker.ReportProgress(Convert.ToInt32(ram / 1048576));
-
-                System.Threading.Thread.Sleep(10000);
-            }
-            sender = null;
-            worker = null;
+                ChangeRamText(self_process.WorkingSet64 / 1048576);
+            }                   
         }
 
         bool bg_disposed = false;
@@ -136,10 +128,10 @@ namespace SteamCMDLauncher
             {
                 if (ram_bgworker != null)
                 {
-                    if (ram_bgworker.IsBusy) ram_bgworker.CancelAsync();
+                    if (ram_bgworker.IsEnabled) ram_bgworker.Stop();
 
-                    ram_bgworker.DoWork -= Ram_bgworker_DoWork;
-                    ram_bgworker.ProgressChanged -= Ram_bgworker_ProgressChanged;
+                    ram_bgworker.Tick -= RamElapsed;
+                    ram_bgworker = null;
                 }
                 
                 self_process?.Dispose();
@@ -183,9 +175,14 @@ namespace SteamCMDLauncher
                 HostDialog.OKDialog("Please select the new location of the server as the last one wasn't found or exists");
 
                 folder_location = Config.GetFolder(string.Empty, string.Empty);
+
                 if (folder_location.Length > 0)
                 {
-                    Config.ChangeServerFolder(id, location, folder_location);
+                    Config cfg = new Config();
+
+                    cfg.ChangeServerFolder(id, location, folder_location);
+
+                    cfg = null;
 
                     Config.Log($"Changed folder from: '{location}' to '{folder_location}'");
 
@@ -206,12 +203,15 @@ namespace SteamCMDLauncher
         {
             Config.Log("LoadServerView was invoked");
 
-            Component.Struct.ServerCardInfo[] servers = Config.GetServers();
+            Config cfg = new Config();
+
+            Component.Struct.ServerCardInfo[] servers = cfg.GetServers();
 
             if (servers is null)
             {
                 Config.Log("[LSV] 'server' array was empty, this shouldn't be the case!");
                 HostDialog.OKDialog("Internal Problem - Not cached servers, fault with server dictionary");
+                cfg = null;
                 return;
             }
 
@@ -224,7 +224,6 @@ namespace SteamCMDLauncher
                 Config.Log("[LSV] Getting server information returned nothing, something went wrong there.");
                 
                 HostDialog.OKDialog($"Problems attempting to find server id: {id}.\nThis is either a code fault or a database fault.");
-                
                 return;
             }
 
@@ -285,11 +284,12 @@ namespace SteamCMDLauncher
                     if(removeDialog.Result == true)
                     {
                         Config.Log($"[MV] User has been prompted and agreed to removing the server '{id}' as its currently not supported in version: '{App._version}'");
-                        bool remove = Config.RemoveServer(id);
+                        bool remove = cfg.RemoveServer(id);
                         HostDialog.OKDialog(remove ? "The server has been removed successfully.\nYou may need to restart the program to see the effect." : "Was unable to remove the server.\nThere might be issues with referencing in the database due to this fault.");
                     }
                 }
             }
+            cfg = null;
         }
 
         private void PopulateCards()
@@ -305,7 +305,10 @@ namespace SteamCMDLauncher
                 initEvents = true;
             }
 
-            Component.Struct.ServerCardInfo[] svr_l = Config.GetServers();
+            Config cfg = new Config();
+
+            Component.Struct.ServerCardInfo[] svr_l = cfg.GetServers();
+
             server_count = svr_l.Length;
 
             ServerStack.VerticalAlignment = (server_count == 0) ? VerticalAlignment.Top : VerticalAlignment.Center;
@@ -325,7 +328,7 @@ namespace SteamCMDLauncher
                 ServerStack.Children.Add(text);
 
                 // Dereference the object as we don't need it anymore
-                Card = null; text = null;
+                Card = null; text = null; cfg = null;
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
@@ -335,12 +338,13 @@ namespace SteamCMDLauncher
             for (int i = 0; i < server_count; i++)
             {
                 Config.Log($"[PC] Loading Server Card for {svr_l[i].Unique_ID}");
-                ServerStack.Children.Add(Card.CreateCard(Config.GetGameByAppId(svr_l[i].GameID), svr_l[i].Alias, svr_l[i].Folder, svr_l[i].Unique_ID));
+                ServerStack.Children.Add(Card.CreateCard(cfg.GetGameByAppId(svr_l[i].GameID), svr_l[i].Alias, svr_l[i].Folder, svr_l[i].Unique_ID));
             }
 
             // Dereference the object as we don't need it anymore
             Card = null;
             svr_l = null;
+            cfg = null;
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -406,11 +410,9 @@ namespace SteamCMDLauncher
                 });
             }
 
-            ram_bgworker = new BackgroundWorker();
-            ram_bgworker.WorkerReportsProgress = true;
-            ram_bgworker.WorkerSupportsCancellation = true;
-            ram_bgworker.DoWork += Ram_bgworker_DoWork;
-            ram_bgworker.ProgressChanged += Ram_bgworker_ProgressChanged;
+            ram_bgworker = new System.Windows.Threading.DispatcherTimer();
+            ram_bgworker.Tick += RamElapsed;
+            ram_bgworker.Interval = TimeSpan.FromSeconds(10);
 
             Config.Log("[MV] Loaded Main Window");
 
@@ -422,7 +424,11 @@ namespace SteamCMDLauncher
 
             UpdateRefreshButton();
 
-            ram_bgworker.RunWorkerAsync();
+            // Get the initial size first
+            RamElapsed(null, null);
+            
+            // Then run the interval
+            ram_bgworker.Start();
             
             // App closing after select new server fix
             if (App.CancelClose)

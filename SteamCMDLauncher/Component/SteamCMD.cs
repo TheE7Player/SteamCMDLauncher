@@ -80,7 +80,9 @@ namespace SteamCMDLauncher.Component
 
             if (id >= 90 && id <= 99)
             {
-                string game_name = Config.GetGameByAppId(id.ToString());
+                Config cfg = new Config(); 
+                string game_name = cfg.GetGameByAppId(id.ToString());
+                cfg = null;
                 switch (game_name)
                 {
                     case "Counter-Strike: Condition Zero": extra_tag = "+app_set_config \"90 mod czero\""; break;

@@ -42,8 +42,12 @@ namespace SteamCMDLauncher
 
             if (Config.DatabaseExists)
             {
-                LiteDB.BsonValue cmdLoc = Config.GetEntryByKey("cmd", Config.INFO_COLLECTION);
+                Config cfg = new Config(); 
 
+                LiteDB.BsonValue cmdLoc = cfg.GetEntryByKey("cmd", Config.INFO_COLLECTION);
+                
+                cfg = null;
+                
                 steamcmd_location = (!(cmdLoc is null)) ? cmdLoc.AsString : string.Empty;
 
                 SteamCMDButton.IsEnabled = string.IsNullOrEmpty(steamcmd_location);
@@ -130,11 +134,13 @@ namespace SteamCMDLauncher
             // Holds the max found games (cached)
             int max = games.Length;
 
+            Config cfg = new Config(); 
+
             // Loop through each game that was found
             foreach (string game in games)
             {
                 // Get the game name based on the 'appid' given
-                current_game = Config.GetGameByAppId(game);
+                current_game = cfg.GetGameByAppId(game);
 
                 // Change the dialog to reflect if that was the game that was found
                 dh.YesNoDialog($"Found Game {count++} of {max}", $"Is the game your adding '{current_game}'?");
@@ -143,7 +149,7 @@ namespace SteamCMDLauncher
                 if (dh.GetResult() == 1) { game_id = game; break; }
 
             }
-         
+            cfg = null;
             current_game = null;
 
             return game_id;
@@ -203,7 +209,10 @@ namespace SteamCMDLauncher
             if (steamcmd_location.Length > 0)
             {
                 Config.Log($"[SETUP] CMD setup is allocated in \"{steamcmd_location}\"");
-                Config.AddEntry_BJSON("cmd", steamcmd_location, Config.INFO_COLLECTION);
+
+                Config cfg = new Config(); 
+                cfg.AddEntry_BJSON("cmd", steamcmd_location, Config.INFO_COLLECTION);
+                cfg = null;
 
                 ServerFolderButton.IsEnabled = true;
 
@@ -284,8 +293,12 @@ namespace SteamCMDLauncher
                     Config.Log("[SETUP] Install Process 4/4: Game has been installed, taking user to home page");
 
                     await Task.Delay(100);
+
+                    Config cfg = new Config(); 
                     
-                    Config.AddServer(selectedGame_ID, folder_location);
+                    cfg.AddServer(selectedGame_ID, folder_location);
+                    
+                    cfg = null;
 
                     Config.Log("[SETUP] Added server information into the database");
 
@@ -313,13 +326,16 @@ namespace SteamCMDLauncher
         private void ServerFolderButton_Click(object sender, RoutedEventArgs e)
         {
             folder_location = Config.GetFolder(null, "");
-
+            
+            Config cfg = new Config();
+            
             if (folder_location.Length > 0)
             {
                 // Validate if the id is correct
-                string[] found_games = Config.FindGameID(folder_location);
+                 
+                string[] found_games = cfg.FindGameID(folder_location);
                 string appid_loc = string.Empty;
-
+               
                 // Creating the programmatic version of a dialog host (using MatieralDesigns)
                 if(found_games.Length > 0)
                 {
@@ -334,24 +350,28 @@ namespace SteamCMDLauncher
                 if(string.IsNullOrEmpty(appid_loc))
                 {
                     dh.OKDialog("Sorry but the program didn't manage to find the appid based on current folders\nPlease help by stating what commands and files to run that in this program.");
+                    cfg = null;
                     return;
                 }
 
-                int result;
-                if(!Int32.TryParse(appid_loc, out result))
+                if (!int.TryParse(appid_loc, out int result))
                 {
                     dh.OKDialog($"Unable to support (from parsing) from id '{appid_loc}' - some features may be not implemented or available");
+                    cfg = null;
                     return;
                 }
 
-                if(!available_IDS.Any(x => x == result))
+                if (!available_IDS.Any(x => x == result))
                 {
                     dh.OKDialog($"Unable to support from id '{appid_loc}' - some features may be not implemented or available");
+                    cfg = null;
                     return;
                 }
 
                 Config.Log($"[SETUP] Adding server with ID {appid_loc} to folder: {folder_location}");
-                Config.AddServer(result, folder_location);
+
+                cfg.AddServer(result, folder_location);
+                cfg = null;
 
                 dh.OKDialog("Server has been added - Returning to home screen");
 
