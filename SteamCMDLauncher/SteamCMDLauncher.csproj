@@ -26,6 +26,9 @@
 
   <ItemGroup>
     <None Remove="icon.ico" />
+    <None Remove="Resources\dedicated_server_list.json" />
+    <None Remove="Resources\res_hash.txt" />
+    <None Remove="Resources\server_file_search.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,9 +56,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Resources\dedicated_server_list.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Resources\game_setting_222860.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -80,12 +80,6 @@
     <None Update="Resources\game_setting_740_en.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\res_hash.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\server_file_search.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Resources\sha256_writer.v">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
@@ -104,6 +98,15 @@
   <ItemGroup>
     <EmbeddedResource Include="icon.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\dedicated_server_list.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\res_hash.txt">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\server_file_search.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
 

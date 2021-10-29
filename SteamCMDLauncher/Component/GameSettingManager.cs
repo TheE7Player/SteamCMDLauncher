@@ -6,6 +6,7 @@ using System.IO;
 using Newtonsoft.Json.Linq;
 using System.Windows.Controls;
 using System.Globalization;
+using System.Reflection;
 
 namespace SteamCMDLauncher.Component
 {
@@ -92,7 +93,10 @@ namespace SteamCMDLauncher.Component
 
             Supported = !string.IsNullOrWhiteSpace(gameFile);
             LanguageSupported = !string.IsNullOrWhiteSpace(langFile);
-
+            
+            // Set config to true by default
+            ConfigOffical = true;
+            
             if (LanguageSupported)
             {
                 if(!SetLanguage(langFile)) { Supported = false; return; }
@@ -104,20 +108,16 @@ namespace SteamCMDLauncher.Component
             }
 
             Config.Log("[GSM] Validating if the config file is unaltered");
-            
-            string config_f = files.FirstOrDefault(x => x.EndsWith("res_hash.txt"));
-            
-            ConfigOffical = true;
 
-            if (string.IsNullOrWhiteSpace(config_f))
-            {
-                Config.Log("[GSM] Couldn't find 'res_hash.txt' - thats an issue!");
-                ConfigOffical = false;
-                return;
-            }
+            Assembly asm = Assembly.GetExecutingAssembly();
 
-            string[] contents = File.ReadAllLines(config_f)
-                .Where(x => !x.StartsWith("#")).ToArray();
+            StreamReader rs = new StreamReader(asm.GetManifestResourceStream("SteamCMDLauncher.Resources.res_hash.txt"));
+            
+            string config_f = rs.ReadToEnd();
+            
+            asm = null; rs = null;
+
+            string[] contents = config_f.GetArrayFromText('\n').Where(x => !x.StartsWith("#")).ToArray();
 
             string cfgHash = gameFile.GetSHA256Sum();
             string lngHash = langFile.GetSHA256Sum();

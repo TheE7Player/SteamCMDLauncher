@@ -92,5 +92,8 @@ namespace SteamCMDLauncher
 
             return output;
         }
+
+        // Quick wrapper for string
+        public static string[] GetArrayFromText(this string text, char spliter) => text.Split(spliter);       
     }
 }
