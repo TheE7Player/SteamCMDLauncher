@@ -36,7 +36,7 @@ namespace SteamCMDLauncher
 
             dh = new UIComponents.DialogHostContent(RootDialog, true, true);
 
-            ReturnBack.Visibility = (!first_time_run) ? Visibility.Visible : Visibility.Hidden;
+            ReturnBack.Visibility = !first_time_run ? Visibility.Visible : Visibility.Hidden;
 
             ToolTipService.SetShowOnDisabled(SteamCMDButton, true);
 
@@ -60,6 +60,15 @@ namespace SteamCMDLauncher
             }
 
             this.GameDropDown.ItemsSource = GetSupportedGames();
+            this.Closed += Setup_Closed;
+        }
+
+        private void Setup_Closed(object sender, EventArgs e)
+        {
+            sender = null; e = null;
+            Destory();
+            App.WindowClosed(this);
+            App.WindowOpen(new main_view());        
         }
 
         private string[] GetSupportedGames()
