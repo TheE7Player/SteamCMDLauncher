@@ -15,7 +15,8 @@ namespace SteamCMDLauncher
         public const string INFO_COLLECTION = "ifo";
         public const string LOG_COLLECTION = "lg";
         public const string SERVER_INFO_COLLECTION = "sci";
-        public const string SERVER_ALIAS_COLLECTION = "sca";
+        public const string SERVER_ALIAS_COLLECTION = "sca";      
+        public const string SERVER_BUILDV_COLLECTION = "sbv";
 
         public enum LogType
         {
@@ -26,7 +27,10 @@ namespace SteamCMDLauncher
             FolderChange = 1, AliasChange = 2,
 
             // Server running/status codes
-            ServerRun = 3, ServerStop = 4, ServerError = 5, ServerValidate = 6, ServerUpdate = 7, ServerRemove = 8
+            ServerRun = 3, ServerStop = 4, ServerError = 5, ServerValidate = 6, ServerUpdate = 7, ServerRemove = 8,
+
+            // Server Update codes
+            ServerOutOfDate = 9, ServerUpdated = 10
         }
 
         private static Component.AutoFlushQueue<BsonDocument> LogQueue;
@@ -121,6 +125,9 @@ namespace SteamCMDLauncher
 
             // Remove all the logging information (actions) from this database
             db.RemoveMany(id, LOG_COLLECTION, "svr_id");
+
+            // Remove current build server versions if any
+            db.RemoveMany(id, SERVER_BUILDV_COLLECTION, "_id");
 
             db.Destory();
             
@@ -342,6 +349,103 @@ namespace SteamCMDLauncher
             return rList.ToArray();
         }
 
+        public void SetCurrentBuildVersion(string server_id, string local_build, string server_build)
+        {
+            Component.DBManager db = null;
+            BsonDocument document;
+            BsonDocument document_old = null;
+
+            try
+            {
+                db = new Component.DBManager(db_location); 
+
+                document = new BsonDocument { ["_id"] = server_id, ["local"] = local_build, ["server"] = server_build, ["lease"] = $"{DateTime.UtcNow.AddDays(1).ToBinary()}" };
+
+                int operation = db.UpdateOrInsert(SERVER_BUILDV_COLLECTION, server_id, document, null, out document_old);
+
+                bool result = operation > 0;
+
+                // If the operation was to update to document instead of inserting it...
+                if (operation == 2)
+                {
+                    if(local_build == server_build)
+                        AddLog(server_id, LogType.ServerUpdated, "Server is now update to date with latest version");
+                    else
+                        AddLog(server_id, LogType.ServerOutOfDate, $"Server is out of date. Latest: {server_build}, Current: {local_build}");
+                }
+            }
+            finally
+            {
+                db.Destory();
+                document = null;
+                db = null;
+                document_old = null;
+                
+                server_id = null;
+                local_build = null;
+                server_build = null;
+            }         
+        }
+
+        /// <summary>
+        /// Returns a value (int) if it requires an update
+        /// </summary>
+        /// <param name="server_id"></param>
+        /// <returns></returns>
+        public int RequireUpdate(string server_id)
+        {
+            Component.DBManager db = null;
+            BsonDocument document;
+            WeakReference doc;
+
+            try
+            {
+                db = new Component.DBManager(db_location);
+
+                doc = db.FilterRowByColumnSingle(SERVER_BUILDV_COLLECTION, server_id);
+
+                // If target is empty or nothing, return -1 as we yet to insert this document
+                if (doc.Target is null) 
+                {
+                    Config.Log("[CFG-RU] Forcing update as server target was not found");
+                    return -1; 
+                }
+                
+                // If not, this means an entity has been found
+                document = doc.Target as BsonDocument;
+
+                // First validate the lease...
+
+                // If the cast more above fails, perform an update to correct it again
+                if(document["lease"].RawValue is null)
+                {
+                    Config.Log("[CFG-RU] Forcing update as column \"lease\" has problems parsing or doesn't exist");
+                    return -1;
+                }
+
+                // Get the date it was last amended
+                DateTime parsedLease = DateTime.FromBinary(Convert.ToInt64(document["lease"].AsDouble));
+
+                // Compare date first (If the current date is more, perform update)
+                if (parsedLease < DateTime.Now)
+                {
+                    Config.Log("[CFG-RU] Forcing update as lease is non-effective");
+                    return -1;
+                }
+
+                // If we get here, it means the lease is still in place!
+                return !document["server"].Equals(document["local"]) ? 1 : 0;
+            }
+            finally
+            {
+                db.Destory();
+                document = null;
+                db = null;
+                server_id = null;
+                doc = null;
+            }
+        }
+
         #endregion
 
         #region Utilities
@@ -460,6 +564,39 @@ namespace SteamCMDLauncher
             #else
                 System.Diagnostics.Debug.WriteLine(text);
             #endif
+        }
+
+        public static bool GetEmbededResource(string file, out string[] output)
+        {
+            System.Reflection.Assembly asm = System.Reflection.Assembly.GetExecutingAssembly();
+            StreamReader rs;
+
+            string config_f = null;
+            
+            try
+            {
+                rs = new StreamReader(asm.GetManifestResourceStream($"SteamCMDLauncher.Resources.{file}"));
+
+                config_f = rs.ReadToEnd();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Config.Log($"[GER] [!] EMBEDED ERROR - NO INTERNAL FILE OF '{file}' WAS FOUND [!]");
+                Config.Log($"[GER] REASON: {ex.Message}");
+            }
+            finally
+            {
+                output = config_f?.Split('\n');
+                
+                config_f = null;
+                file = null;
+                rs = null;
+                asm = null;
+            }
+
+            return false;
         }
 #endregion
     }

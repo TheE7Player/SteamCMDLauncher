@@ -32,6 +32,11 @@ namespace SteamCMDLauncher.Component
         /// If the current loaded config (either language or file) is unedited from release build
         /// </summary>
         public bool ConfigOffical { get; private set; }
+        
+        /// <summary>
+        /// If at any point during initialization stage the required embedded file failed
+        /// </summary>
+        public bool BrokenEmbededResource { get; private set; }
 
         private string targetExecutable, targetDictionary, PreArguments, JoinConnectString;
 
@@ -109,15 +114,16 @@ namespace SteamCMDLauncher.Component
 
             Config.Log("[GSM] Validating if the config file is unaltered");
 
-            Assembly asm = Assembly.GetExecutingAssembly();
-
-            StreamReader rs = new StreamReader(asm.GetManifestResourceStream("SteamCMDLauncher.Resources.res_hash.txt"));
-            
-            string config_f = rs.ReadToEnd();
-            
-            asm = null; rs = null;
-
-            string[] contents = config_f.GetArrayFromText('\n').Where(x => !x.StartsWith("#")).ToArray();
+            if (Config.GetEmbededResource("res_hash.txt", out string[] contents))
+            { 
+                contents = contents.Where(x => !x.StartsWith("#")).ToArray();
+                BrokenEmbededResource = false;
+            }
+            else
+            {
+                BrokenEmbededResource = true;
+                return;
+            }
 
             string cfgHash = gameFile.GetSHA256Sum();
             string lngHash = langFile.GetSHA256Sum();
@@ -138,7 +144,7 @@ namespace SteamCMDLauncher.Component
             }
 
             comparer = null; lngHash = null; cfgHash = null;
-            contents = null; config_f = null;
+            contents = null;
 
             langFile = null; gameFile = null;
             files = null; resource = null;

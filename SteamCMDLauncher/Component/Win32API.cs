@@ -25,6 +25,9 @@ namespace SteamCMDLauncher.Component
         {
             if (window is null) return;
 
+            if (window.Visibility == System.Windows.Visibility.Collapsed)
+                window.Visibility = System.Windows.Visibility.Visible;
+
             IntPtr current_hidden_window = new System.Windows.Interop.WindowInteropHelper(window).EnsureHandle();
 
             SetForegroundWindow(current_hidden_window);

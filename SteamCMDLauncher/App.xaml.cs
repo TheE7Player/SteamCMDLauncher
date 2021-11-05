@@ -8,6 +8,7 @@ using System.Diagnostics;
 
 // [NOTE] DON'T REMOVE THIS - It's not used in DEBUG mode but RELEASE mode!
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SteamCMDLauncher
 {
@@ -26,7 +27,7 @@ namespace SteamCMDLauncher
         /// <summary>
         /// Holds the current version of the program
         /// </summary>
-        public static string _version = "0.7.1";
+        public static string _version = "0.7.2";
 
         /// <summary>
         /// Holds the string to display the version of the program
@@ -392,23 +393,40 @@ namespace SteamCMDLauncher
         {
             sender = null; e = null;
 
+            NotifyIcon.Visible = false;
             ActiveWindow.ShowInTaskbar = true;
 
             Component.Win32API.ForceWindowOpen(ref ActiveWindow);
+        }
+
+        public static async Task ForceNotify(string title, string message, System.Windows.Forms.ToolTipIcon icon, int delay, bool condition, bool IconVisibility, bool TaskBarVisibility)
+        {
+            await System.Threading.Tasks.Task.Delay(200);
+
+            NotifyIcon.Visible = IconVisibility;
+            ActiveWindow.ShowInTaskbar = TaskBarVisibility;
+
+            if(condition) NotifyIcon.ShowBalloonTip(delay, title, message, icon);
+
+            title = null;
+            message = null;
         }
 
         private static async void AsyncToggleNotifyState(object sender, EventArgs e)
         {
             sender = null; e = null;
 
-            await System.Threading.Tasks.Task.Delay(200);
+            bool cond1 = ActiveWindow.WindowState == WindowState.Minimized;
+            bool cond2 = ActiveWindow.WindowState == WindowState.Normal;
 
-            NotifyIcon.Visible = ActiveWindow.WindowState == WindowState.Minimized;
-            ActiveWindow.ShowInTaskbar = ActiveWindow.WindowState == WindowState.Normal;
-
-            if(ActiveWindow.WindowState == WindowState.Minimized)
-              NotifyIcon.ShowBalloonTip(250, "Window Hidden", "Click here to resume the window", System.Windows.Forms.ToolTipIcon.Info);
+            await ForceNotify("Window Hidden",
+                "Click here to resume the window",
+                System.Windows.Forms.ToolTipIcon.Info,
+                250,
+                cond1, cond1, cond2);
         }
+
+        public static WeakReference GetActiveWindow() => new WeakReference(App.ActiveWindow);
 
         public static void WindowClosed(Window sender)
         {

@@ -20,7 +20,8 @@ namespace SteamCMDLauncher
         {
             NoResourceFolder,
             GameNotSupported,
-            CultureNotSupported
+            CultureNotSupported,
+            BrokenEmbedFile
         }
 
         #region Attributes
@@ -60,16 +61,14 @@ namespace SteamCMDLauncher
 
         private bool disposed = false;
 
-        public string GetFaultReason()
+        public string GetFaultReason() => NotReadyReason switch
         {
-            switch (NotReadyReason)
-            {
-                case FaultReason.NoResourceFolder: return "Failed to find the resource folder - please ensure your not running outside the application folder!";
-                case FaultReason.GameNotSupported: return "Game not supported yet\nPlease create the json files or wait till the game gets supported!";
-                case FaultReason.CultureNotSupported: return "The current config file for this game is in ENGLISH for now: Please contribute to translating it!";
-                default: return "Unknown";
-            }
-        }
+            FaultReason.NoResourceFolder => "Failed to find the resource folder - please ensure your not running outside the application folder!",
+            FaultReason.GameNotSupported => "Game not supported yet\nPlease create the json files or wait till the game gets supported!",
+            FaultReason.CultureNotSupported => "The current config file for this game is in ENGLISH for now: Please contribute to translating it!",
+            FaultReason.BrokenEmbedFile => "A fault from the Embedded Resource has occurred.\nPlease look at the release log file to see what resource failed.",
+            _ => "Unknown"
+        };
 
         public ServerView(string id, string alias, string folder, string app_id = "")
         {
@@ -85,23 +84,10 @@ namespace SteamCMDLauncher
 
             gsm = new Component.GameSettingManager(appid, folder);
 
-            if (!gsm.ResourceFolderFound)
-            {
-                NotReadyReason = FaultReason.NoResourceFolder; 
-                return;
-            }
-
-            if (!gsm.Supported)
-            {
-                NotReadyReason = FaultReason.GameNotSupported; 
-                return;
-            }
-
-            if (!gsm.LanguageSupported)
-            {
-                NotReadyReason = FaultReason.CultureNotSupported; 
-                return;
-            }
+            if (!gsm.ResourceFolderFound) { NotReadyReason = FaultReason.NoResourceFolder; return; }
+            if (!gsm.Supported) { NotReadyReason = FaultReason.GameNotSupported; return; }
+            if (!gsm.LanguageSupported) { NotReadyReason = FaultReason.CultureNotSupported; return; }
+            if (gsm.BrokenEmbededResource) { NotReadyReason = FaultReason.BrokenEmbedFile; return; }
 
             this.Loaded += Window_Loaded;
 
@@ -470,7 +456,7 @@ namespace SteamCMDLauncher
             Config.Log("[SV] Running Server");
 
             tb_Status.Text = "Server Running";
-               
+            
             server_run_id = cmd.Run(new Action(() => {
                 // Pre-invoke the button, to update the UI state
                 this.Dispatcher.Invoke(() =>
@@ -478,6 +464,14 @@ namespace SteamCMDLauncher
                     ServerStop();
                 });
             }));
+
+            await App.ForceNotify("Server Running",
+            "Your server is now running. Click here to access the panel again!",
+            System.Windows.Forms.ToolTipIcon.Info,
+            300,
+            true, true, false);
+
+            this.Visibility = Visibility.Collapsed;
 
             if (server_run_id == -1)
                 throw new Exception("ServerView for running the server program has returned -1, something went wrong. The process may have been executed but cannot be controlled by program.");
@@ -502,7 +496,7 @@ namespace SteamCMDLauncher
                 Config.Log($"[SV] server_run_id has returned {server_run_id}, that was not requested or expected!");
                 dh.OKDialog($"An error has occurred, as the process id is '{server_run_id}'.\nThis was unexpected and should be reported to issues in the GitHub Page.");
                 ToggleRunButton();
-                return; 
+                return;
             }
 
             System.Diagnostics.Process.GetProcessById(server_run_id).Kill();
@@ -521,7 +515,12 @@ namespace SteamCMDLauncher
             sb.Append(TotalTime.Seconds > 9 ? $"{TotalTime.Seconds}" : $"0{TotalTime.Seconds}");
 
             tb_Status.Text = $"Server Halted: {sb}";
+            
             sb = null;
+
+            Window self = App.GetActiveWindow().Target as Window;
+            SteamCMDLauncher.Component.Win32API.ForceWindowOpen(ref self);
+            self = null;
         }
         
         // Start/Stop Server button
@@ -550,6 +549,12 @@ namespace SteamCMDLauncher
         {
             if (!Component.Win32API.IsConnectedToInternet()) { Config.Log("[SV] [!] IsGameServerUpdated: Cannot update as there was no Internet to begin with. [!]"); return -1;}
 
+            Config cfg = new Config();
+
+            int require_update = cfg.RequireUpdate(id);
+
+            if (require_update > -1 ) return require_update;
+
             Config.Log("[SV] IsGameServerUpdated: Creating Unmanaged Objects");
             // We first use the https://www.steamcmd.net API to get the latest fork of the current server
             
@@ -577,7 +582,7 @@ namespace SteamCMDLauncher
                 httpRequest.Accept = "application/json";
                 System.Net.WebResponse httpResponse = null;
                 StreamReader streamReader = null;
-                bool ResponceMade = false;
+                //bool ResponceMade = false;
 
                 try
                 {
@@ -585,7 +590,7 @@ namespace SteamCMDLauncher
                     {
                         if (!disposed)
                         { 
-                            ResponceMade = true;
+                            //ResponceMade = true;
                             httpResponse = r.Result;
                             streamReader = new StreamReader(httpResponse.GetResponseStream());
                             response = streamReader.ReadToEndAsync().Result;
@@ -682,6 +687,8 @@ namespace SteamCMDLauncher
 
                 Config.Log("[SV] IsGameServerUpdated: Manifest file 'buildid' find is complete");
 
+                cfg.SetCurrentBuildVersion(id, build_id_index_lc, server_buildid);
+
                 // Now we compare if both strings are equal (same version)
                 // We're comparing the server to the local, as we cannot guarantee if the local is the same as server
                 if (mFound && !string.Equals(server_buildid, build_id_index_lc))
@@ -692,6 +699,7 @@ namespace SteamCMDLauncher
             finally
             {
                 // Dispose / Dereference any unmanaged objects
+                cfg = null;
 
                 pattern = null;
                 app_manif_loc = null;

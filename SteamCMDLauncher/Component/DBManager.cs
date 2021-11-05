@@ -231,7 +231,32 @@ namespace SteamCMDLauncher.Component
             
             return self;
         }
-    
+
+        public WeakReference FilterRowByColumnSingle(string table, string value)
+        {
+            WeakReference _table, self;
+
+            try
+            {
+                StartLock("Entering FilterRowByColumnSingle");
+
+                _table = GetTable(table);
+
+                self = new WeakReference(((ILiteCollection<BsonDocument>)_table.Target)
+                    .FindAll()
+                    .SingleOrDefault(x => x.Values.Contains(value)));
+            }
+            finally
+            {
+                _table = null;
+                value = null;
+                table = null;
+                EndLock("Exiting FilterKey");
+            }
+
+            return self;
+        }
+
         /// <summary>
         /// Returns how many elements are in a given table
         /// </summary>
