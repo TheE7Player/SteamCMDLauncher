@@ -359,7 +359,7 @@ namespace SteamCMDLauncher
             {
                 db = new Component.DBManager(db_location); 
 
-                document = new BsonDocument { ["_id"] = server_id, ["local"] = local_build, ["server"] = server_build, ["lease"] = $"{DateTime.UtcNow.AddDays(1).ToBinary()}" };
+                document = new BsonDocument { ["_id"] = server_id, ["local"] = local_build, ["server"] = server_build, ["lease"] = $"{DateTime.UtcNow.AddMinutes(30).ToBinary()}" };
 
                 int operation = db.UpdateOrInsert(SERVER_BUILDV_COLLECTION, server_id, document, null, out document_old);
 

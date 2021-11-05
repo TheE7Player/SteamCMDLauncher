@@ -175,7 +175,7 @@ namespace SteamCMDLauncher
         #endregion
 
         #region Server Operations
-        private void DoVerification(bool update = false)
+        private async void DoVerification(bool update = false)
         {
             if(!Component.Win32API.IsConnectedToInternet())
             {
@@ -203,7 +203,10 @@ namespace SteamCMDLauncher
             }));
 
             cfg.AddLog(id, update ? Config.LogType.ServerUpdate : Config.LogType.ServerValidate, "Operation Finished");
-            
+
+            // Call this function again to set the build numbers
+            await IsGameServerUpdated(folder, appid, true);
+
             cfg = null;
         }
 
@@ -545,15 +548,18 @@ namespace SteamCMDLauncher
         /// <param name="server_dir">The folder location of the ROOT server folder</param>
         /// <param name="app_id">the servers id number (not the parent game id!)</param>      
         /// <returns>1 if true (needs updated), 0 if false (no update) or -1 if no Internet</returns>
-        private async ValueTask<int> IsGameServerUpdated(string server_dir, string app_id)
+        private async ValueTask<int> IsGameServerUpdated(string server_dir, string app_id, bool force_check = false)
         {
-            if (!Component.Win32API.IsConnectedToInternet()) { Config.Log("[SV] [!] IsGameServerUpdated: Cannot update as there was no Internet to begin with. [!]"); return -1;}
+            if (!Component.Win32API.IsConnectedToInternet()) { Config.Log("[SV] [!] IsGameServerUpdated: Cannot update as there was no Internet to begin with. [!]"); return -1; }
 
             Config cfg = new Config();
 
-            int require_update = cfg.RequireUpdate(id);
+            if (!force_check) { 
 
-            if (require_update > -1 ) return require_update;
+                int require_update = cfg.RequireUpdate(id);
+
+                if (require_update > -1) return require_update; 
+            }
 
             Config.Log("[SV] IsGameServerUpdated: Creating Unmanaged Objects");
             // We first use the https://www.steamcmd.net API to get the latest fork of the current server
