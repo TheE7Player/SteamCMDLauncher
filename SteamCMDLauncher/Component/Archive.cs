@@ -9,10 +9,10 @@ namespace SteamCMDLauncher.Component
 {
     public class Archive
     {
-        private string app_id;
-        private string output_path;
-        private int revisions = 1;
+        private ArchiveData self_data;
+
         private const int COMPRESS_LEVEL = 9;
+        public static string CACHE_PATH = Path.Combine(Path.GetTempPath(), "TheE7Player", "SteamCMDLauncher", "temp");
 
         private string DEFAULT_EXTENTION_CFG = ".smdcg";
         private string DEFAULT_EXTENTION_SETTING = ".smds";
@@ -27,10 +27,20 @@ namespace SteamCMDLauncher.Component
             LOCALIZATION_PATH = null;
         }
 
-        public Archive(string file_location, string appid)
+        public Archive(string file_location, string appid, bool performLoad = false)
         {
-            this.app_id = appid;
-            this.output_path = file_location;
+            this.self_data = new ArchiveData();
+            this.self_data.locationReference = file_location;
+            this.self_data.GameID = appid;
+
+            if (!File.Exists(file_location))
+            { 
+                this.self_data.Revisions = 0;
+            }
+            else
+            {
+                if( performLoad ) LoadFile();
+            }
 
             file_location = null; appid = null;
         }
@@ -38,25 +48,30 @@ namespace SteamCMDLauncher.Component
         private byte[] CreateMetaDataFile()
         {
             byte[] output = null;
+          
+            this.self_data.LastRead = DateTime.UtcNow;
+
             using (MemoryStream stringBuffer = new MemoryStream())
             {
                 using (StreamWriter sW = new StreamWriter(stringBuffer, UnicodeEncoding.Unicode))
                 {
-                    sW.WriteLine($"DATE={DateTime.UtcNow}");
-                    sW.WriteLine($"GAME={app_id}");
-                    sW.WriteLine($"REVI={revisions}");
+                    sW.WriteLine($"DATE={this.self_data.LastRead}");
+                    sW.WriteLine($"GAME={this.self_data.GameID}");
+                    sW.WriteLine($"REVI={this.self_data.Revisions}");
                     sW.Flush();
                     stringBuffer.Position = 0;
                     output = stringBuffer.ToArray();
-                }              
+                }
             }
 
             return output;
         }
 
         //Dictionary<string, string[]> colection
-        public void SaveFile(string fileloc)
+        public void SaveFile()
         {
+            this.self_data.Revisions++;
+
             MemoryStream outputMemStream = new MemoryStream();
             ZipOutputStream zipStream = new ZipOutputStream(outputMemStream);
 
@@ -77,71 +92,89 @@ namespace SteamCMDLauncher.Component
             zipStream.IsStreamOwner = false;
             zipStream.Close();
 
-            System.IO.File.WriteAllBytes(fileloc, outputMemStream.GetBuffer());
+            System.IO.File.WriteAllBytes(this.self_data.locationReference, outputMemStream.GetBuffer());
         }
 
-        public ArchiveData LoadFile(string fileloc)
+        public void LoadFile()
         {
-            ArchiveData self = new ArchiveData();
+            if (!Directory.Exists(CACHE_PATH)) 
+            {
+                Config.Log($"[AD] Creating TMP folder in: {CACHE_PATH}");
+                Directory.CreateDirectory(CACHE_PATH); 
+            }
 
-            using (var fs = new FileStream(fileloc, FileMode.Open, FileAccess.Read))
+            string zip_path_folder = Path.Combine(CACHE_PATH, Path.GetFileNameWithoutExtension(this.self_data.locationReference));
+
+            if(Directory.Exists(zip_path_folder))
+            {
+                Directory.Delete(zip_path_folder, true);
+            }
+
+            Directory.CreateDirectory(zip_path_folder);
+
+            this.self_data.tempReference = zip_path_folder;
+
+            using (var fs = new FileStream(this.self_data.locationReference, FileMode.Open, FileAccess.Read))
             {
                 using (var zf = new ZipFile(fs))
                 {
+                    string fi = string.Empty;
                     foreach (ZipEntry ze in zf)
                     {
-                        if (ze.IsDirectory)
+                        /*if (ze.IsDirectory)
                         {
-                            self.Folders++;
                             continue; 
-                        }
+                        }*/
+                        using Stream s = zf.GetInputStream(ze);
+                        using StreamReader sr = new StreamReader(s);
+                        fi = sr.ReadToEnd();
                         
-                        self.Files++;
-
                         if (ze.Name == META_DATA_FILE)
                         {
-                            using Stream s = zf.GetInputStream(ze);
-                            using StreamReader sr = new StreamReader(s);
-                            string[] eh = sr.ReadToEnd().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+                            string[] eh = fi.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
                             string outp;
+
                             for (int i = 0; i < eh.Length; i++)
                             {
                                 outp = eh[i][5..].Trim();
 
                                 if (eh[i].StartsWith("DATE"))
                                 {
-                                    self.LastRead = DateTime.Parse(outp);
+                                    this.self_data.LastRead = DateTime.Parse(outp);
                                 }
 
                                 if(eh[i].StartsWith("GAME"))
                                 {
-                                    self.GameID = outp;
+                                    this.self_data.GameID = outp;
                                 }
 
                                 if (eh[i].StartsWith("REVI"))
                                 {
-                                    self.Revisions = Convert.ToInt32(outp);
+                                    this.self_data.Revisions = Convert.ToInt32(outp);
                                 }
-                            }
+                            }                
                         }
+
+                        File.WriteAllText(Path.Combine(zip_path_folder, ze.Name), fi);
+                        
+                        fi = null;
                     }
                 }
             }
-
-            return self;
+           
+           // return this.self_data;
         }
     }
 
     public struct ArchiveData
     {
-        public string GameID;
         public DateTime LastRead;
+        
         public int Revisions;
-
-        public string[] Translations;
-
-        public int Files;
-        public int Folders;
+        
+        public string GameID;
+        public string tempReference;
+        public string locationReference;
     }
 }

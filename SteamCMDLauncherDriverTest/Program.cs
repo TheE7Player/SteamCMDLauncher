@@ -9,14 +9,26 @@ namespace SteamCMDLauncherDriverTest
         {
             string target = @"C:\Users\james\Desktop\file_test.zip";
 
-            var aaa = new Archive("A", "740");
+            DoSave(target);
+
+        }
+
+        static void CreateInstace(string target)
+        {
+            var aaa = new Archive(target, "740");
 
             System.IO.File.Delete(target);
 
-            aaa.SaveFile(target);
+            aaa.SaveFile();
 
-            var result = aaa.LoadFile(target);
-
+            aaa.LoadFile();
+        }
+        
+        static void DoSave(string target)
+        {
+            var aaa = new Archive(target, "740", true);
+            
+            aaa.SaveFile();
         }
     }
 }
