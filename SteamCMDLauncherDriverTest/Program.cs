@@ -62,6 +62,9 @@ namespace SteamCMDLauncherDriverTest
 
             aaa.SaveFile();
 
+            aaa.Cleanup = true;
+            aaa.ForceClear();
+
             file = null;
             target = null;
             new_file = null; 
