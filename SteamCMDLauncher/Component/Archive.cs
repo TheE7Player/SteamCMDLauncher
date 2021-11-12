@@ -1,5 +1,6 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -12,6 +13,9 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         public bool Cleanup { get; set; }
 
+        // If the intention is for reading the archive
+        private bool IsReadOnly { get; set; }
+        
         private bool IsLoaded;
 
         private bool IsSafed;
@@ -74,6 +78,20 @@ namespace SteamCMDLauncher.Component
             file_location = null; appid = null;
         }
        
+        // View the archive in read-only mode
+        public Archive(string file_location)
+        {
+            IsLoaded = true;
+            
+            // Create the new archive data struct
+            this.self_data = new ArchiveData();
+            this.self_data.locationReference = file_location;
+            
+            IsReadOnly = true;
+            
+            LoadFile();
+        }
+
         ~Archive() { ForceClear(); }
       
         /// <summary>
@@ -91,14 +109,17 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         public void ForceClear()
         {
-            // If the 'IsSafed' flag isn't true, force the save to prevent data loss
-            if (!IsSafed) SaveFile();
+            if(!IsReadOnly)
+            { 
+                // If the 'IsSafed' flag isn't true, force the save to prevent data loss
+                if (!IsSafed) SaveFile();
 
-            // If the 'Cleanup' flag is true and 'IsLoaded' flag is true, then start to destroy unmanaged objects
-            if (Cleanup && IsLoaded)
-            {
-                META_DATA_FILE = null;
-                Clear();
+                // If the 'Cleanup' flag is true and 'IsLoaded' flag is true, then start to destroy unmanaged objects
+                if (Cleanup && IsLoaded)
+                {
+                    META_DATA_FILE = null;
+                    Clear();
+                }
             }
         }
 
@@ -231,14 +252,14 @@ namespace SteamCMDLauncher.Component
         public void LoadFile()
         {
             // If the tmp folder doesn't exist, do so
-            if(!Directory.Exists(this.self_data.tempReference))
+            if(!Directory.Exists(this.self_data.tempReference) && !IsReadOnly)
             {
                 Config.Log($"[AD] Creating ARCHIVE TMP folder: {this.self_data.tempReference}");
                 Directory.CreateDirectory(this.self_data.tempReference);
             }
 
             // What if the load is for a new file to be created?
-            if(!File.Exists(this.self_data.locationReference)) { IsLoaded = true; return; }
+            if(!File.Exists(this.self_data.locationReference) && !IsReadOnly) { IsLoaded = true; return; }
 
             // Create a disposable FileStream to read the archive
             using (FileStream fs = new FileStream(this.self_data.locationReference, FileMode.Open, FileAccess.Read))
@@ -297,8 +318,10 @@ namespace SteamCMDLauncher.Component
 
                             outp = null;
                             eh = null;
-                        }
 
+                            if (IsReadOnly) break;
+                        }
+                        if (IsReadOnly) break;
                         // Then cache the file location where this file will be created in temp
                         string file = Path.Combine(this.self_data.tempReference, ze.Name);
 
@@ -324,6 +347,42 @@ namespace SteamCMDLauncher.Component
 
             // Then set the 'IsLoaded' flag to true
             IsLoaded = true;
+        }
+
+        /// <summary>
+        /// Iterate through the archive without caching
+        /// </summary>
+        /// <returns>A typle where T1 is the file name, T2 being the contents</returns>
+        public IEnumerable<(string, string)> GetFiles()
+        {
+            // Check if its possible to read the archive in the first place
+            if (!File.Exists(this.self_data.locationReference)) 
+                yield break;
+
+            using (FileStream fs = new FileStream(this.self_data.locationReference, FileMode.Open, FileAccess.Read))
+            {
+                // Create a disposable ZipFile, each will read each file
+                using (ZipFile zf = new ZipFile(fs))
+                {
+                    // Setup a string to hold the file contents
+                    string fi = string.Empty;
+
+                    // For each entry found...
+                    foreach (ZipEntry ze in zf)
+                    {
+                        // Create a stream from the current file being processed
+                        using Stream s = zf.GetInputStream(ze);
+
+                        // Create a stream reader to read the current stream
+                        using StreamReader sr = new StreamReader(s);
+
+                        // Push the stream into a string and store it into 'fi'
+                        fi = sr.ReadToEnd();
+
+                        yield return (ze.Name, fi);
+                    }
+                }
+            }
         }
 
         /// <summary>

@@ -928,7 +928,7 @@ namespace SteamCMDLauncher
 
                 UpdateBarText.Text = needs_update_flag switch
                 {
-                    -1 => "NO INTERNET",
+                    -1 => "NO INTERNET / SERVER FAULT",
                     0  => "RECENT VERSION",
                     1  => "UPDATE SERVER",
                     _  => $"ERROR: GOT {needs_update_flag}"

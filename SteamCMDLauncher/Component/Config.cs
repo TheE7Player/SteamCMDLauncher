@@ -598,6 +598,48 @@ namespace SteamCMDLauncher
 
             return false;
         }
-#endregion
+
+        /// <summary>
+        /// Returns the SHA-256 of a file, assuming 'path' is an actual file
+        /// </summary>
+        /// <param name="path">The file to get the SHA-256 hash from</param>
+        /// <returns>The 65 length hash SHA-256 of the file - 'string.Empty' if not a file</returns>
+        public static string GetSHA256Sum(string path)
+        {
+            Config.Log($"[SHA-256] Getting hash from file: {path}");
+            if (!System.IO.File.Exists(path)) return string.Empty;
+
+            // https://stackoverflow.com/questions/38474362/get-a-file-sha256-hash-code-and-checksum/51966515#51966515
+            // Same idea but different logic (this comment means to only output the B64 string, not the hex we need!)
+
+            // Good resource: https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hashalgorithm.computehash?view=net-5.0
+
+            string output = null;
+
+            using (System.Security.Cryptography.SHA256 hash = System.Security.Cryptography.SHA256Managed.Create())
+            {
+                byte[] encr = hash.ComputeHash(System.IO.File.ReadAllBytes(path));
+
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+                System.Collections.IEnumerator bEnum = encr.GetEnumerator();
+
+                string hex_cvrt = "x2";
+
+                while (bEnum.MoveNext())
+                {
+                    sb.Append(((byte)bEnum.Current).ToString(hex_cvrt));
+                }
+
+                output = sb.ToString();
+                hex_cvrt = null;
+                sb = null;
+                bEnum = null;
+                encr = null;
+            }
+
+            return output;
+        }
+        #endregion
     }
 }

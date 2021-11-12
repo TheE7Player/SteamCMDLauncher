@@ -87,24 +87,56 @@ namespace SteamCMDLauncher.Component
             targetDictionary = folderLocation;
 
             // Get all the files in the current directory
-            string[] files = Directory.GetFiles(resource);
-            string langFile, gameFile = string.Empty;
+            string[] files = Directory.GetFiles(resource, $"*{Archive.DEFAULT_EXTENTION_CFG}");
+            int fLength = files.Length;
 
-            string gameJson = $"game_setting_{appid}.json";
-            string langJson = $"game_setting_{appid}_{lang}.json";
+            string correct_file = string.Empty;
+            Archive arch = null;
 
-            gameFile = files.FirstOrDefault(x => x.EndsWith(gameJson));
-            langFile = files.FirstOrDefault(x => x.EndsWith(langJson));
+            for (int i = 0; i < fLength; i++)
+            {
+                arch = new Archive(files[i]);
 
-            Supported = !string.IsNullOrWhiteSpace(gameFile);
-            LanguageSupported = !string.IsNullOrWhiteSpace(langFile);
+                if (arch.GetArchiveDetails.GameID == appid)
+                { correct_file = files[i]; break; }
+            }
+            
+            string langFile = string.Empty, gameFile = string.Empty;
+
+            //string gameJson = $"game_setting_{appid}.json";
+            string langJson = $"lang/lang_{lang}.json";
+
+            Supported = !string.IsNullOrWhiteSpace(correct_file);
+            LanguageSupported = false;
+
+            if (Supported)
+            {
+                // T1: File name, T2: Contents
+                foreach ((string, string) item in arch.GetFiles())
+                {
+                    if(item.Item1 == "settings.json")
+                    {
+                        gameFile = item.Item2; continue;
+                    }
+
+                    if(item.Item1 == langJson)
+                    {
+                        langFile = item.Item2;
+                        LanguageSupported = true; break;
+                    }
+                }
+            }
+            
+            arch = null;
+
+            //LanguageSupported = !string.IsNullOrWhiteSpace(langFile);
             
             // Set config to true by default
             ConfigOffical = true;
             
             if (LanguageSupported)
             {
-                if(!SetLanguage(langFile)) { Supported = false; return; }
+                if(!SetLanguageByContent(langFile)) { Supported = false; return; }
             }
 
             if (Supported)
@@ -125,8 +157,7 @@ namespace SteamCMDLauncher.Component
                 return;
             }
 
-            string cfgHash = gameFile.GetSHA256Sum();
-            string lngHash = langFile.GetSHA256Sum();
+            string cfgHash = Config.GetSHA256Sum(correct_file);
 
             // Now we compare
             StringComparer comparer = StringComparer.OrdinalIgnoreCase;
@@ -137,18 +168,12 @@ namespace SteamCMDLauncher.Component
                 ConfigOffical = false;
             }
 
-            if (!contents.Any(x => x.Contains(lngHash)))
-            {
-                Config.Log("[GSM-SHA] The language config loaded isn't offical, showing UI warning to user.");
-                ConfigOffical = false;
-            }
-
-            comparer = null; lngHash = null; cfgHash = null;
+            comparer = null; cfgHash = null;
             contents = null;
 
             langFile = null; gameFile = null;
             files = null; resource = null;
-            gameJson = null; langJson = null;
+            langJson = null;
             lang = null;
         }
         
@@ -174,7 +199,7 @@ namespace SteamCMDLauncher.Component
             string lFile;
 
             // Remove any comments if any
-            lFile = String.Join(null, File.ReadAllLines(path)
+            lFile = string.Join(null, File.ReadAllLines(path)
                 .Where(x => !x.Contains("//"))
                 .ToArray());
 
@@ -185,16 +210,27 @@ namespace SteamCMDLauncher.Component
             return !ReferenceEquals(language, null);
         }
 
+        private bool SetLanguageByContent(string content)
+        {
+            language = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(content);
+
+            return !ReferenceEquals(language, null);
+        }
+
         private bool SetControls(string path)
         {
             Config.Log("[GSM] Got JSON to read properties from...");
-            
-            // Remove any comments if any
-            string lFile = String.Join(null, File.ReadAllLines(path)
-            .Where(x => !x.Contains("//"))
-            .ToArray());
 
-            JObject cont = (JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(lFile);
+            if (string.IsNullOrEmpty(path)) 
+            {
+                Config.Log("[GSM] [!] Argument given for SetControls were empty - should be the case! [!]");
+                return false; 
+            }
+
+            // Remove any comments if any
+            JObject cont = (JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(File.Exists(path) ? string.Join(null, File.ReadAllLines(path)
+                .Where(x => !x.Contains("//"))
+                .ToArray()) : path);
 
             if (cont is null)
             {
@@ -203,8 +239,6 @@ namespace SteamCMDLauncher.Component
             }
 
             controls = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
-            
-            lFile = null;
 
             JToken target_kv;
 
@@ -356,7 +390,7 @@ namespace SteamCMDLauncher.Component
             tab_control_children = null;
             to_fix = null;
 
-            cont = null; lFile = null; carry_dir = null; iterable_fields = null;
+            cont = null; carry_dir = null; iterable_fields = null;
             return true;
         }
 
