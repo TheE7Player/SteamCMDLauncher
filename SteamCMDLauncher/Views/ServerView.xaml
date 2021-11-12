@@ -34,14 +34,15 @@
         <TextBlock x:Name="UpdateBarText" FontSize="14" Text="Checking Latest Version" Style="{DynamicResource MaterialDesignBody3TextBlock}" Foreground="{StaticResource White}" Margin="641,44,415,44" VerticalAlignment="Top" HorizontalAlignment="Center"/>
         <ProgressBar x:Name="UpdateBar" IsIndeterminate="True" Margin="641,71,415,45" />
         
-        <StackPanel Grid.Row="1" Orientation="Horizontal">
+        <Grid Grid.Row="1">
             <TextBox
                 Name="ServerAlias"
                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
                 VerticalAlignment="Top"
+                HorizontalAlignment="Left"
                 Height="55"
                 VerticalScrollBarVisibility="Hidden" Width="475"
-                FontSize="16" Margin="42,10,20,0" Foreground="{StaticResource White}" KeyUp="ServerAlias_KeyUp"
+                FontSize="16" Margin="40,10,0,0" Foreground="{StaticResource White}" KeyUp="ServerAlias_KeyUp"
                 >
                 <TextBox.Text>
                     <Binding Path="Alias">
@@ -51,12 +52,12 @@
                     </Binding>
                 </TextBox.Text>
             </TextBox>
-            <Button Click="DeleteServer_Click" Margin="0,12,0,0" Width="74" Height="50" HorizontalAlignment="Center" VerticalAlignment="Top">
+            <Button Click="DeleteServer_Click" Margin="0,12,120,0" Width="74" Height="50" HorizontalAlignment="Center" VerticalAlignment="Top">
                 <materialDesign:PackIcon Kind="Delete" Foreground="{StaticResource White}" Width="35" Height="35"/>
             </Button>
-            <TextBlock x:Name="configStatus" Style="{DynamicResource MaterialDesignBody3TextBlock}" Foreground="Wheat" FontSize="20" Text="No Config Loaded" VerticalAlignment="Center" Margin="25,0,0,20"/>
-            <ComboBox x:Name="configBox" Width="400" Foreground="{StaticResource White}" IsEnabled="False" FontSize="15" SelectionChanged="configBox_SelectionChanged" DropDownOpened="ToggleConfigBoxColour" DropDownClosed="ToggleConfigBoxColour" Margin="20,0,0,10" />
-        </StackPanel>
+            <TextBlock x:Name="configStatus" Style="{DynamicResource MaterialDesignBody3TextBlock}" Foreground="Wheat" FontSize="20" Text="No Config Loaded" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="180,0,0,25"/>
+            <ComboBox x:Name="configBox" Width="400" Foreground="{StaticResource White}" IsEnabled="False" FontSize="15" SelectionChanged="configBox_SelectionChanged" DropDownOpened="ToggleConfigBoxColour" DropDownClosed="ToggleConfigBoxColour" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,30,20"/>
+        </Grid>
 
         <GroupBox Grid.Row="2" Header="Server Actions" Width="240" Height="400" Margin="0,0,955,0">
             <StackPanel>

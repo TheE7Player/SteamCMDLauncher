@@ -9,7 +9,7 @@
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
         FontFamily="{DynamicResource MaterialDesignFont}"
-        Title="extra" Height="450" Width="800" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" AllowsTransparency="True" Background="Transparent">
+        Title="Advanced Menu" Height="500" Width="850" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" AllowsTransparency="True" Background="Transparent" Topmost="True">
     <Grid>
         <materialDesign:DialogHost x:Name="RootDialog" IsOpen="False" >
             <materialDesign:DialogHost.DialogContent>
@@ -21,7 +21,7 @@
                 <TextBlock x:Name="DialogTitle"
                            FontSize="17" 
                            FontWeight="DemiBold" 
-                           Padding="7" Margin="0,4,0,10" 
+                           Padding="7" Margin="0,4,0,5" 
                            VerticalAlignment="Center" HorizontalAlignment="Center" 
                            TextWrapping="Wrap"></TextBlock>
                 <GroupBox Header="Database Related"
@@ -31,6 +31,7 @@
                     <StackPanel>
                         <CheckBox FontSize="13" Style="{DynamicResource MaterialDesignAccentCheckBox}" Margin="0,5,0,5" IsChecked="{Binding DeleteDB}">Delete Database Content</CheckBox>
                         <CheckBox FontSize="13" Style="{DynamicResource MaterialDesignAccentCheckBox}" Margin="0,5,0,5" IsChecked="{Binding ClearLog}">Delete Activity Logging (Server Actions etc)</CheckBox>
+                        <CheckBox FontSize="13" Style="{DynamicResource MaterialDesignAccentCheckBox}" Margin="0,5,0,5" IsChecked="{Binding DeleteTemp}" IsEnabled="{Binding isTempEnabled}">Delete left over temp files</CheckBox>
                     </StackPanel>
                 </GroupBox>
 

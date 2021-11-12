@@ -356,7 +356,7 @@ namespace SteamCMDLauncher.Component
         public IEnumerable<(string, string)> GetFiles()
         {
             // Check if its possible to read the archive in the first place
-            if (!File.Exists(this.self_data.locationReference)) 
+            if (!File.Exists(this.self_data.locationReference))
                 yield break;
 
             using (FileStream fs = new FileStream(this.self_data.locationReference, FileMode.Open, FileAccess.Read))

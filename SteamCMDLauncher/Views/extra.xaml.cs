@@ -9,6 +9,9 @@ namespace SteamCMDLauncher.Views
     {
         public bool DeleteDB { get; set; }
         public bool ClearLog { get; set; }
+        public bool DeleteTemp { get; set; }
+
+        public bool isTempEnabled { get; set; }
 
         private UIComponents.DialogHostContent dh;
 
@@ -16,6 +19,13 @@ namespace SteamCMDLauncher.Views
         {
             App.CancelClose = true;
             InitializeComponent();
+
+            isTempEnabled = false;
+
+            if(System.IO.Directory.Exists(Component.Archive.CACHE_PATH))
+            {
+                isTempEnabled = System.IO.Directory.GetFiles(Component.Archive.CACHE_PATH).Length > 0;
+            }
 
             DialogTitle.Text = $"SteamCMDLauncher V{App._version} Advanced Menu";
             dh = new UIComponents.DialogHostContent(RootDialog, true, true);
@@ -45,6 +55,11 @@ namespace SteamCMDLauncher.Views
                 {
                     dh.OKDialog("Database wasn't erased - as there were no database to begin with.");
                 }
+            }
+
+            if(DeleteTemp)
+            {
+                System.IO.Directory.Delete(Component.Archive.CACHE_PATH, true);
             }
 
             Exit();

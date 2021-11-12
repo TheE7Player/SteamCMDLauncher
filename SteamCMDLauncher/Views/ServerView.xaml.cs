@@ -259,23 +259,34 @@ namespace SteamCMDLauncher
             if (!Directory.Exists(cfg_path))
                 Directory.CreateDirectory(cfg_path);
 
-            string file_location = first_save ? Path.Combine(cfg_path, $"{name}.cfg") : last_save_location;
+            string file_location = first_save ? Path.Combine(cfg_path, $"{name}{Component.Archive.DEFAULT_EXTENTION_SETTING}") : last_save_location;
             
             if(string.IsNullOrEmpty(last_save_location) || !file_location.Same(last_save_location))
                 last_save_location = name;
 
-            File.WriteAllLines(file_location, file);
+            var save_config = new Component.Archive(file_location, appid, true);
 
-            dh.YesNoDialog("Reveal File", "The config file was successful!\nWould you like to access it directly right now?", new Action(() =>
+            save_config.SetFileContents("config.cfg", string.Join("\r\n",file));
+
+            save_config.SaveFile();
+
+            save_config.Cleanup = true;
+            save_config.ForceClear();
+            save_config = null;
+
+            string temp_path = Path.Combine(Component.Archive.CACHE_PATH, $"{name}.cfg");
+            File.WriteAllLines(temp_path, file);
+
+            dh.YesNoDialog("Reveal File", "The config file was successful!\nWould you like to access it directly right now?\n(Note: This is a temp file as editing the config is not possible outside this application)", new Action(() =>
             {
-                System.Diagnostics.Process.Start("explorer.exe", file_location);
+                System.Diagnostics.Process.Start("explorer.exe", temp_path);
             }));
 
             file_location = null;
             cfg_path = null;
             name = null;
             file = null;
-
+            temp_path = null;
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
@@ -303,6 +314,36 @@ namespace SteamCMDLauncher
             }
 
             bool force_out = false;
+
+            var arch = new Component.Archive(file);
+
+            if(arch.GetArchiveDetails.GameID != appid)
+            {
+                Config.Log("[SV] LoadConfigFile returned false as the appid didn't match");
+                return false;
+            }
+
+            string[] contents = null;
+
+            foreach (var item in arch.GetFiles())
+            {
+                if(item.Item1 == "config.cfg")
+                {
+                    contents = item.Item2.Split(Environment.NewLine);
+                    break;
+                }
+            }
+
+            arch.Cleanup = true;
+            arch.ForceClear();
+            arch = null;
+
+            if(contents is null)
+            {
+                Config.Log("[SV] LoadConfigFile returned false as the config file while reading the archive in read-mode failed");
+                return false;
+            }
+
             await Task.Run(async () =>
             {
                 await this.Dispatcher.Invoke(async() =>
@@ -314,7 +355,7 @@ namespace SteamCMDLauncher
 
                     dh.IsWaiting(false);
                     dh.ShowBufferingDialog();
-                    gsm.SetConfigFiles(File.ReadAllLines(file),
+                    gsm.SetConfigFiles(contents,
                     new Action(() => {
                         dh.CloseDialog();
                         dh.IsWaiting(true);
@@ -342,10 +383,9 @@ namespace SteamCMDLauncher
         private async void LoadConfig_Click(object sender, RoutedEventArgs e)
         {
             // Load config file
-            string file = Config.GetFile(".cfg");
+            string file = Config.GetFile(Component.Archive.DEFAULT_EXTENTION_SETTING);
             
             if (string.IsNullOrEmpty(file)) return;
-
 
             Config.Log("[CFG] Loading settings from config file");
 
@@ -745,7 +785,7 @@ namespace SteamCMDLauncher
             string displayName = Path.GetFileNameWithoutExtension(file_name);
 
             if (!configBox.Items.Contains(displayName))
-            { 
+            {
                 configBox.Items.Add(displayName);
             }
 
@@ -754,8 +794,8 @@ namespace SteamCMDLauncher
             // Assign the combobox index
 
             if (configBox.Items.Count == 1)
-            { 
-                configBox.SelectedIndex = 0; 
+            {
+                configBox.SelectedIndex = 0;
             }
             else
             {

@@ -63,7 +63,7 @@ namespace SteamCMDLauncher
                 Console.Beep();
 
                 // Then show the window as a dialog (halts until close event is fired)
-                WindowOpen(new Views.extra(), true);               
+                WindowOpen(new Views.extra(), true);
             }
         }
 
@@ -222,6 +222,37 @@ namespace SteamCMDLauncher
 
             return targets.Slice(0, slice_start).ToArray();
         }
+
+        private void DoFileCheckup(string path, int days)
+        {
+            Config.Log($"[APP] Checking path: {path} for any files with expiry date of {Math.Abs(days)} days");
+
+            if (!System.IO.Directory.Exists(path)) return;
+
+            FileInfo[] old_log_files = Directory
+                .GetFiles(path)
+                .Select(x => new FileInfo(x)).ToArray();
+
+            int deletedCount = 0;
+
+            // Clear any logs that were found to be more than a day old
+            if (old_log_files?.Length > 0)
+            {
+                DateTime expired_date = DateTime.Now.AddDays(days);
+
+                int deleteLen = old_log_files.Length;
+                for (int i = 0; i < deleteLen; i++)
+                {
+                    if (old_log_files[i].LastWriteTime < expired_date)
+                    { old_log_files[i].Delete(); deletedCount++; }
+                }
+            }
+
+            Config.Log(deletedCount > 0 ? $"[APP] Deleted {deletedCount} files that went past the expected expiry date stated above" : $"[APP] Didn't find any files that matched the expiry criteria");
+
+            path = null;
+            old_log_files = null;
+        }
         #endregion
 
         #region Window Logic
@@ -231,7 +262,6 @@ namespace SteamCMDLauncher
         private void App_Startup(object sender, StartupEventArgs e)
         {
             // Disable Hardware Acceleration (If not supported by GPU or CPU)
-
             if (System.Windows.Media.RenderCapability.Tier >> 16 == 0)
             {
                 Config.Log("[RENDERER] GPU Tier 0 - Forcing Software Renderer as Hardware Render isn't possible");
@@ -241,28 +271,12 @@ namespace SteamCMDLauncher
             {
                 Config.Log("[RENDERER] GPU Tier 1/2 - Hardware Render is supported by default, Ignore");
             }
-            
-            #if RELEASE
+
+#if RELEASE
             // Clear any old logs (if any)
-            FileInfo[] old_log_files = Directory.GetFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"))
-                .Select(x => new FileInfo(x))
-                .ToArray();
-
-            // Clear any logs that were found to be more than a day old
-            if(old_log_files?.Length > 0)
-            {
-                DateTime expired_date = DateTime.Now.AddDays(-1);
-
-                int deleteLen = old_log_files.Length;
-                for (int i = 0; i < deleteLen; i++)
-                {
-                    if(old_log_files[i].LastWriteTime < expired_date)
-                        old_log_files[i].Delete();
-                }
-            }
-
-            old_log_files = null;
-            #endif
+            DoFileCheckup(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"), -1);
+#endif
+            DoFileCheckup(Component.Archive.CACHE_PATH, -1);
 
             // Set the 'StartTime' to the current date
             StartTime = DateTime.Now;
@@ -386,7 +400,9 @@ namespace SteamCMDLauncher
             if (!AsDialog)
             { ActiveWindow.Show(); }
             else
-            { ActiveWindow.ShowDialog(); }
+            { 
+                ActiveWindow.ShowDialog();
+            }
         }
         
         private static void NotifyClick(object sender, EventArgs e)

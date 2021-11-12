@@ -21,7 +21,7 @@ namespace SteamCMDLauncher.Component
         private const int FORCE_WINDOW_OPEN = 9;
         private const int FLAG_OFFLINE = 32; // (0x20) = 32
 
-        public static void ForceWindowOpen(ref System.Windows.Window window)
+        public static void ForceWindowOpen(ref System.Windows.Window window, int FLAG = FORCE_WINDOW_OPEN)
         {
             if (window is null) return;
 
@@ -32,7 +32,7 @@ namespace SteamCMDLauncher.Component
 
             SetForegroundWindow(current_hidden_window);
 
-            ShowWindow(current_hidden_window, 9);
+            ShowWindow(current_hidden_window, FLAG);
         }
 
         public static bool IsConnectedToInternet()
