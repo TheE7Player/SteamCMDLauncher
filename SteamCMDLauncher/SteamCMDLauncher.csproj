@@ -26,9 +26,13 @@
 
   <ItemGroup>
     <None Remove="icon.ico" />
+    <None Remove="Resources\CSGO.smdcg" />
     <None Remove="Resources\dedicated_server_list.json" />
+    <None Remove="Resources\Garrys Mod.smdcg" />
+    <None Remove="Resources\L4D2.smdcg" />
     <None Remove="Resources\res_hash.txt" />
     <None Remove="Resources\server_file_search.json" />
+    <None Remove="Resources\TF2.smdcg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -110,6 +114,21 @@
     <EmbeddedResource Include="Resources\server_file_search.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\CSGO.smdcg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Garrys Mod.smdcg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\L4D2.smdcg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\TF2.smdcg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">

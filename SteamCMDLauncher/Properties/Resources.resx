@@ -118,37 +118,25 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="CSGO" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CSGO.smdcg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="dedicated_server_list" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\dedicated_server_list.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="game_setting_222860" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\game_setting_222860.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="Garrys_Mod" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Garrys Mod.smdcg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="game_setting_222860_en" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\game_setting_222860_en.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="game_setting_232250" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\game_setting_232250.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="game_setting_232250_en" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\game_setting_232250_en.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="game_setting_4020" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\game_setting_4020.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
-  </data>
-  <data name="game_setting_4020_en" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\game_setting_4020_en.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
-  </data>
-  <data name="game_setting_740" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\game_setting_740.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
-  </data>
-  <data name="game_setting_740_en" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\game_setting_740_en.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  <data name="L4D2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\L4D2.smdcg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="res_hash" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\res_hash.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
   <data name="server_file_search" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\server_file_search.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="TF2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\TF2.smdcg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

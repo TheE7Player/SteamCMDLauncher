@@ -5,7 +5,7 @@ import crypto.sha256
 import time
 
 const (
-	target = "json"
+	target = "smdcg"
 	__debug = false
 	output = "res_hash.txt"
 )

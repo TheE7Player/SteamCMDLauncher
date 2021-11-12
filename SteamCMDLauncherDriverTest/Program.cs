@@ -1,5 +1,7 @@
 ﻿using System;
 using SteamCMDLauncher.Component;
+using System.IO;
+using System.Linq;
 
 namespace SteamCMDLauncherDriverTest
 {
@@ -7,7 +9,7 @@ namespace SteamCMDLauncherDriverTest
     {
         static void Main(string[] args)
         {
-            string target = @"C:\Users\james\Desktop\file_test.zip";
+            /*string target = $"C:\\Users\\james\\Desktop\\CSGO.zip";
 
             if (!System.IO.File.Exists(target))
                 CreateInstace(target);
@@ -16,8 +18,50 @@ namespace SteamCMDLauncherDriverTest
 
             DoFileFetch(target, ".metadata");
 
-            DoFileSaveAmend(target, ".metadata", "example_folder>.new_file_data", "This has been written");
+            DoFileSaveAmend(target, ".metadata", "example_folder>.new_file_data", "This has been written");*/
 
+            // Create the game config files
+
+            //GenerateGameConfig("C:\\Users\\james\\Desktop\\TF2", "232250", "game_setting_232250");
+        }
+
+        static void GenerateGameConfig(string name, string appid, string target)
+        {
+            var eeee = Directory.GetFiles(@"C:\Users\james\source\repos\SteamCMDLauncher\SteamCMDLauncher\Resources")
+                .Where(x => x.Contains(target))
+                .ToArray();
+
+            var ooo = new Archive($"{name}{Archive.DEFAULT_EXTENTION_CFG}", appid, true);
+
+            // Amend the config first
+            foreach (string file in eeee)
+            {
+                // This is the default setting file
+                if(file.Contains($"{target}.json"))
+                {
+                    var a1 = ooo.SetFileContents("settings.json", File.ReadAllText(file));
+                }
+                else
+                {
+                    // This means it is a language file
+                    string nm = Path.GetFileNameWithoutExtension(file);
+
+                    // Get the lang type only
+                    nm = nm[(target.Length + 1)..];
+
+                    var a2 = ooo.SetFileContents($"lang>lang_{nm}.json", File.ReadAllText(file));
+                }
+            }
+
+            ooo.SaveFile();
+
+            ooo.Cleanup = true;
+            ooo.ForceClear();
+            ooo = null;
+
+            name = null;
+            appid = null;
+            target = null;
         }
 
         static void CreateInstace(string target)

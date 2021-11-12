@@ -1,7 +1,5 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -30,7 +28,7 @@ namespace SteamCMDLauncher.Component
         public const string DEFAULT_EXTENTION_CFG = ".smdcg";
         public const string DEFAULT_EXTENTION_SETTING = ".smds";
 
-        private string META_DATA_FILE = ".metadata", LOCALIZATION_PATH = "/lang/";
+        private string META_DATA_FILE = ".metadata";
 
         /// <summary>
         /// Create a new archive to save or load configurations
@@ -68,12 +66,10 @@ namespace SteamCMDLauncher.Component
             { 
                 this.self_data.Revisions = 0;
             }
-            else
-            {
-                // If not and auto-call for loading is enabled, load the archive
-                if( performLoad ) LoadFile();
-            }
-
+            
+            // If not and auto-call for loading is enabled, load the archive
+            if( performLoad ) LoadFile();
+            
             // Clear the strings as we don't need them anymore
             file_location = null; appid = null;
         }
@@ -102,7 +98,6 @@ namespace SteamCMDLauncher.Component
             if (Cleanup && IsLoaded)
             {
                 META_DATA_FILE = null;
-                LOCALIZATION_PATH = null;
                 Clear();
             }
         }
@@ -241,6 +236,9 @@ namespace SteamCMDLauncher.Component
                 Config.Log($"[AD] Creating ARCHIVE TMP folder: {this.self_data.tempReference}");
                 Directory.CreateDirectory(this.self_data.tempReference);
             }
+
+            // What if the load is for a new file to be created?
+            if(!File.Exists(this.self_data.locationReference)) { IsLoaded = true; return; }
 
             // Create a disposable FileStream to read the archive
             using (FileStream fs = new FileStream(this.self_data.locationReference, FileMode.Open, FileAccess.Read))
@@ -382,7 +380,14 @@ namespace SteamCMDLauncher.Component
 
             // Set 'IsSafed' to false as we are appending a new or overwritten item
             IsSafed = false;
-            
+
+            // If the tmp folder doesn't exist, do so
+            if (!Directory.Exists(this.self_data.tempReference))
+            {
+                Config.Log($"[AD] Creating ARCHIVE TMP folder: {this.self_data.tempReference}");
+                Directory.CreateDirectory(this.self_data.tempReference);
+            }
+
             try
             {
                 // If the archive isn't loaded yet
