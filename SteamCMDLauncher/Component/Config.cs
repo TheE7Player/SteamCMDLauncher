@@ -582,7 +582,7 @@ namespace SteamCMDLauncher
             return string.Empty;
         }
 
-        public static void Log(string text)
+        public static void Log(string text, bool play_beep_sound = false)
         {
             #if RELEASE
             if(string.IsNullOrEmpty(SessionFileName))
@@ -592,9 +592,16 @@ namespace SteamCMDLauncher
                 if (!Directory.Exists(logFolder))
                     Directory.CreateDirectory(logFolder);
 
-                int currentNumber = Directory.GetFiles(logFolder).Length + 1;
-                SessionFileName = Path.Combine(logFolder, $"scmdl_session_{++currentNumber}.txt");
-
+                string[] currentFiles = Directory.GetFiles(logFolder);
+                
+                int latestFile = 0;
+                if (currentFiles.Length > 0)
+                    latestFile = Convert.ToInt32(Path.GetFileNameWithoutExtension(currentFiles[^1])[14..]);
+                  
+                SessionFileName = Path.Combine(logFolder, $"scmdl_session_{++latestFile}.txt");
+                
+                currentFiles = null;
+                
                 logFolder = null;
             }
 
@@ -606,6 +613,8 @@ namespace SteamCMDLauncher
             #else
                 System.Diagnostics.Debug.WriteLine(text);
             #endif
+
+            if(play_beep_sound) System.Media.SystemSounds.Beep.Play();
         }
 
         public static bool GetEmbededResource(string file, out string[] output)

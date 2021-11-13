@@ -225,7 +225,7 @@ namespace SteamCMDLauncher
             // Validate if any required files are needed fist
 
             //Check if any fields that are required are filled
-            if (!ValidateInputs(true)) return;
+            if (!ValidateInputs()) return;
 
             // Save config button
             string[] file = gsm.GetSafeConfig();
@@ -292,11 +292,47 @@ namespace SteamCMDLauncher
             GC.Collect();
         }
 
+        private async Task<bool> LoadConfigComponents(string file, string[] contents)
+        {
+            string short_name = string.Empty;
+
+            try
+            {
+                dh.IsWaiting(false);
+                dh.ShowBufferingDialog();
+
+                await Task.Delay(500);
+
+                dh.IsWaiting(false);
+            
+                dh.ShowBufferingDialog();
+
+                bool result = false;
+
+                gsm.SetConfigFiles(contents,
+                new Action(() => { dh.CloseDialog(); dh.IsWaiting(true); result = true; }),
+                new Action(() => { dh.CloseDialog(); dh.IsWaiting(true);}));
+
+                if (!result) return false;
+
+                short_name = Path.GetFileNameWithoutExtension(file);
+
+                if (!config_files.ContainsKey(short_name))
+                    config_files.Add(short_name, file);
+            }
+            finally
+            {
+                short_name = null;
+                contents = null;
+                file = null;
+            }
+            
+            return false;
+        }
+
         private async Task<bool> LoadConfigFile(string file)
         {
             if (!File.Exists(file)) return false;
-
-            string short_name;
 
             if (config_files is null)
             { 
@@ -312,8 +348,6 @@ namespace SteamCMDLauncher
                     return false;
                 }
             }
-
-            bool force_out = false;
 
             var arch = new Component.Archive(file);
 
@@ -344,40 +378,9 @@ namespace SteamCMDLauncher
                 return false;
             }
 
-            await Task.Run(async () =>
-            {
-                await this.Dispatcher.Invoke(async() =>
-                {
-                    dh.IsWaiting(false);
-                    dh.ShowBufferingDialog();
-                
-                    await Task.Delay(1000);
+            bool result = await LoadConfigComponents(file, contents);
 
-                    dh.IsWaiting(false);
-                    dh.ShowBufferingDialog();
-                    gsm.SetConfigFiles(contents,
-                    new Action(() => {
-                        dh.CloseDialog();
-                        dh.IsWaiting(true);
-                    }), 
-                    new Action(() => { 
-                        dh.CloseDialog();
-                        dh.IsWaiting(true);
-                        force_out = true;
-                    }));
-                });
-
-                if (force_out) return;
-
-                short_name = Path.GetFileNameWithoutExtension(file);
-                
-                if (!config_files.ContainsKey(short_name))
-                    config_files.Add(short_name, file);
-
-                short_name = null;
-            });
-
-            return !force_out;
+            return !result;
         }
 
         private async void LoadConfig_Click(object sender, RoutedEventArgs e)
@@ -399,7 +402,9 @@ namespace SteamCMDLauncher
                 dh.OKDialog("A problem occurred. Either:\nA) The config you loaded is already been stored (Use the ComboBox top right)\nB) The config you selected isn't for the controls available or is corrupted.");
                 return;
             }
-            
+
+            newConfigBoxItemLock = true;
+
             LoadConfigBox(file);
             
             file = null;
@@ -772,6 +777,7 @@ namespace SteamCMDLauncher
         #region Config Box Related
 
         bool toggleColour = false;
+        bool newConfigBoxItemLock = false;
 
         // Toggles between Black and White depending if the dropdown menu is option
         private System.Windows.Media.Brush ChangeForeground_ConfigBox => (toggleColour = !toggleColour) ?
@@ -809,18 +815,24 @@ namespace SteamCMDLauncher
 
         private async void configBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (configBox.Items.Count <= 1 ) { return; }
+            if (configBox.Items.Count <= 1 || newConfigBoxItemLock) { newConfigBoxItemLock = false; return; }
 
             string target = config_files[configBox.SelectedValue.ToString()];
 
-            bool result = await LoadConfigFile(target);
-
-            if (!result)
+            await LoadConfigFile(target).ContinueWith((x) =>
             {
-                Config.Log($"[LoadConfig] async returned false: \"{target}\"");
-                dh.OKDialog("That config file is missing or is already stored!\nIf loaded previously, use the ComboBox in the top right to load it in again.");
-                return;
-            }
+                if (!x.Result)
+                {
+                    Config.Log($"[LoadConfig] async returned false: \"{target}\"");
+
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        dh.OKDialog("That config file is missing or is already stored!\nIf loaded previously, use the ComboBox in the top right to load it in again.");
+                    });
+                                  
+                    return;
+                }
+            });
 
             if (!last_save_location.Same(target))
                 last_save_location = target;
