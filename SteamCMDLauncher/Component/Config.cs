@@ -197,6 +197,48 @@ namespace SteamCMDLauncher
             return output;
         }
 
+        public Dictionary<string, int> GetSupportedGames()
+        {
+            string file;
+
+            string key_id = "id";
+            string key_game = "game";
+            string key_svr = "server";
+
+            JObject objectA;
+            JToken[] objects;
+
+            Dictionary<string, int> output = new Dictionary<string, int>();
+
+            try
+            {
+                file = System.Text.Encoding.Default.GetString(Properties.Resources.dedicated_server_list);
+
+                objectA = JObject.Parse(file);
+
+                objects = objectA[key_svr].Children().ToArray();
+
+                int size = objects.Length;
+
+                for (int i = 0; i < size; i++) 
+                { 
+                    output.Add(objects[i].Value<string>(key_game), objects[i].Value<int>(key_id));
+                }
+            }
+            finally
+            {
+                file = null;
+                objectA = null;
+                objects = null;
+
+                key_game = null;
+                key_svr = null;
+                key_svr = null;
+            }
+
+            return output;
+        }
+
         public bool ChangeServerAlias(string id, string new_alias)
         {
             Component.DBManager db = new Component.DBManager(db_location);

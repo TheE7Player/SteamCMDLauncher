@@ -435,7 +435,7 @@ namespace SteamCMDLauncher.Component
         public (bool, string) SetFileContents(string target, string contents)
         {
             // A string to hold the temp location file
-            string temp_contents = string.Empty;          
+            string temp_contents = string.Empty;
 
             // Set 'IsSafed' to false as we are appending a new or overwritten item
             IsSafed = false;

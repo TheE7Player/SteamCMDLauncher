@@ -355,7 +355,7 @@ namespace SteamCMDLauncher.UIComponents
 
             TextBox tb = new TextBox() { Margin = new Thickness(5) };
 
-            MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
+            MainPanel.Margin = new Thickness(20);
 
             MainPanel.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 2) });
 
@@ -423,7 +423,7 @@ namespace SteamCMDLauncher.UIComponents
 
             Button btn = new Button() { Content = "OK" };
 
-            MainPanel.Margin = new System.Windows.Thickness(20, 20, 20, 20);
+            MainPanel.Margin = new Thickness(20);
 
             MainPanel.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 2) });
 
@@ -436,13 +436,58 @@ namespace SteamCMDLauncher.UIComponents
                 ExitState();
             };
 
-            btn.Margin = new Thickness(20,20,20,0);
+            btn.Margin = new Thickness(20, 20, 20, 0);
 
             MainPanel.Children.Add(btn);
 
             _dialog.DialogContent = MainPanel;
 
             if (forceOpenWhenCall) ShowDialog();
+        }
+
+        public ValueTask<string> ShowComponentCombo(string title, string message, string[] elements)
+        {
+            StackPanel MainPanel = new StackPanel();
+
+            Button btn = new Button() { Content = "OK" };
+
+            ComboBox cmbo = new ComboBox()
+            {
+                Margin = new Thickness(10),
+                IsReadOnly = true
+            };
+
+            bool ready = false;
+
+            MainPanel.Margin = new Thickness(20, 20, 20, 20);
+
+            MainPanel.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 2) });
+
+            MainPanel.Children.Add(new Separator() { Margin = new Thickness(0, 0, 0, 15) });
+
+            MainPanel.Children.Add(new TextBlock { Text = message, FontSize = 12, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 4, 0, 2) });
+
+            cmbo.ItemsSource = elements;
+
+            MainPanel.Children.Add(cmbo);
+
+            btn.Click += (_, e) =>
+            {
+                ready = true;
+                ExitState();
+            };
+
+            btn.Margin = new Thickness(20, 20, 20, 0);
+
+            MainPanel.Children.Add(btn);
+
+            _dialog.DialogContent = MainPanel;
+
+            if (forceOpenWhenCall) ShowDialog();
+
+            while (!ready && df.Continue) { Task.Delay(500); }
+
+            return new ValueTask<string>(!ready ? "" : cmbo.Text.Trim());
         }
 
         #endregion

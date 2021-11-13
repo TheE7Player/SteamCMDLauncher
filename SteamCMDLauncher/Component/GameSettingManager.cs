@@ -6,7 +6,6 @@ using System.IO;
 using Newtonsoft.Json.Linq;
 using System.Windows.Controls;
 using System.Globalization;
-using System.Reflection;
 
 namespace SteamCMDLauncher.Component
 {
@@ -224,7 +223,7 @@ namespace SteamCMDLauncher.Component
             if (string.IsNullOrEmpty(path)) 
             {
                 Config.Log("[GSM] [!] Argument given for SetControls were empty - should be the case! [!]");
-                return false; 
+                return false;
             }
 
             // Remove any comments if any

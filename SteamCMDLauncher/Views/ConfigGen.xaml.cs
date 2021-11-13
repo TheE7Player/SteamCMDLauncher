@@ -1,5 +1,5 @@
-﻿#define SKIP_JSON_LOAD
-#define FORCE_LOAD
+﻿#undef SKIP_CFG_LOAD
+#undef FORCE_LOAD
 
 using Newtonsoft.Json.Linq;
 using System;
@@ -24,6 +24,10 @@ namespace SteamCMDLauncher.Views
         #region Attributes
         private int priorityControlLevel = 0;
         private bool disposed = false;
+
+        private string config_appid = string.Empty;
+
+        private string loadedConfig = string.Empty;
 
         private bool isLoadedConfig = false;
        
@@ -52,9 +56,13 @@ namespace SteamCMDLauncher.Views
         private string preCommands = string.Empty;
         private string joinCommand = string.Empty;
 
+        private string currentConfig = "No Config Loaded";
+
         public string Target { get => target; set { target = value; OnPropertyChanged(nameof(Target)); } }
         public string PreComands { get => preCommands; set { preCommands = value; OnPropertyChanged(nameof(PreComands)); } }
         public string JoinCommand { get => joinCommand; set { joinCommand = value; OnPropertyChanged(nameof(JoinCommand)); } }
+        public string GameConfigDescription { get => currentConfig; set { currentConfig = value; OnPropertyChanged(nameof(GameConfigDescription)); } }
+
 
         public ObservableCollection<Component.Struct.ConfigTree> TreeModel { get; set; }
 
@@ -459,15 +467,6 @@ namespace SteamCMDLauncher.Views
                 CurrentControls.Add(control_hint);
                 CurrentControls.Add(control_alert);
 
-                /*control_type = null;
-                control_label = null;
-                control_def = null;
-                control_hint = null;
-                control_alert = null;
-                control_cmd = null;
-                control_cmd_pf = null;
-                control_tag = null;*/
-
                 if (t == 't' || t == 'p')
                 {
                     // If the control type is an input or password
@@ -576,7 +575,7 @@ namespace SteamCMDLauncher.Views
 
         #region Control Functions/Methods
         
-        private void GenerateJSON(string filename, bool languageSupport)
+        private void GenerateJSON(bool languageSupport)
         {
             if (output is null)
             {
@@ -675,7 +674,7 @@ namespace SteamCMDLauncher.Views
                                 table.Add(col[0], col[1]);
                             }
 
-                            col = null;                         
+                            col = null;
                             data = null;
                             row = null;
 
@@ -693,8 +692,10 @@ namespace SteamCMDLauncher.Views
                             // Add the type ([0]) and its value ([1])
                             controlOut.Add(valSplit[0], cTranslations);
 
-                            lang_output.Value.Add(cTranslations, valSplit[1]);
-
+                            if(lang_output.Value.ContainsKey(cTranslations))
+                                lang_output.Value[cTranslations] = valSplit[1];
+                            else
+                                lang_output.Value.Add(cTranslations, valSplit[1]);
                             cTranslations = null;
                         }
                         else
@@ -712,7 +713,6 @@ namespace SteamCMDLauncher.Views
             valSplit = null;
             why = null;
             controlOut = null;
-            filename = null;
             cKey = null;
             cTranslations = null;
             TextTranslationTypes = null;
@@ -907,7 +907,7 @@ namespace SteamCMDLauncher.Views
                 // ControlCategory.SelectedIndex = -1; ~ Category won't be changed as this will make the UI experience annoying
 
                 // Reset table for next control
-                table = null;
+                table = new Lazy<DataTable>();
                 
                 GenerateTree();
             } 
@@ -920,11 +920,11 @@ namespace SteamCMDLauncher.Views
             content = null;
             fault_reason = null;
         }
-        
+
         private void SafeConfig_Click(object sender, RoutedEventArgs e)
         {
             // Save Config Button
-            if(!output_directory.IsValueCreated || output_directory.Value.Count < 1)
+            if (!output_directory.IsValueCreated || output_directory.Value.Count < 1)
             {
                 dh.OKDialog("No Controls have been inserted yet... please do so before saving!");
                 return;
@@ -932,41 +932,79 @@ namespace SteamCMDLauncher.Views
 
             string fileName = string.Empty;
 
-            bool includeLanguageSupport = false;
-
-            dh.YesNoDialog("Multiple Language Support", "Does your config support multiple languages?\n(Click 'No' if its intended for personal usage!)", new Action(() => includeLanguageSupport = true));
-
-            dh.InputDialog("Save Config",
-                "What do you want to name your configuration? (Just the filename, not with extension!)\nNote: You'll need to find the AppID in order for the program to detect it.",
-                new Action<string>((x) => fileName = x));
-
-            // Check if the fileName variable contains any characters that are not allowed in a file name
-            char[] ill = System.IO.Path.GetInvalidFileNameChars();
-            if (fileName.Any(x => ill.Contains(x)))
+            // Get the game id if its not already set (new config)
+            if (config_appid == string.Empty)
             {
-                dh.OKDialog($"The given filename '{fileName}' contained illegal characters, please ensure you don't have any!");
-                ill = null;
-                fileName = null;
-                return;
+                Config cfg = new Config();
+
+                Dictionary<string, int> available = cfg.GetSupportedGames();
+
+                cfg = null;
+
+                System.Threading.Tasks.ValueTask<string> Configuration_Dialog = dh.ShowComponentCombo(
+                    "Choose Game Config",
+                    "Please chose what game this configuration is for:",
+                    available.Keys.ToArray());
+
+                if (string.IsNullOrEmpty(Configuration_Dialog.Result)) { return; }
+
+                config_appid = available[Configuration_Dialog.Result].ToString();
+
+                dh.OKDialog($"Acknowledged '{Configuration_Dialog.Result}' with game id of: '{config_appid}'");
+
+                GameConfigDescription = $"Loaded: {Configuration_Dialog.Result}";
+
+                available = null;
             }
 
-            GenerateJSON(fileName, includeLanguageSupport);
+            //bool includeLanguageSupport = false;
+
+            //dh.YesNoDialog("Multiple Language Support", "Does your config support multiple languages?\n(Click 'No' if its intended for personal usage!)", new Action(() => includeLanguageSupport = true));
+
+            bool sameConfig = false;
+            if (!string.IsNullOrEmpty(loadedConfig) && File.Exists(loadedConfig))
+            {
+                System.Threading.Tasks.ValueTask<bool> r = dh.YesNoDialog("Save to new file?", $"The program still have reference to the current config stated below:\n{loadedConfig}\nWould you like to save it to there again?");
+                sameConfig = r.Result;
+            }
+
+            if (!sameConfig)
+            {
+                dh.InputDialog("Save Config",
+                    "What do you want to name your configuration? (Just the filename, not with extension!)",
+                    new Action<string>((x) => fileName = x));
+
+                // Check if the fileName variable contains any characters that are not allowed in a file name
+                char[] ill = Path.GetInvalidFileNameChars();
+                if (fileName.Any(x => ill.Contains(x)))
+                {
+                    dh.OKDialog($"The given filename '{fileName}' contained illegal characters, please ensure you don't have any!");
+                    ill = null;
+                    fileName = null;
+                    return;
+                }
+            }
+
+            GenerateJSON(true);
 
             // Output the file itself
-            string output_location = Path.Combine(Environment.CurrentDirectory, "Resources", $"{fileName}.json");
-            string lang_output_location = includeLanguageSupport ? Path.Combine(Environment.CurrentDirectory, "Resources", $"{fileName}_en.json") : string.Empty;
+            string output_location = Path.Combine(Environment.CurrentDirectory, "Resources", sameConfig ? loadedConfig : $"{fileName}{Component.Archive.DEFAULT_EXTENTION_CFG}");
 
-            File.WriteAllText(output_location, output.Value.ToString());
+            Component.Archive arch = new Component.Archive(output_location, config_appid, true);
 
-            if (!string.IsNullOrEmpty(lang_output_location))
-            {
-                File.WriteAllText(lang_output_location, lang_output.Value.ToString());
-            }
+            arch.SetFileContents("settings.json", output.Value.ToString());
+            arch.SetFileContents("lang>lang_en.json", lang_output.Value.ToString());
+
+            arch.SaveFile();
+
+            arch.Cleanup = true;
+            arch.ForceClear();
+            arch = null;
 
             if (File.Exists(output_location))
             {
-                dh.YesNoDialog("Success", "Your file has been saved in the configuration folder!\nWould you like to view it now?",
-                new Action(() => { System.Diagnostics.Process.Start("explorer.exe", output_location); }));
+                loadedConfig = output_location;
+                dh.OKDialog("Your file has been saved in the configuration folder!");
             } 
             else
             {
@@ -976,7 +1014,6 @@ namespace SteamCMDLauncher.Views
             output = null;
             lang_output = null;
 
-            ill = null;
             fileName = null;
             output_location = null;
         }
@@ -989,7 +1026,7 @@ namespace SteamCMDLauncher.Views
             // Reset the objects to read the new files
 
             CurrentControls = null;
-            table = null;
+            table = new Lazy<DataTable>();
             output_directory = new Lazy<Dictionary<string, Dictionary<string, string[]>>>();
 
             string key_iter = null;
@@ -1083,13 +1120,15 @@ namespace SteamCMDLauncher.Views
 
             if(!isLoadedConfig) isLoadedConfig = true;
 
-            string load_file = null;
-            string[] availableFiles = null;
+            config_appid = string.Empty;
 
+            string load_file = null;
+            List<(string, string)> language_files = null;
             JObject parseFile = null;
             JObject parseFile_lang = null;
 
-            System.Threading.Tasks.ValueTask<bool> isFile;
+            // TODO: Bring this variable and functionality back after mutli-lang support
+            //System.Threading.Tasks.ValueTask<bool> isFile;
             
             preloaded_Language = null;
             
@@ -1099,11 +1138,11 @@ namespace SteamCMDLauncher.Views
 
                 // Get the file the load in
 
-#if !SKIP_JSON_LOAD || !DEBUG
-                load_file = Config.GetFile(".json", "Resources");
+#if !SKIP_CFG_LOAD || !DEBUG
+                load_file = Config.GetFile(Component.Archive.DEFAULT_EXTENTION_CFG, "Resources");
 #else
                 // Skip loading process by pre-loading a config
-                load_file = "C:\\Users\\james\\source\\repos\\SteamCMDLauncher\\SteamCMDLauncher\\bin\\Debug\\netcoreapp3.1\\Resources\\game_setting_740.json";
+                load_file = "C:\\Users\\james\\source\\repos\\SteamCMDLauncher\\SteamCMDLauncher\\bin\\Debug\\netcoreapp3.1\\Resources\\CSGO.smdcg";
 #endif
                 // Validate if a file has been chosen
                 if (load_file.Length <= 1) return;
@@ -1114,8 +1153,54 @@ namespace SteamCMDLauncher.Views
                     return;
                 }
 
-                // Parse the file as an JObject
-                parseFile = JObject.Parse(File.ReadAllText(load_file));
+                loadedConfig = load_file;
+
+                bool found = false;
+
+                language_files = new List<(string, string)>();
+
+                var arch = new Component.Archive(load_file);
+
+                foreach ((string, string) item in arch.GetFiles())
+                {
+                    if(item.Item1 == "settings.json")
+                    {
+                        // Parse the file as an JObject
+                        parseFile = JObject.Parse(item.Item2);
+
+                        if(parseFile.Count == 0)
+                        {
+                            Config.Log($"[CFG-G] Current config file '{load_file}' internal file 'settings.json' is corrupt - zero entries");
+                            dh.OKDialog("An error occurred while handling the config. This is likely due to the file being corrupted while saving.");
+                            loadedConfig = string.Empty;
+                            return;
+                        }
+
+                        config_appid = arch.GetArchiveDetails.GameID;
+                        found = true;
+                    }
+                    else if(item.Item1.StartsWith("lang/lang_"))
+                    {
+                        language_files.Add(item);
+                    }
+                }
+
+                arch.Cleanup = true;
+                arch.ForceClear();
+
+                arch = null;
+
+                if(!found)
+                {
+                    Config.Log($"[CFG-G] Current config file '{load_file}' is missing internal file 'settings.json'");
+                    dh.OKDialog("An error occurred while handling the config. An expected internal file was not found.");
+                    loadedConfig = string.Empty;
+                    return;
+                }
+
+                Target = string.Empty;
+                PreComands = string.Empty;
+                JoinCommand = string.Empty;
 
                 // Validate if we need localize file...
                 foreach (JProperty item in parseFile.Children<JProperty>())
@@ -1123,19 +1208,8 @@ namespace SteamCMDLauncher.Views
                     if (item.Name.StartsWith("#")) { requires_localize_file = true; break; }
                 }
 
-                // Get the current file that is loaded in's folder location and exact name (without extension)
-                string currentFolder = Path.GetDirectoryName(load_file);
-                string currentFile = Path.GetFileNameWithoutExtension(load_file);
-                
-                // Create an Enumerable to hold all language files
-                availableFiles = Directory.GetFiles(currentFolder)
-                    .Where(x => x.Contains($"{currentFile}_"))
-                    .ToArray();
-
-                currentFolder = null; currentFile = null;
-
                 // Check if any files found, report if not
-                if(requires_localize_file && availableFiles.Count() == 0)
+                if(requires_localize_file && language_files.Count() == 0)
                 {
                     Config.Log("[CFG-G] Required Localize File is set true, but no localize files were found! (_*.json)");
                     dh.OKDialog("No Localize File Found - it is required that an English Translation is available by default!");
@@ -1146,42 +1220,45 @@ namespace SteamCMDLauncher.Views
                     Config.Log("[CFG-G] Localize File was found, now perform logic to cache it.");
                     
                     bool required_file = false;
-                    int len = availableFiles.Length;
+                    int len = language_files.Count;
                     string required_file_loc = string.Empty;
                     
                     if(len == 1)
                     {
-                        required_file_loc = availableFiles[0];
+                        required_file_loc = language_files[0].Item2;
                         required_file = true;
                     }
                     else
                     {
-                        string shortname = null;
-                        
-                        for (int i = 0; i < len; i++)
-                        {
-                            // Get the filename only of the file
-                            shortname = Path.GetFileNameWithoutExtension(availableFiles[i]);
-                            
-                            // Ask if the file is the correct one
-                            isFile = dh.YesNoDialog($"File {i + 1}/{len}", $"Is the file {shortname}?");
+                        /* 
+                         * Bring this variable and functionality back after mutli-lang support
+                         * 
+                         * string shortname = null;
 
-                            // If so, stop and note it
-                            if(isFile.Result)
-                            {
-                                required_file_loc = availableFiles[i];
-                                required_file = true;
-                                break;
-                            }
-                        }
+                         for (int i = 0; i < len; i++)
+                         {
+                             // Get the filename only of the file
+                             //shortname = Path.GetFileNameWithoutExtension(language_files[i]);
 
-                        shortname = null;
+                             // Ask if the file is the correct one
+                             isFile = dh.YesNoDialog($"File {i + 1}/{len}", $"Is the file {shortname}?");
 
+                             // If so, stop and note it
+                             if(isFile.Result)
+                             {
+                                 //required_file_loc = language_files[i];
+                                 required_file = true;
+                                 break;
+                             }
+                         }
+
+                         shortname = null;*/
+                        dh.OKDialog("This config contains multiple translations, which aren't processable at this current time. Will be available later on.");
                     }
 
                     if(!string.IsNullOrEmpty(required_file_loc))
                     {
-                        parseFile_lang = JObject.Parse(File.ReadAllText(required_file_loc));
+                        parseFile_lang = JObject.Parse(required_file_loc);
 
                         preloaded_Language = new Lazy<Dictionary<string, string>>();
 
@@ -1206,6 +1283,12 @@ namespace SteamCMDLauncher.Views
                 }
 
                 Config.Log("[CFG-G] Starting parsing process");
+                
+                var eeee = new Config();
+                
+                GameConfigDescription = $"Loaded: {eeee.GetGameByAppId(config_appid)}";
+           
+                eeee = null;
 
                 // Lets start with the setup arguments, as that doesn't require any form of iteration
                 string setup_key = "setup";
@@ -1222,17 +1305,20 @@ namespace SteamCMDLauncher.Views
                 // Now lets load in the controls (Skipping the setup key, which should ALWAYS be first)
                 Config.Log("[CFG-G] Running LoadTokens");
                 
-                LoadTokens(parseFile.Children().Skip(1).ToArray());
-                
+                if(!string.IsNullOrEmpty(Target) || !string.IsNullOrEmpty(PreComands) || !string.IsNullOrEmpty(JoinCommand))
+                    LoadTokens(parseFile.Children().Skip(1).ToArray());
+                else
+                    LoadTokens(parseFile.Children().ToArray());
+
                 Config.Log("[CFG-G] Finished LoadTokens - Now loading GenerateTree");
                 GenerateTree();
                
                 Config.Log("[CFG-G] Loaded Config and Language Config (If any)");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 //TODO: Make exceptions more helpful... maybe...
-                Config.Log("[CFG-G] LoadConfig throw an error");
+                Config.Log($"[CFG-G] LoadConfig throw an error: {ex.Message}");
                 throw;
             }
             finally
@@ -1240,7 +1326,7 @@ namespace SteamCMDLauncher.Views
                 parseFile = null;
                 load_file = null;
                 parseFile_lang = null;
-                availableFiles = null;
+                language_files = null;
             }
         }
 

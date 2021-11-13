@@ -11,7 +11,7 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignDarkBackground}"
         FontFamily="{DynamicResource MaterialDesignFont}"
-        Title="ServerView" Height="720" Width="1280" ResizeMode="CanMinimize"  WindowStartupLocation="CenterScreen" Closing="Window_Closing">
+        Title="Server View" Height="720" Width="1280" ResizeMode="CanMinimize"  WindowStartupLocation="CenterScreen" Closing="Window_Closing">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="120"></RowDefinition>

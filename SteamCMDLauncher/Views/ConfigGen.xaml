@@ -21,12 +21,13 @@
 
         <!-- Headings -->
         <TextBlock FontSize="30" Style="{StaticResource DefaultBold}">SteamCMDLauncher Configuration Editor</TextBlock>
-        <TextBlock Style="{StaticResource DefaultBold}" Margin="0,38,0,0">Alpha 0.1</TextBlock>
+        <TextBlock Style="{StaticResource DefaultBold}" Margin="0,38,0,0">Alpha 0.2</TextBlock>
 
         <!-- Load/Save Config Buttons -->
         <Button Content="Load Config" VerticalAlignment="Top" Margin="0,75,1100,0" Click="LoadConfig_Click"/>
         <Button Content="Save Config" VerticalAlignment="Top" Margin="135,75,970,0" Click="SafeConfig_Click"/>
-
+        <TextBlock Text="{Binding GameConfigDescription}" Margin="270,78,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="{StaticResource White}" FontSize="20"></TextBlock>
+        
         <!-- GroupBox to generate controls -->
         <GroupBox Header="Create Control" VerticalAlignment="Top" Margin="0,135,654,0" Height="500" FontSize="16" Foreground="{StaticResource White}">
             <StackPanel>
