@@ -31,7 +31,7 @@ namespace SteamCMDLauncher.Views
 
         private bool isLoadedConfig = false;
        
-        private char lastControlType = '\0';
+        //private char lastControlType = '\0';
         #endregion
 
         #region Class Attributes
@@ -374,7 +374,6 @@ namespace SteamCMDLauncher.Views
             {
                 content.Children.Clear();
                 content.Children.Add(No_content);
-                lastControlType = '\0';
             }
             else
             {
@@ -383,31 +382,7 @@ namespace SteamCMDLauncher.Views
                 
                 char t = compoent_idx[ControlType.SelectedIndex];
 
-                // Clear the controls ONLY if the control has been changed
-                if (lastControlType == '\0')
-                {
-                    // If any text block that says "No type" exists
-                    if (content.Children.Count == 1 && content.Children[0] is TextBlock)
-                    {
-                        content.Children.Clear();
-                    }
-                   
-                    lastControlType = t;
-                }
-                else if (lastControlType != t)
-                {
-                    lastControlType = t;
-                    content.Children.Clear();
-                }
-                else
-                {
-                    // Ignore the creation of new objects
-                    content = null;
-                    compoent_idx = null;
-                    No_content = null;
-                    return;
-                }
-
+                content.Children.Clear();
                 CurrentControls.Clear();
 
                 compoent_idx = null;
@@ -538,6 +513,8 @@ namespace SteamCMDLauncher.Views
                     //TODO: DO an operation with "combo_target" to "combo-target" once validating (Name cannot contain "-")
                     TextBox comboTar = new TextBox { Name = "combo_target", Margin = default_space };
 
+                    TextBox comboRar = new TextBox { Name = "combo_range", Margin = default_space };
+
                     Button keyPair = new Button { Content = "Set Key Pairs" };
 
                     keyPair.Click += ComboStrictDialog;
@@ -555,14 +532,18 @@ namespace SteamCMDLauncher.Views
                     };
 
                     MaterialDesignThemes.Wpf.HintAssist.SetHint(comboTar, "File/Folder Search (\\<file>;*.<ext>)");
+                    MaterialDesignThemes.Wpf.HintAssist.SetHint(comboRar, "Integer Range ( low-high )");
 
                     content.Children.Add(comboTar);
+                    content.Children.Add(comboRar);
                     content.Children.Add(keyPair);
 
                     CurrentControls.Add(comboTar);
+                    CurrentControls.Add(comboRar);
                     CurrentControls.Add(keyPair);
                     
                     comboTar = null;
+                    comboRar = null;
                     keyPair = null;
                 }
             }
@@ -659,9 +640,8 @@ namespace SteamCMDLauncher.Views
                         {
                             JObject table = new JObject();
 
-                            string data = valSplit[1][1..^1];
-
-                            string[] row = data.Split(';')
+                            string[] row = valSplit[1][1..^1]
+                                .Split(',')
                                 .Where(x => !string.IsNullOrWhiteSpace(x))
                                 .ToArray();
 
@@ -670,12 +650,11 @@ namespace SteamCMDLauncher.Views
                             
                             for (int z = 0; z < rowLen; z++)
                             {
-                                col = row[z].Split('|', 2);
-                                table.Add(col[0], col[1]);
+                                col = row[z].Trim().Split(':', 2);
+                                table.Add(col[0][1..^1], col[1][1..^1]);
                             }
 
                             col = null;
-                            data = null;
                             row = null;
 
                             // Then we add it the control
@@ -721,7 +700,8 @@ namespace SteamCMDLauncher.Views
         private bool IterateControls(ref StackPanel content, ref List<string> control, out string fail_reason)
         {
             int len = content.Children.Count;
-          
+            string fixedName = string.Empty;
+
             Type ctrl_type = null;
             TextBox ctrl_tb_placeholder = null;
             ComboBox ctrl_cb_placeholder = null;
@@ -735,6 +715,8 @@ namespace SteamCMDLauncher.Views
                 for (int i = 0; i < len; i++)
                 {
                     to_add = false;
+
+                    fixedName = string.Empty;
 
                     // Get the control type of the control (TextBox or ComboBox etc) 
                     ctrl_type = content.Children[i].GetType();
@@ -751,7 +733,11 @@ namespace SteamCMDLauncher.Views
                             return false;
                         }
 
-                        sb.AppendFormat("{0}={1}", ctrl_tb_placeholder?.Name, ctrl_tb_placeholder.Text);
+                        fixedName = (bool)ctrl_tb_placeholder?.Name.Contains("_") ?
+                                    ctrl_tb_placeholder.Name.Replace("_", "-") :
+                                    ctrl_tb_placeholder.Name;
+
+                        sb.AppendFormat("{0}={1}", fixedName, ctrl_tb_placeholder.Text);
 
                         ctrl_tb_placeholder = null;
                     }
@@ -766,8 +752,12 @@ namespace SteamCMDLauncher.Views
                             fail_reason = $"A combo field '{ctrl_cb_placeholder?.Name}' was left blank, where its required to set a value!";
                             return false;
                         }
-                        
-                        sb.AppendFormat("{0}={1}", ctrl_cb_placeholder?.Name, ctrl_cb_placeholder.Text);
+
+                        fixedName = (bool)ctrl_cb_placeholder?.Name.Contains("_") ?
+                                    ctrl_cb_placeholder.Name.Replace("_", "-") :
+                                    ctrl_cb_placeholder.Name;
+
+                        sb.AppendFormat("{0}={1}", fixedName, ctrl_cb_placeholder.Text);
 
                         ctrl_cb_placeholder = null;
                     }
@@ -775,7 +765,11 @@ namespace SteamCMDLauncher.Views
                     {
                         ctrl_chb_placeholder = (CheckBox)content.Children[i];
 
-                        sb.AppendFormat("{0}={1}", ctrl_chb_placeholder?.Name, ctrl_chb_placeholder.IsChecked);
+                        fixedName = (bool)ctrl_chb_placeholder?.Name.Contains("_") ?
+                                    ctrl_chb_placeholder.Name.Replace("_", "-") :
+                                    ctrl_chb_placeholder.Name;
+
+                        sb.AppendFormat("{0}={1}", fixedName, ctrl_chb_placeholder.IsChecked);
 
                         ctrl_chb_placeholder = null;
                     }
@@ -795,12 +789,12 @@ namespace SteamCMDLauncher.Views
                     sb.Append("combo-strict=[");
 
                     for (int i = 0; i < rowCount; i++)
-                    {                      
+                    {
                         row = table.Value.Rows[i].ItemArray;
                         
-                        sb.Append(string.Join('|', row));
+                        sb.Append(string.Join(':', row));
 
-                        if (i < rowCount) sb.Append(';');
+                        if ((i + 1) < rowCount) sb.Append(',');
                     }
                     
                     sb.Append("]");
@@ -823,6 +817,104 @@ namespace SteamCMDLauncher.Views
                         return false;
                     }
                 }
+
+                if (control.Contains("type=combo"))
+                {
+                    //Check 2: Check if its a combo, if it contains ONLY 1 strict from (not using multiple variations)
+                    int typeCheck = 0;
+
+                    bool isStrict = false; // If the combo relies on an Key-Value structure
+                    bool isRange = false;  // If the combo relies on an integer range ( min - max )
+                    bool isTarget = false; // If the combo relies on reading a file structure (folder or file rule)
+
+                    if (control.Any(x => x.StartsWith("combo-target"))) { isTarget = true; typeCheck++; }
+                    if (control.Any(x => x.StartsWith("combo-strict"))) { isStrict = true; typeCheck++; }
+                    if (control.Any(x => x.StartsWith("combo-range"))) { isRange = true; typeCheck++; }
+
+                    if(typeCheck > 1)
+                    {
+                        StringBuilder sb_r = new StringBuilder();
+                        
+                        sb_r.AppendLine("This combo field has used multiple combo types, this is an illegal move.\n");
+
+                        sb_r.AppendLine($"Using combo-target : {isTarget}");
+                        sb_r.AppendLine($"Using combo-strict : {isStrict}");
+                        sb_r.AppendLine($"Using combo-range  : {isRange}\n");
+
+                        sb_r.AppendLine("Please use only ONE instance rule...");
+                        fail_reason = sb_r.ToString();
+                        
+                        sb_r = null;
+                        
+                        return false;
+                    }
+
+                    // Check 3: If combo range is used, check if its valid
+                    if(control.Any(x => x.StartsWith("combo-range")))
+                    {
+                        int idx = control.FindIndex(x => x.StartsWith("combo-range"));
+
+                        string range = control[idx][12..];
+                        string[] rangeCheck;
+
+                        try
+                        {
+                            // Check 3.1 - Check if a range has been selected (-)
+                            int rCount = range.Where(x => x == '-').Count();
+
+                            if(rCount != 1)
+                            {
+                                fail_reason = rCount switch {
+                                    0 => "No range selector ( - ) was included to validate the range",
+                                    _ => $"Invalid amount of range selector found: {rCount} instead of 1"
+                                };
+                                return false;
+                            }
+
+                            // Check 3.2 - Check if any of the inputs aren't valid (not a number)
+                            rangeCheck = range
+                                .Split("-") // Split the text into an array from the character '-'
+                                .Select(x => x.Trim()) // Then for each element, trim it to remove whitespace
+                                .ToArray(); // Then return it back into an array
+                            
+                            if(rangeCheck.Any( x => x.Any(y => !char.IsDigit(y) )))
+                            {
+                                fail_reason = "A character was found in the range which didn't identify as an integer. Only numbers are allowed in range.";
+                                return false;
+                            }
+
+                            // Check 3.3 - Check if the range is reasonable (and parse-able!)
+                            if(!int.TryParse(rangeCheck[0], out int rangeA))
+                            {
+                                fail_reason = $"Failed to convert smallest range '{rangeCheck[0]}' into a integer.";
+                                return false;
+                            }
+
+                            if (!int.TryParse(rangeCheck[1], out int rangeB))
+                            {
+                                fail_reason = $"Failed to convert biggest range '{rangeCheck[1]}' into a integer.";
+                                return false;
+                            }
+
+                            if (rangeB - rangeA == 0)
+                            {
+                                fail_reason = "The result of the range is zero - this may have issues later on.";
+                                return false;
+                            }
+
+                            if(Math.Abs(rangeB - rangeA) > 125)
+                            {
+                                fail_reason = "The range yield count is beyond 125 elements, this is not recommended.";
+                                return false;
+                            }
+                        }
+                        finally
+                        {
+                            range = null;
+                            rangeCheck = null;
+                        }
+                    }
+                }
             }
             finally
             {
@@ -831,6 +923,7 @@ namespace SteamCMDLauncher.Views
                 ctrl_cb_placeholder = null;
                 ctrl_chb_placeholder = null;
                 sb = null;
+                fixedName = null;
             }
 
             fail_reason = string.Empty;
@@ -852,19 +945,7 @@ namespace SteamCMDLauncher.Views
                 return;
             }
 
-            // We validate if a control exists already
-
-            // Step 1: Validate if a category exists...
-            if(output_directory.Value.ContainsKey(ControlCategory.Text))
-            {
-                // Step 2: We now check if a control of this name exists
-                if(output_directory.Value[ControlCategory.Text].ContainsKey(ControlName.Text))
-                {
-                    // We then complain about it to the user...
-                    dh.OKDialog($"A control of this name already exists as \"{ControlName.Text}\" under category: \"{ControlCategory.Text}\"\nPlease change the name to prevent duplicates!");
-                    return;
-                }
-            }
+            //TODO: Bring in detection for duplication ONLY if it doesn't exist from another category
 
             StackPanel content = ((ScrollViewer)ControlExtra.Content).Content as StackPanel;
 
@@ -890,7 +971,10 @@ namespace SteamCMDLauncher.Views
                 
                 string propName = ControlName.Text;
 
-                output_directory.Value[cate].Add(propName, new string[loopLen]);
+                if (!output_directory.Value[cate].ContainsKey(propName))
+                    output_directory.Value[cate].Add(propName, new string[loopLen]);
+                else
+                    output_directory.Value[cate][propName] = new string[loopLen];
 
                 for (int i = 0; i < loopLen; i++)
                 {
@@ -1403,13 +1487,13 @@ namespace SteamCMDLauncher.Views
 
                         ControlCategory.SelectedIndex = categoryIdx;
                         
+                        //TODO: Solve why this crashed?
                         if (CurrentControls is null)
                             throw new Exception("[CFG-G] CurrentControls variable in ConfigGen is empty - this should not be the case.");
 
                         FrameworkElement ctrl = null;
 
                         Type ctrl_t = null;
-
 
                         for (int i = 0; i < iter_size; i++)
                         {
@@ -1430,7 +1514,7 @@ namespace SteamCMDLauncher.Views
                             }
                             else
                             {
-                                if (split_array[0].StartsWith("combo-strict"))
+                                if (split_array[0] == "combo-strict")
                                 {
                                     // Load the table data
                                     table = new Lazy<DataTable>();
@@ -1442,7 +1526,7 @@ namespace SteamCMDLauncher.Views
                                     // Substring so that we eliminate the square brackets ( .Substring(1, len - 1) )
                                     ReadOnlySpan<char> SpanSlice = split_array[1][1..^1];
 
-                                    string[] rows = SpanSlice.ToString().Split(";");
+                                    string[] rows = SpanSlice.ToString().Split(",");
                                     string[] columns = null;
 
                                     int iterSize = rows.Length;
@@ -1450,7 +1534,10 @@ namespace SteamCMDLauncher.Views
                                     {
                                         if (string.IsNullOrWhiteSpace(rows[j])) continue;
 
-                                        columns = rows[j].Split('|');
+                                        columns = rows[j]
+                                            .Replace("\"", "") // Remove the quotes from the JSON string
+                                            .Trim() // Trim any whitespace or characters which aren't visible
+                                            .Split(':'); // Then split the rows by the JSON dictionary key ':'
 
                                         if (columns.Length > 2) throw new Exception($"[CFG-G] Row \"{rows[j]}\" contains more than 2 elements, this shouldn't be the case!");
 
@@ -1460,6 +1547,15 @@ namespace SteamCMDLauncher.Views
                                     columns = null;
                                     SpanSlice = null;
                                     rows = null;
+                                } 
+                                else if (split_array[0] == "combo-range")
+                                {
+                                    //Re-tune to get the correct control
+                                    ctrl = CurrentControls.SingleOrDefault(x => x.Name == "combo_range");
+
+                                    if(ctrl is null) { dh.OKDialog($"Unable to find combo-range given in control, ignoring {selectedItem.CName}"); continue; }
+
+                                    ((TextBox)ctrl).Text = split_array[1];
                                 }
                             }
                         }
