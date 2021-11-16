@@ -126,7 +126,7 @@ namespace SteamCMDLauncher.UIComponents
                             if(control.ContainsKey("returns"))
                             {
                                val = control["returns"].Split(',').Select(x => x.Trim()).ToArray();
-                               ctrl = new GSCheck(this, (val.Length>= 2) ? val : null);
+                               ctrl = new GSCheck(this, val.Length >= 2 ? val : null);
                             } 
                             else
                             {

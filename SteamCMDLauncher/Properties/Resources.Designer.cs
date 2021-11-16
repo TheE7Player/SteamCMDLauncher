@@ -83,6 +83,16 @@ namespace SteamCMDLauncher.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        public static byte[] Double_Action_Boogaloo {
+            get {
+                object obj = ResourceManager.GetObject("Double_Action_Boogaloo", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         public static byte[] Garrys_Mod {
             get {
                 object obj = ResourceManager.GetObject("Garrys_Mod", resourceCulture);
@@ -102,12 +112,13 @@ namespace SteamCMDLauncher.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to # Holds hash keys to validate if the json loaded is official
-        ///# Validation was runned after build at (YYYY-MM-DD): 2021-11-12 00:23:10
+        ///# Validation was runned after build at (YYYY-MM-DD): 2021-11-16 02:42:53
         ///# This process is automated using vlang ~ https://github.com/vlang/v
         ///CSGO=3a8d668b2fe0e109aa77b0ffc4a88990aab36cfaafa3e9ae6d4fb08b8175cc53
+        ///Double Action Boogaloo=354e90fa9205651fda5b6bc1f861c597a05782cda0944800ced4113b2a6597bb
         ///Garrys Mod=2d5f8799bdea7e8d3428facdf8b729ee7f2de737e23777a9d7c17153438a9fa2
         ///L4D2=ef613b5806c4c448637b7a33456d96c65fb4f307f980fd157641a09b6e562bad
-        ///TF2=a2fdb85983093f034d2046704b41385096f5156f307d84c4c446d6c8b0a791f0.
+        ///TF2=a [rest of string was truncated]&quot;;.
         /// </summary>
         public static string res_hash {
             get {

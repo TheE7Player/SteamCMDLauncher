@@ -58,7 +58,14 @@
                 </GroupBox>
 
                 <!-- Control's Append Button -->
-                <Button Click="AddComponent_Click">ADD TO CONFIG</Button>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Click="AddComponent_Click" Margin="20,0,20,0">ADD TO CONFIG</Button>
+                    <Button Grid.Column="1" Click="ResetControl_Click" Margin="20,0,20,0">RESET CONTROL</Button>
+                </Grid>
             </StackPanel>
         </GroupBox>
 

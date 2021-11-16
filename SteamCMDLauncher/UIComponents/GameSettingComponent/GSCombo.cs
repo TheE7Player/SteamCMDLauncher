@@ -88,6 +88,8 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
 
                     string[] s_split = dir_parse.Split(';');
 
+                    if (string.IsNullOrEmpty(dir_path)) throw new Exception($"GSCombo Absolute Folder Path for entity: '{self.name}' was empty");
+
                     // For some reason Path.Combine doesn't concat the path safely somehow, using concat for now.
                     string folder = string.Concat(dir_path, s_split[0]);
 

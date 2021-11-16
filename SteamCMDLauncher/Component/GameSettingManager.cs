@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using System.IO;
-using Newtonsoft.Json.Linq;
-using System.Windows.Controls;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Windows.Controls;
 
 namespace SteamCMDLauncher.Component
 {
@@ -37,6 +37,9 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         public bool BrokenEmbededResource { get; private set; }
 
+        public bool BrokenCFGFile { get; private set; }
+        public string BrokenCFGFileReason { get; private set; }
+
         private string targetExecutable, targetDictionary, PreArguments, JoinConnectString;
 
         private Dictionary<string, string> language;
@@ -62,7 +65,7 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         /// <param name="appid">The id to get the correct .json to read the settings from</param>
         /// <param name="folderLocation">The folder will the directory location to run the server from</param>
-        public GameSettingManager(string appid, string folderLocation)
+        public GameSettingManager(string appid, string folderLocation, ref UIComponents.DialogHostContent host)
         {
             string lang = GetLanguageType();
 
@@ -91,15 +94,42 @@ namespace SteamCMDLauncher.Component
 
             string correct_file = string.Empty;
             Archive arch = null;
+            List<string> found_cfgs = new List<string>();
 
             for (int i = 0; i < fLength; i++)
             {
                 arch = new Archive(files[i]);
 
                 if (arch.GetArchiveDetails.GameID == appid)
-                { correct_file = files[i]; break; }
+                {
+                    found_cfgs.Add(files[i]);
+                }
             }
-            
+            arch = null;
+
+            if (found_cfgs.Count == 1) correct_file = found_cfgs[0];
+            else
+            {
+                if (found_cfgs.Count < 1)
+                {
+                    Supported = false;
+                    return;
+                }
+
+                System.Threading.Tasks.ValueTask<string> eee = host.ShowComponentCombo("Multiple Configurations Found",
+                $"There are {found_cfgs.Count} configurations found for this game.\nPlease select the one you want to use:",
+                found_cfgs.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray());
+
+                int idx = found_cfgs.FindIndex(x => x.Contains(eee.Result));
+
+                if (idx < 0 || idx > found_cfgs.Count)
+                    throw new Exception($"Unexpected Index return from GameSettingManager Constructor: Got {idx} (Max is: {found_cfgs.Count})");
+
+                correct_file = found_cfgs[idx];
+            }
+
+            found_cfgs = null;
+
             string langFile = string.Empty, gameFile = string.Empty;
 
             //string gameJson = $"game_setting_{appid}.json";
@@ -107,6 +137,8 @@ namespace SteamCMDLauncher.Component
 
             Supported = !string.IsNullOrWhiteSpace(correct_file);
             LanguageSupported = false;
+
+            arch = new Archive(correct_file);
 
             if (Supported)
             {
@@ -125,11 +157,10 @@ namespace SteamCMDLauncher.Component
                     }
                 }
             }
-            
             arch = null;
 
             //LanguageSupported = !string.IsNullOrWhiteSpace(langFile);
-            
+
             // Set config to true by default
             ConfigOffical = true;
             
@@ -146,7 +177,7 @@ namespace SteamCMDLauncher.Component
             Config.Log("[GSM] Validating if the config file is unaltered");
 
             if (Config.GetEmbededResource("res_hash.txt", out string[] contents))
-            { 
+            {
                 contents = contents.Where(x => !x.StartsWith("#")).ToArray();
                 BrokenEmbededResource = false;
             }
@@ -248,7 +279,7 @@ namespace SteamCMDLauncher.Component
                 target_kv = cont["setup"]["target"];
 
                 if (target_kv == null)
-                {
+                {                   
                     Config.Log("[GSM] No existing \"target\" key found in json - this is needed to run the server application!");
                     Supported = false; return false;
                 }
@@ -260,6 +291,8 @@ namespace SteamCMDLauncher.Component
             } 
             else
             {
+                BrokenCFGFile = true;
+                BrokenCFGFileReason = "Configuration was compiled without a setup key assigned, this is an issue\ncaused by ConfigBuilder or Saving Issue";
                 Config.Log("[GSM] No existing \"setup\" key found in json - this is needed to run the server application!");
                 Supported = false; return false;
             }
@@ -274,44 +307,55 @@ namespace SteamCMDLauncher.Component
                 if (target_kv == null)
                 {
                     Config.Log("[GSM] No existing \"precommands\" key found in json - Ignoring, this may cause launch issues!");
-                    Supported = false; return false;
                 }
+                else
+                { 
+                    PreArguments = target_kv.ToString();
 
-                PreArguments = target_kv.ToString();
-
-                // Check if the 'PreArguments' contains an IPv4 tag ($IP4)
-                string ipCondition = "$IP4";
-                if(PreArguments.Contains(ipCondition))
-                {
-                    string ip_local = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName())
-                        .AddressList
-                        .FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                        .ToString();
-
-                    if(string.IsNullOrEmpty(ip_local))
+                    // Check if the 'PreArguments' contains an IPv4 tag ($IP4)
+                    string ipCondition = "$IP4";
+                    if(PreArguments.Contains(ipCondition))
                     {
-                        Config.Log($"[GSM] IPv4 address was invalid or is wrong, result was: '{ip_local}'");
-                    } 
-                    else
-                    {
-                        Config.Log("[GSM] IPv4 address was found and is being used as the server ip root");
-                        PreArguments = PreArguments.Replace(ipCondition, ip_local);
+                        string ip_local = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName())
+                            .AddressList
+                            .FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                            .ToString();
+
+                        if(string.IsNullOrEmpty(ip_local))
+                        {
+                            Config.Log($"[GSM] IPv4 address was invalid or is wrong, result was: '{ip_local}'");
+                        } 
+                        else
+                        {
+                            Config.Log("[GSM] IPv4 address was found and is being used as the server ip root");
+                            PreArguments = PreArguments.Replace(ipCondition, ip_local);
+                        }
+
+                        ip_local = null;
                     }
+                    ipCondition = null;
+                }
 
-                    ip_local = null;
+                target_kv = cont["setup"]["server_join_command"];
+
+                if (target_kv == null)
+                {
+                    Config.Log("[GSM] No existing \"server_join_command\" key found in json - Ignoring, this may cause launch issues!");
                 }
-                ipCondition = null;
-                target_kv = null;
+                else
+                {
+                    try
+                    {
+                        JoinConnectString = cont["setup"]["server_join_command"].ToString();
+                    }
+                    catch(Exception ex)
+                    {
+                        Config.Log("[GSM] JoinConnectString threw error, bellow states why. This may make it hard to tell user the ip or password!");
+                        Config.Log($"[GSM] Couldn't assign property due to: {ex.Message}");
+                    }
+                }
                 
-                try
-                {
-                    JoinConnectString = cont["setup"]["server_join_command"].ToString();
-                } 
-                catch(Exception ex)
-                {
-                    Config.Log("[GSM] JoinConnectString threw error, bellow states why. This may make it hard to tell user the ip or password!");
-                    Config.Log($"[GSM] Couldn't assign property due to: {ex.Message}");
-                }
+                target_kv = null;
             }
 
             Config.Log("[GSM] Parsing Data...");

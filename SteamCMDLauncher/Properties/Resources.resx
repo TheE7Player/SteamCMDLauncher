@@ -124,6 +124,9 @@
   <data name="dedicated_server_list" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\dedicated_server_list.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="Double_Action_Boogaloo" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Double Action Boogaloo.smdcg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="Garrys_Mod" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Garrys Mod.smdcg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>

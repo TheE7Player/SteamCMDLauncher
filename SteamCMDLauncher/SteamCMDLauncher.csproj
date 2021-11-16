@@ -28,6 +28,7 @@
     <None Remove="icon.ico" />
     <None Remove="Resources\CSGO.smdcg" />
     <None Remove="Resources\dedicated_server_list.json" />
+    <None Remove="Resources\Double Action Boogaloo.smdcg" />
     <None Remove="Resources\Garrys Mod.smdcg" />
     <None Remove="Resources\L4D2.smdcg" />
     <None Remove="Resources\res_hash.txt" />
@@ -120,6 +121,9 @@
     <Content Include="Resources\CSGO.smdcg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\Double Action Boogaloo.smdcg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\Garrys Mod.smdcg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -129,6 +133,10 @@
     <Content Include="Resources\TF2.smdcg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="bin\Debug\netcoreapp3.1\Resources\Double Action Boogaloo.smdcg" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">

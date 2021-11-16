@@ -806,7 +806,7 @@ namespace SteamCMDLauncher.Views
 
                 // Final Error Checks
 
-                // Check 1: If set blank is true, an alert message should be set with it
+                // Check 1.1: If set blank is true, an alert message should be set with it
                 if (control.Contains("can_leave_blank=False"))
                 {
                     string target_ba = "blank_alert";
@@ -815,6 +815,28 @@ namespace SteamCMDLauncher.Views
                         target_ba = null;
                         fail_reason = "Since 'Can Leave Blank' is false, you need to provide a message if its left blank\n(requires 'blank_alert' attribute / \"No Value Warning\" text box )";
                         return false;
+                    }
+                }
+
+                // Check 1.2: If no width is set for any text type, set it to 300 by default (Won't show unless stated)
+                if (control.Contains("type=input") || control.Contains("type=pass"))
+                {
+                    if (!control.Any(x => x.StartsWith("width=")))
+                    {
+                        dh.OKDialog($"Since '{ControlName.Text}' never stated a width (RECOMMENDED), it has been set to 300 by default.");
+                        control.Add("width=300");
+                    }
+                    else
+                    {
+                        // Check 1.2.1: Validate if the length is valid as a number
+
+                        int idx = control.FindIndex(x => x.StartsWith("width="));
+                        
+                        if(!int.TryParse(control[idx][6..], out int num))
+                        {
+                            fail_reason = $"Invalid width for '{ControlName.Text}': {num}";
+                            return false;
+                        }
                     }
                 }
 
@@ -848,6 +870,7 @@ namespace SteamCMDLauncher.Views
                         
                         return false;
                     }
+
 
                     // Check 3: If combo range is used, check if its valid
                     if(control.Any(x => x.StartsWith("combo-range")))
@@ -912,6 +935,15 @@ namespace SteamCMDLauncher.Views
                         {
                             range = null;
                             rangeCheck = null;
+                        }
+                    }
+
+                    // Check 4: If combo-target, ensure a carry-dir is included (needed)
+                    if(control.Any(x => x.StartsWith("combo-target")))
+                    {
+                        if(!control.Any(x => x.StartsWith("carry-dir")))
+                        {
+                            control.Add("carry-dir=true");
                         }
                     }
                 }
@@ -1102,6 +1134,17 @@ namespace SteamCMDLauncher.Views
             output_location = null;
         }
         
+        private void ResetControl_Click(object sender, RoutedEventArgs e)
+        {
+            // Reset typed controls button
+            if(dh.YesNoDialog("Clear Items", "Are you sure you want to clear the items?\nThis is no undoing afterwards.").Result)
+            {
+                ControlName.Text = null;
+                ControlType.SelectedItem = -1;
+                GetExtraControls(true);
+            }
+        }
+
         private void LoadTokens(JToken[] elements)
         {
             int iterationLen = elements.Length;
@@ -1499,7 +1542,8 @@ namespace SteamCMDLauncher.Views
                         {
                             split_array = value[i].Split('=', 2);
 
-                            ctrl = CurrentControls.SingleOrDefault(x => x.Name == split_array[0]);
+                            ctrl = CurrentControls.SingleOrDefault(x => x.Name == split_array[0]) ??
+                                   CurrentControls.SingleOrDefault(x => x.Name.Replace("_", "-") == split_array[0]);
 
                             if(ctrl != null)
                             {
@@ -1752,6 +1796,7 @@ namespace SteamCMDLauncher.Views
             sender = null;
             e = null;
         }
-#endregion
+        #endregion
+
     }
 }

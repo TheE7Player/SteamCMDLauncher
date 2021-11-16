@@ -18,10 +18,12 @@ namespace SteamCMDLauncher
     {
         public enum FaultReason
         {
+            None,
             NoResourceFolder,
             GameNotSupported,
             CultureNotSupported,
-            BrokenEmbedFile
+            BrokenEmbedFile,
+            BrokenCFG
         }
 
         #region Attributes
@@ -61,14 +63,18 @@ namespace SteamCMDLauncher
 
         private bool disposed = false;
 
-        public string GetFaultReason() => NotReadyReason switch
+        public string GetFaultReason()
         {
-            FaultReason.NoResourceFolder => "Failed to find the resource folder - please ensure your not running outside the application folder!",
-            FaultReason.GameNotSupported => "Game not supported yet\nPlease create the json files or wait till the game gets supported!",
-            FaultReason.CultureNotSupported => "The current config file for this game is in ENGLISH for now: Please contribute to translating it!",
-            FaultReason.BrokenEmbedFile => "A fault from the Embedded Resource has occurred.\nPlease look at the release log file to see what resource failed.",
-            _ => "Unknown"
-        };
+            return NotReadyReason switch
+            {          
+                FaultReason.NoResourceFolder => "Failed to find the resource folder - please ensure your not running outside the application folder!",
+                FaultReason.GameNotSupported => "Game not supported yet\nPlease create the json files or wait till the game gets supported!",
+                FaultReason.CultureNotSupported => "The current config file for this game is in ENGLISH for now: Please contribute to translating it!",
+                FaultReason.BrokenEmbedFile => "A fault from the Embedded Resource has occurred.\nPlease look at the release log file to see what resource failed.",
+                FaultReason.BrokenCFG => $"Loading Config Fault:\n{gsm.BrokenCFGFileReason}",
+                _ => $"Uncatched Enum: {NotReadyReason}"
+            };
+        }
 
         public ServerView(string id, string alias, string folder, string app_id = "")
         {
@@ -82,27 +88,22 @@ namespace SteamCMDLauncher
             waitTime.Tick += TimerElapsed;
             waitTime.Interval = TimeSpan.FromSeconds(3);
 
-            gsm = new Component.GameSettingManager(appid, folder);
-
-            if (!gsm.ResourceFolderFound) { NotReadyReason = FaultReason.NoResourceFolder; return; }
-            if (!gsm.Supported) { NotReadyReason = FaultReason.GameNotSupported; return; }
-            if (!gsm.LanguageSupported) { NotReadyReason = FaultReason.CultureNotSupported; return; }
-            if (gsm.BrokenEmbededResource) { NotReadyReason = FaultReason.BrokenEmbedFile; return; }
-
             this.Loaded += Window_Loaded;
 
             InitializeComponent();
-
-            // Data context is used for binding, do not remove!
-            this.DataContext = this;
-
-            ServerGroupBox.Content = gsm.GetControls();
             
-            Component.EventHooks.View_Dialog += OnHint;
-
             this.dh = new UIComponents.DialogHostContent(RootDialog, true, true);
 
-            IsReady = true;
+            gsm = new Component.GameSettingManager(appid, folder, ref dh);
+
+            NotReadyReason = gsm.BrokenCFGFile ? FaultReason.BrokenCFG :
+                             !gsm.ResourceFolderFound ? FaultReason.NoResourceFolder :
+                             !gsm.Supported ? FaultReason.GameNotSupported :
+                             !gsm.LanguageSupported ? FaultReason.CultureNotSupported :
+                             gsm.BrokenEmbededResource ? FaultReason.BrokenEmbedFile :
+                             FaultReason.None;
+
+            IsReady = NotReadyReason == FaultReason.None;
         }
 
         private void OnHint(string hint) => dh.OKDialog(hint);
@@ -959,14 +960,33 @@ namespace SteamCMDLauncher
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+
             Config.Log("[SV] Window has been fully loaded");
+
+            /*if(NotReadyReason != FaultReason.None)
+            {
+                if (NotReadyReason == FaultReason.BrokenCFG)
+                    dh.OKDialog($"CFG Fault Found In Loaded File:\n{gsm.BrokenCFGFileReason}");
+                else
+                    dh.OKDialog(GetFaultReason());
+
+                this.Close();
+                return;
+            }*/
 
             if (!gsm.ConfigOffical)
             {
                 Config.Log("[SV] Showing unofficial config file has been loaded");
                 dh.OKDialog("SteamCMDLauncher has identified an unofficial config has been loaded.\nThis could be either the game config json or the language config.\nSteamCMDLauncher is not responable for any damages with untrusted configurations. Please be careful!");
             }
-       
+
+            // Data context is used for binding, do not remove!
+            this.DataContext = this;
+
+            Component.EventHooks.View_Dialog += OnHint;
+
+            ServerGroupBox.Content = gsm.GetControls();
+
             int needs_update_flag = await IsGameServerUpdated(folder, appid);
 
             if(!disposed)
@@ -986,6 +1006,7 @@ namespace SteamCMDLauncher
                     _  => $"ERROR: GOT {needs_update_flag}"
                 };
             }
+
             sender = null; e = null;
         }
     }
