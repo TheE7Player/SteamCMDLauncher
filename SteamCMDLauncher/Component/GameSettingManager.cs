@@ -37,8 +37,17 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         public bool BrokenEmbededResource { get; private set; }
 
+        /// <summary>
+        /// If it detected multiple variations of the same supported type
+        /// </summary>
+        public bool MultipleConfigurationsFound => Available_Configurations?.Count > 1;
+
+        private List<string> Available_Configurations { get; set; }
+
         public bool BrokenCFGFile { get; private set; }
         public string BrokenCFGFileReason { get; private set; }
+
+        private string _appid = string.Empty;
 
         private string targetExecutable, targetDictionary, PreArguments, JoinConnectString;
 
@@ -65,146 +74,173 @@ namespace SteamCMDLauncher.Component
         /// </summary>
         /// <param name="appid">The id to get the correct .json to read the settings from</param>
         /// <param name="folderLocation">The folder will the directory location to run the server from</param>
-        public GameSettingManager(string appid, string folderLocation, ref UIComponents.DialogHostContent host)
+        public GameSettingManager(string appid, string folderLocation)
         {
+            _appid = appid;
+            
             string lang = GetLanguageType();
-
             string resource = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
-
-            if (!Directory.Exists(resource))
-            {
-                Config.Log($"[GSM] Resource folder was not found - Got '{resource}'");
-                Supported = false; ResourceFolderFound = false; lang = null; resource = null; return;
-            }
-
-            ResourceFolderFound = true;
-
-            // Store where the server folder is at root
-            if(!Directory.Exists(folderLocation))
-            {
-                Config.Log($"[GSM] Server Root Folder is invalid or missing - Got '{folderLocation}'");
-                Supported = false; lang = null; resource = null; return;
-            }
-
-            targetDictionary = folderLocation;
-
-            // Get all the files in the current directory
-            string[] files = Directory.GetFiles(resource, $"*{Archive.DEFAULT_EXTENTION_CFG}");
-            int fLength = files.Length;
-
-            string correct_file = string.Empty;
             Archive arch = null;
-            List<string> found_cfgs = new List<string>();
+            string[] files = null;
 
-            for (int i = 0; i < fLength; i++)
+            if (Available_Configurations is null)
+                Available_Configurations = new List<string>(5);
+
+            try
             {
-                arch = new Archive(files[i]);
-
-                if (arch.GetArchiveDetails.GameID == appid)
+                if (!Directory.Exists(resource))
                 {
-                    found_cfgs.Add(files[i]);
+                    Config.Log($"[GSM] Resource folder was not found - Got '{resource}'");
+                    Supported = false; ResourceFolderFound = false; return;
+                }
+
+                ResourceFolderFound = true;
+
+                // Store where the server folder is at root
+                if(!Directory.Exists(folderLocation))
+                {
+                    Config.Log($"[GSM] Server Root Folder is invalid or missing - Got '{folderLocation}'");
+                    Supported = false; return;
+                }
+                
+                targetDictionary = folderLocation;
+
+                // Get all the files in the current directory
+                files = Directory.GetFiles(resource, $"*{Archive.DEFAULT_EXTENTION_CFG}");
+
+                int fLength = files.Length;
+
+                for (int i = 0; i < fLength; i++)
+                {
+                    arch = new Archive(files[i]);
+
+                    if (arch.GetArchiveDetails.GameID == _appid)
+                    {
+                        Available_Configurations.Add(files[i]);
+                    }
                 }
             }
-            arch = null;
-
-            if (found_cfgs.Count == 1) correct_file = found_cfgs[0];
-            else
+            finally
             {
-                if (found_cfgs.Count < 1)
+                resource = null;
+                lang = null;
+                arch = null;
+                files = null;
+            }
+        }
+
+        /// <summary>
+        /// Starts the configuration building process
+        /// </summary>
+        /// <param name="host"></param>
+        public void DoWork(ref UIComponents.DialogHostContent host)
+        {
+            string resource = Path.Combine(Directory.GetCurrentDirectory(), "Resources"),
+            lang = GetLanguageType(), langFile = null, gameFile = null,
+            cfgHash = null, correct_file = null, langJson = null;
+            string[] contents = null;
+            
+            Archive arch = null;
+            StringComparer comparer = null;
+            
+            try
+            {
+
+                if (Available_Configurations.Count == 1) { correct_file = Available_Configurations[0]; }
+                else
                 {
-                    Supported = false;
+                    if (Available_Configurations.Count < 1)
+                    {
+                        Supported = false;
+                        return;
+                    }
+
+                    System.Threading.Tasks.ValueTask<string> eee = host.ShowComponentCombo("Multiple Configurations Found",
+                    $"There are {Available_Configurations.Count} configurations found for this game.\nPlease select the one you want to use:",
+                    Available_Configurations.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray());
+
+                    int idx = Available_Configurations.FindIndex(x => x.Contains(eee.Result));
+
+                    if (idx < 0 || idx > Available_Configurations.Count)
+                        throw new Exception($"Unexpected Index return from GameSettingManager Constructor: Got {idx} (Max is: {Available_Configurations.Count})");
+
+                    correct_file = Available_Configurations[idx];
+
+                    Available_Configurations = null;
+                }
+
+                //string gameJson = $"game_setting_{appid}.json";
+                langJson = $"lang/lang_{lang}.json";
+
+                Supported = !string.IsNullOrWhiteSpace(correct_file);
+                LanguageSupported = false;
+
+                arch = new Archive(correct_file);
+
+                if (Supported)
+                {
+                    // T1: File name, T2: Contents
+                    foreach ((string, string) item in arch.GetFiles())
+                    {
+                        if (item.Item1 == "settings.json")
+                        {
+                            gameFile = item.Item2; continue;
+                        }
+
+                        if (item.Item1 == langJson)
+                        {
+                            langFile = item.Item2;
+                            LanguageSupported = true; break;
+                        }
+                    }
+                }
+
+                //LanguageSupported = !string.IsNullOrWhiteSpace(langFile);
+
+                // Set config to true by default
+                ConfigOffical = true;
+
+                if (LanguageSupported)
+                {
+                    if (!SetLanguageByContent(langFile)) { Supported = false; return; }
+                }
+
+                if (Supported)
+                {
+                    if (!SetControls(gameFile)) { Supported = false; return; }
+                }
+
+                Config.Log("[GSM] Validating if the config file is unaltered");
+
+                if (Config.GetEmbededResource("res_hash.txt", out contents))
+                {
+                    contents = contents.Where(x => !x.StartsWith("#")).ToArray();
+                    BrokenEmbededResource = false;
+                }
+                else
+                {
+                    BrokenEmbededResource = true;
                     return;
                 }
 
-                System.Threading.Tasks.ValueTask<string> eee = host.ShowComponentCombo("Multiple Configurations Found",
-                $"There are {found_cfgs.Count} configurations found for this game.\nPlease select the one you want to use:",
-                found_cfgs.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray());
+                cfgHash = Config.GetSHA256Sum(correct_file);
 
-                int idx = found_cfgs.FindIndex(x => x.Contains(eee.Result));
+                // Now we compare
+                comparer = StringComparer.OrdinalIgnoreCase;
 
-                if (idx < 0 || idx > found_cfgs.Count)
-                    throw new Exception($"Unexpected Index return from GameSettingManager Constructor: Got {idx} (Max is: {found_cfgs.Count})");
-
-                correct_file = found_cfgs[idx];
-            }
-
-            found_cfgs = null;
-
-            string langFile = string.Empty, gameFile = string.Empty;
-
-            //string gameJson = $"game_setting_{appid}.json";
-            string langJson = $"lang/lang_{lang}.json";
-
-            Supported = !string.IsNullOrWhiteSpace(correct_file);
-            LanguageSupported = false;
-
-            arch = new Archive(correct_file);
-
-            if (Supported)
-            {
-                // T1: File name, T2: Contents
-                foreach ((string, string) item in arch.GetFiles())
+                if (!contents.Any(x => x.Contains(cfgHash)))
                 {
-                    if(item.Item1 == "settings.json")
-                    {
-                        gameFile = item.Item2; continue;
-                    }
-
-                    if(item.Item1 == langJson)
-                    {
-                        langFile = item.Item2;
-                        LanguageSupported = true; break;
-                    }
+                    Config.Log("[GSM-SHA] The config loaded isn't offical, showing UI warning to user.");
+                    ConfigOffical = false;
                 }
             }
-            arch = null;
-
-            //LanguageSupported = !string.IsNullOrWhiteSpace(langFile);
-
-            // Set config to true by default
-            ConfigOffical = true;
-            
-            if (LanguageSupported)
+            finally
             {
-                if(!SetLanguageByContent(langFile)) { Supported = false; return; }
+                comparer = null; cfgHash = null; arch = null;
+                contents = null; langFile = null; gameFile = null;
+                langJson = null; resource = null;
+                lang = null;
             }
-
-            if (Supported)
-            {
-                if (!SetControls(gameFile)) { Supported = false; return; }
-            }
-
-            Config.Log("[GSM] Validating if the config file is unaltered");
-
-            if (Config.GetEmbededResource("res_hash.txt", out string[] contents))
-            {
-                contents = contents.Where(x => !x.StartsWith("#")).ToArray();
-                BrokenEmbededResource = false;
-            }
-            else
-            {
-                BrokenEmbededResource = true;
-                return;
-            }
-
-            string cfgHash = Config.GetSHA256Sum(correct_file);
-
-            // Now we compare
-            StringComparer comparer = StringComparer.OrdinalIgnoreCase;
-
-            if(!contents.Any(x => x.Contains(cfgHash)))
-            {
-                Config.Log("[GSM-SHA] The config loaded isn't offical, showing UI warning to user.");
-                ConfigOffical = false;
-            }
-
-            comparer = null; cfgHash = null;
-            contents = null;
-
-            langFile = null; gameFile = null;
-            files = null; resource = null;
-            langJson = null;
-            lang = null;
         }
         
         /// <summary>
@@ -251,7 +287,7 @@ namespace SteamCMDLauncher.Component
         {
             Config.Log("[GSM] Got JSON to read properties from...");
 
-            if (string.IsNullOrEmpty(path)) 
+            if (string.IsNullOrEmpty(path))
             {
                 Config.Log("[GSM] [!] Argument given for SetControls were empty - should be the case! [!]");
                 return false;

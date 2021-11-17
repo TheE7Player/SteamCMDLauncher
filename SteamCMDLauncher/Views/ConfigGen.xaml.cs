@@ -666,7 +666,7 @@ namespace SteamCMDLauncher.Views
 
                         if(languageSupport && TextTranslationTypes.Contains(valSplit[0]))
                         {
-                            cTranslations = $"#{cate.Key}_{valSplit[0]}";
+                            cTranslations = $"#{ctrl.Key}_{valSplit[0]}";
 
                             // Add the type ([0]) and its value ([1])
                             controlOut.Add(valSplit[0], cTranslations);

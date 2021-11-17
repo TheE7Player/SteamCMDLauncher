@@ -63,6 +63,18 @@ namespace SteamCMDLauncher
 
         private bool disposed = false;
 
+        private bool AnyErrors(Component.GameSettingManager gsm)
+        {
+            NotReadyReason = gsm.BrokenCFGFile? FaultReason.BrokenCFG:
+            !gsm.ResourceFolderFound ? FaultReason.NoResourceFolder :
+            !gsm.Supported ? FaultReason.GameNotSupported :
+            !gsm.LanguageSupported ? FaultReason.CultureNotSupported :
+            gsm.BrokenEmbededResource ? FaultReason.BrokenEmbedFile :
+            FaultReason.None;
+
+            return NotReadyReason != FaultReason.None || gsm.MultipleConfigurationsFound;
+        }
+
         public string GetFaultReason()
         {
             return NotReadyReason switch
@@ -94,16 +106,9 @@ namespace SteamCMDLauncher
             
             this.dh = new UIComponents.DialogHostContent(RootDialog, true, true);
 
-            gsm = new Component.GameSettingManager(appid, folder, ref dh);
+            gsm = new Component.GameSettingManager(appid, folder);
 
-            NotReadyReason = gsm.BrokenCFGFile ? FaultReason.BrokenCFG :
-                             !gsm.ResourceFolderFound ? FaultReason.NoResourceFolder :
-                             !gsm.Supported ? FaultReason.GameNotSupported :
-                             !gsm.LanguageSupported ? FaultReason.CultureNotSupported :
-                             gsm.BrokenEmbededResource ? FaultReason.BrokenEmbedFile :
-                             FaultReason.None;
-
-            IsReady = NotReadyReason == FaultReason.None;
+            IsReady = AnyErrors(gsm);
         }
 
         private void OnHint(string hint) => dh.OKDialog(hint);
@@ -961,53 +966,55 @@ namespace SteamCMDLauncher
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
 
+            bool close_after = false;
+
             Config.Log("[SV] Window has been fully loaded");
 
-            /*if(NotReadyReason != FaultReason.None)
-            {
-                if (NotReadyReason == FaultReason.BrokenCFG)
-                    dh.OKDialog($"CFG Fault Found In Loaded File:\n{gsm.BrokenCFGFileReason}");
-                else
-                    dh.OKDialog(GetFaultReason());
+            gsm.DoWork(ref dh);
 
-                this.Close();
-                return;
-            }*/
-
-            if (!gsm.ConfigOffical)
+            if (AnyErrors(gsm))
             {
-                Config.Log("[SV] Showing unofficial config file has been loaded");
-                dh.OKDialog("SteamCMDLauncher has identified an unofficial config has been loaded.\nThis could be either the game config json or the language config.\nSteamCMDLauncher is not responable for any damages with untrusted configurations. Please be careful!");
+                dh.OKDialog(GetFaultReason());
+                close_after = true;
             }
-
-            // Data context is used for binding, do not remove!
-            this.DataContext = this;
-
-            Component.EventHooks.View_Dialog += OnHint;
-
-            ServerGroupBox.Content = gsm.GetControls();
-
-            int needs_update_flag = await IsGameServerUpdated(folder, appid);
-
-            if(!disposed)
-            { 
-                if(needs_update_flag == 1)
+            else
+            {
+                if (!gsm.ConfigOffical)
                 {
-                    dh.OKDialog("Your running in an older version of the local server files!\nPress 'Update Server' button to get the new files ('Validate Server' if the update is corrupted!)");
+                    Config.Log("[SV] Showing unofficial config file has been loaded");
+                    dh.OKDialog("SteamCMDLauncher has identified an unofficial config has been loaded.\nThis could be either the game config json or the language config.\nSteamCMDLauncher is not responable for any damages with untrusted configurations. Please be careful!");
                 }
 
-                UpdateBar.IsIndeterminate = false;
+                // Data context is used for binding, do not remove!
+                this.DataContext = this;
 
-                UpdateBarText.Text = needs_update_flag switch
+                Component.EventHooks.View_Dialog += OnHint;
+
+                ServerGroupBox.Content = gsm.GetControls();
+
+                int needs_update_flag = await IsGameServerUpdated(folder, appid);
+
+                if (!disposed)
                 {
-                    -1 => "NO INTERNET / SERVER FAULT",
-                    0  => "RECENT VERSION",
-                    1  => "UPDATE SERVER",
-                    _  => $"ERROR: GOT {needs_update_flag}"
-                };
-            }
+                    if (needs_update_flag == 1)
+                    {
+                        dh.OKDialog("Your running in an older version of the local server files!\nPress 'Update Server' button to get the new files ('Validate Server' if the update is corrupted!)");
+                    }
 
+                    UpdateBar.IsIndeterminate = false;
+
+                    UpdateBarText.Text = needs_update_flag switch
+                    {
+                        -1 => "NO INTERNET / SERVER FAULT",
+                        0 => "RECENT VERSION",
+                        1 => "UPDATE SERVER",
+                        _ => $"ERROR: GOT {needs_update_flag}"
+                    };
+                }
+            }
             sender = null; e = null;
+
+            if (close_after) this.Close();
         }
     }
 }
