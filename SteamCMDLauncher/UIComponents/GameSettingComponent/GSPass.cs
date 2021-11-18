@@ -76,8 +76,7 @@ namespace SteamCMDLauncher.UIComponents.GameSettingComponent
                 {
                     selectedChar = (char)ran.Next(char_min, char_max);
                     
-                    if(char.IsLetterOrDigit((selectedChar)))
-                        break;
+                    if(char.IsLetterOrDigit(selectedChar)) break;
                 }
                 
                 sb.Append(selectedChar);

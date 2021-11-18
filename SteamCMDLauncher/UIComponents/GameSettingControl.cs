@@ -180,7 +180,7 @@ namespace SteamCMDLauncher.UIComponents
 
             if(control.ContainsKey("can_leave_blank"))
             {
-                canBeBlank = (control["can_leave_blank"] == "True");
+                canBeBlank = control["can_leave_blank"].ToLower() == "true";
             }
 
             if (control.ContainsKey("blank_alert"))

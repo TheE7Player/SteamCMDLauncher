@@ -623,7 +623,7 @@ namespace SteamCMDLauncher.Component
                 if (!comp.canBeBlank)
                 {
                     if (comp.IsEmpty())
-                        r.Add(comp.blank_error);
+                        r.Add(comp.blank_error ?? $"Field '{comp.name}' doesn't state a reason, likely needs to have a value in it");
                 }
             }
 

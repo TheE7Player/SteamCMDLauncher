@@ -556,6 +556,26 @@ namespace SteamCMDLauncher.Views
 
         #region Control Functions/Methods
         
+        private string CorrectControlName(string name, bool to_underscore = false)
+        {
+            // Put some fields that shouldn't be re-fixed
+            if (name == "carry-dir" || name.StartsWith("combo-")) return name;
+
+            char dash = '-';
+            char underscore = '_';
+
+            try
+            {
+                return name.Contains("-") ? 
+                    name.Replace(to_underscore ? dash : underscore, 
+                    to_underscore ? underscore : dash) : name;
+            }
+            finally
+            {
+                name = null;
+            }
+        }
+
         private void GenerateJSON(bool languageSupport)
         {
             if (output is null)
@@ -599,7 +619,7 @@ namespace SteamCMDLauncher.Views
 
                 setupNode = null;
             }
-            
+
             foreach (KeyValuePair<string, Dictionary<string, string[]>> cate in output_directory.Value)
             {
                 cKey = !languageSupport ? cate.Key : $"#{cate.Key}";
@@ -635,6 +655,12 @@ namespace SteamCMDLauncher.Views
                         // Get the contents by splitting at the first 'equals' occurrence
                         valSplit = ctrl.Value[i].Split('=', 2);
                         
+                        // Restore the underscore if any
+                        if(valSplit[0].Contains("-"))
+                        {
+                            valSplit[0] = CorrectControlName(valSplit[0], true);
+                        }
+
                         // If its a table, we have to restructure it again!
                         if(valSplit[0] == "combo-strict")
                         {
@@ -763,13 +789,15 @@ namespace SteamCMDLauncher.Views
                     }
                     else if (Equals(ctrl_type, typeof(CheckBox)))
                     {
+                        to_add = true;
+
                         ctrl_chb_placeholder = (CheckBox)content.Children[i];
 
                         fixedName = (bool)ctrl_chb_placeholder?.Name.Contains("_") ?
                                     ctrl_chb_placeholder.Name.Replace("_", "-") :
                                     ctrl_chb_placeholder.Name;
 
-                        sb.AppendFormat("{0}={1}", fixedName, ctrl_chb_placeholder.IsChecked);
+                        sb.AppendFormat("{0}={1}", fixedName, ((bool)ctrl_chb_placeholder.IsChecked) ? "true" : "false");
 
                         ctrl_chb_placeholder = null;
                     }
@@ -807,7 +835,7 @@ namespace SteamCMDLauncher.Views
                 // Final Error Checks
 
                 // Check 1.1: If set blank is true, an alert message should be set with it
-                if (control.Contains("can_leave_blank=False"))
+                if (control.Contains("can-leave-blank=false"))
                 {
                     string target_ba = "blank_alert";
                     if (!control.Any(x => x.StartsWith(target_ba)))

@@ -1,8 +1,8 @@
 # Holds hash keys to validate if the json loaded is official
-# Validation was runned after build at (YYYY-MM-DD): 2021-11-17 23:41:30
+# Validation was runned after build at (YYYY-MM-DD): 2021-11-18 01:16:42
 # This process is automated using vlang ~ https://github.com/vlang/v
 CSGO=3a8d668b2fe0e109aa77b0ffc4a88990aab36cfaafa3e9ae6d4fb08b8175cc53
-Double Action Boogaloo=354e90fa9205651fda5b6bc1f861c597a05782cda0944800ced4113b2a6597bb
+Double Action Boogaloo=3be001420104a494e59d9e8ceb1d1303fd572c8339e8ddde6b3b06fea955c84d
 Garrys Mod=2d5f8799bdea7e8d3428facdf8b729ee7f2de737e23777a9d7c17153438a9fa2
 L4D2=ef613b5806c4c448637b7a33456d96c65fb4f307f980fd157641a09b6e562bad
 TF2=a2fdb85983093f034d2046704b41385096f5156f307d84c4c446d6c8b0a791f0
